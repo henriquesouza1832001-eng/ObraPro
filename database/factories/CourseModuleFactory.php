@@ -20,8 +20,8 @@ class CourseModuleFactory extends Factory
     {
         return [
             'course_id' => Course::factory(),
-            'title' => fake()->sentence(3),
-            'description' => fake()->sentence(10),
+            'title' => $this->faker->sentence(3),
+            'description' => $this->faker->sentence(10),
             'position' => 1,
         ];
     }

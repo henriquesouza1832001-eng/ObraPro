@@ -23,7 +23,7 @@ class SupportTicketFactory extends Factory
             'user_id' => User::factory(), 'organization_id' => Organization::factory(),
             'title' => 'Botao nao responde', 'description' => 'Descricao do problema.',
             'category' => 'bug', 'priority' => 'normal', 'status' => 'open',
-            'route' => '/painel', 'correlation_id' => fake()->uuid(),
+            'route' => '/painel', 'correlation_id' => $this->faker->uuid(),
             'session_context' => ['locale' => 'pt-BR'],
         ];
     }

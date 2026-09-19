@@ -20,8 +20,8 @@ class WorkFactory extends Factory
     {
         return [
             'organization_id' => Organization::factory(),
-            'name' => fake()->sentence(3),
-            'slug' => fake()->unique()->slug(),
+            'name' => $this->faker->sentence(3),
+            'slug' => $this->faker->unique()->slug(),
             'status' => 'planning',
             'city' => 'Belo Horizonte',
             'state' => 'MG',

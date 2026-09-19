@@ -20,8 +20,8 @@ class LessonFactory extends Factory
     {
         return [
             'course_module_id' => CourseModule::factory(),
-            'title' => fake()->sentence(5),
-            'summary' => fake()->sentence(12),
+            'title' => $this->faker->sentence(5),
+            'summary' => $this->faker->sentence(12),
             'duration_minutes' => 8,
             'is_free' => false,
             'position' => 1,
