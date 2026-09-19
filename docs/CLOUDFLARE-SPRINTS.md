@@ -37,9 +37,9 @@ Nenhum agente edita as pastas reservadas do outro. Claude nao edita `cloudflare/
 | CF1-D1: `docs/CLOUDFLARE-MIGRATION.md` com decisao de arquitetura e regras de implementacao | Codex | Feito (PR #27) |
 | CF1-D2: Migration D1 inicial de identidade e catalogo (`0001_identity_and_catalog.sql`) | Codex | Feito (commit `eb660a6`) |
 | CF1-D3: Contratos de dominio `identity.ts` e `catalog.ts` (`CourseSummary`, `CourseDetails`, `AuthenticatedUser`, `OrganizationMembership`) | Codex | Feito (commit `eb660a6`) |
-| CF1-D4: CI do Worker (build, typecheck, deploy de preview) e bindings separados develop/production | Codex | Pendente |
+| CF1-D4: CI do Worker (build, typecheck, deploy de preview) e bindings separados develop/production | Codex | Feito (PR #33, mesclado): CI roda `worker:typecheck`/`worker:build` quando a fundacao existe. Bindings separados de producao seguem como trabalho futuro do Codex. |
 
-**Testes:** `npm run worker:typecheck`, `npm run worker:build`, testes manuais das rotas publicas (200 nos slugs validos, 404 real em slug inexistente).
+**Testes:** `npm run worker:typecheck`, `npm run worker:build`, `npm run worker:test` (suite automatizada com Vitest cobrindo todas as rotas publicas, headers de seguranca e a pagina de erro sanitizada quando o repositorio falha).
 
 **Aceite:** um agente novo consegue rodar `wrangler dev`, abrir todas as rotas publicas e ver o catalogo mockado, sem depender do Laravel.
 
@@ -55,7 +55,7 @@ Nenhum agente edita as pastas reservadas do outro. Claude nao edita `cloudflare/
 | CF2-C2 | Claude | Estados de carregamento/erro no catalogo e no detalhe (obra ainda nao publicada, curso despublicado) e teste manual de responsividade apos a troca de fonte de dados. | Feito: pagina de erro sanitizada (`renderServerError`) para falha do repositorio em `/cursos` e `/cursos/:slug`, validada com D1CourseRepository real no codigo (teste manual continua em mock local por falta de binding D1 de preview neste ambiente; ver "Testes" abaixo). |
 | CF2-C3 | Claude | Atualizar CHANGELOG.md e nota de "conteudo editorial" quando o dado passar a vir do D1 real. | Feito: CHANGELOG.md atualizado nesta entrada confirmando a integracao D1 na camada publica. |
 
-**Testes:** `npm run worker:typecheck` e `npm run worker:build` com o `D1CourseRepository` integrado (ok, sem alteracao de codigo necessaria); `wrangler dev` local sem binding `COURSES_DB` confirma o fallback correto para `MockCourseRepository` em todas as rotas publicas (`/`, `/como-funciona`, `/cursos`, `/cursos/:slug`, `/cursos/slug-inexistente` 404, `/health`). Falta um teste manual com binding `COURSES_DB` real apontando para o D1 de `develop` (ambiente Cloudflare, fora do alcance do `wrangler dev` local sem credenciais) — recomendado para a validacao do responsavel do projeto ou do Codex antes do checkpoint do lote.
+**Testes:** `npm run worker:typecheck` e `npm run worker:build` com o `D1CourseRepository` integrado (ok, sem alteracao de codigo necessaria); `npm run worker:test` (Vitest) cobre `/`, `/como-funciona`, `/cursos`, `/cursos/:slug` valido e inexistente (404 real), `/health`, os headers de seguranca minimos, e simula o binding `COURSES_DB` falhando para confirmar que `/cursos` e `/cursos/:slug` retornam 500 sanitizado (sem stack trace) enquanto as rotas independentes continuam 200; `wrangler dev` local sem binding `COURSES_DB` confirma o mesmo fallback manualmente. Falta um teste manual com binding `COURSES_DB` real apontando para o D1 de `develop` (ambiente Cloudflare, fora do alcance do `wrangler dev` local sem credenciais) — recomendado para a validacao do responsavel do projeto ou do Codex antes do checkpoint do lote.
 
 **Aceite:** o catalogo publico funciona identico ao mock para o visitante, mas os dados vem do D1; nenhuma rota publica muda de contrato.
 

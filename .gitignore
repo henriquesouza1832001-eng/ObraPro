@@ -29,3 +29,4 @@ secrets/
 .dev.vars
 /.wrangler
 /cloudflare/dist
+/cloudflare/node_modules
