@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main, develop, hotfix]
+  push:
+    branches: [main, develop, hotfix]
+
+permissions:
+  contents: read
+
+jobs:
+  policy:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate branch flow
+        env:
+          BASE: ${{ github.base_ref }}
+          HEAD: ${{ github.head_ref }}
+        run: |
+          case "$BASE" in
+            main)
+              [[ "$HEAD" == "develop" || "$HEAD" == "hotfix" ]]
+              ;;
+            develop)
+              [[ "$HEAD" == "main" || "$HEAD" == feature/* || "$HEAD" == fix/* || "$HEAD" == chore/* || "$HEAD" == docs/* || "$HEAD" == refactor/* || "$HEAD" == test/* ]]
+              ;;
+            hotfix)
+              [[ "$HEAD" == hotfix/* || "$HEAD" == "main" ]]
+              ;;
+            *)
+              exit 1
+              ;;
+          esac
+
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          coverage: none
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install PHP dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Install frontend dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Prepare test environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Check formatting
+        run: vendor/bin/pint --test
+
+      - name: Run tests
+        run: php artisan test
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Audit PHP dependencies
+        run: composer audit --locked
+
+      - name: Audit frontend dependencies
+        run: npm audit --audit-level=high
