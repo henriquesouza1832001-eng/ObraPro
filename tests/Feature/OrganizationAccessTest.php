@@ -6,7 +6,9 @@ use App\Enums\MembershipRole;
 use App\Enums\MembershipStatus;
 use App\Models\Organization;
 use App\Models\OrganizationMembership;
+use App\Models\Procedure;
 use App\Models\User;
+use App\Models\Work;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Gate;
 use Tests\TestCase;
@@ -145,6 +147,18 @@ class OrganizationAccessTest extends TestCase
             'role' => MembershipRole::Owner->value,
             'status' => MembershipStatus::Suspended->value,
         ])->assertStatus(422);
+    }
+
+    public function test_dashboard_uses_counts_from_active_organization(): void
+    {
+        [$user, $organization] = $this->userInOrganization(MembershipRole::Admin);
+        $work = Work::factory()->for($organization)->create();
+        Procedure::factory()->for($work)->count(2)->create();
+
+        $this->actingAs($user)->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('Procedimentos')
+            ->assertSee('2');
     }
 
     /** @return array{User, Organization} */

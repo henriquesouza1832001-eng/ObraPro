@@ -24,6 +24,12 @@ class Organization extends Model
         return $this->hasMany(OrganizationMembership::class);
     }
 
+    /** @return HasMany<Work, $this> */
+    public function works(): HasMany
+    {
+        return $this->hasMany(Work::class);
+    }
+
     /** @return BelongsToMany<User, $this> */
     public function users(): BelongsToMany
     {
