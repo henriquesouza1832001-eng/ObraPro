@@ -73,7 +73,12 @@ jobs:
         run: composer audit --locked
 
       - name: Audit frontend dependencies
-        run: npm audit --audit-level=high
+        run: |
+          for attempt in 1 2 3; do
+            npm audit --audit-level=high && exit 0
+            [[ "$attempt" == "3" ]] && exit 1
+            sleep 15
+          done
 
   deploy-preview:
     if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
