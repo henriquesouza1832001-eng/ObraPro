@@ -8,6 +8,7 @@ use App\Http\Controllers\ExecutionController;
 use App\Http\Controllers\OrganizationMemberController;
 use App\Http\Controllers\PlatformSecurityController;
 use App\Http\Controllers\ProcedureController;
+use App\Http\Controllers\RegistrationController;
 use App\Http\Controllers\SupportTicketController;
 use App\Http\Controllers\WorkController;
 use Illuminate\Support\Facades\Route;
@@ -20,6 +21,8 @@ Route::get('/cursos/{course}', [CourseController::class, 'show'])->name('courses
 Route::middleware('guest')->group(function (): void {
     Route::get('/entrar', [AuthController::class, 'create'])->name('login');
     Route::post('/entrar', [AuthController::class, 'store'])->middleware('throttle:login');
+    Route::get('/cadastro', [RegistrationController::class, 'create'])->name('register');
+    Route::post('/cadastro', [RegistrationController::class, 'store'])->middleware('throttle:login')->name('register.store');
 });
 
 Route::middleware('auth')->group(function (): void {
