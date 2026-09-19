@@ -1,5 +1,5 @@
-const CACHE_NAME = 'obrapro-shell-v1';
-const PUBLIC_SHELL = ['/', '/manifest.webmanifest'];
+const CACHE_NAME = 'obrapro-shell-v2';
+const PUBLIC_SHELL = ['/', '/entrar', '/manifest.webmanifest', '/images/bricklayer-training.png', '/icons/icon-192.png', '/icons/icon-512.png'];
 
 self.addEventListener('install', event => {
     event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(PUBLIC_SHELL)));
@@ -13,10 +13,9 @@ self.addEventListener('activate', event => {
 
 self.addEventListener('fetch', event => {
     if (event.request.method !== 'GET' || new URL(event.request.url).origin !== self.location.origin) return;
-    if (!PUBLIC_SHELL.includes(new URL(event.request.url).pathname)) return;
     event.respondWith(fetch(event.request).then(response => {
         const copy = response.clone();
         caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
         return response;
-    }).catch(() => caches.match(event.request)));
+    }).catch(async () => (await caches.match(event.request)) || caches.match('/')));
 });

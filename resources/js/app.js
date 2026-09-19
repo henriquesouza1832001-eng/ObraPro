@@ -51,3 +51,27 @@ function updateChecklist() {
 
 checklist.forEach((item) => item.addEventListener('change', updateChecklist));
 updateChecklist();
+
+const dashboardViews = [...document.querySelectorAll('[data-dashboard-view]')];
+
+function showDashboardView(target) {
+    if (!dashboardViews.length) return;
+
+    dashboardViews.forEach((view) => view.classList.toggle('hidden', view.dataset.dashboardView !== target));
+    document.querySelectorAll('[data-dashboard-go]').forEach((button) => {
+        const isActive = button.dataset.dashboardGo === target;
+        button.classList.toggle('bg-white/10', isActive);
+        button.classList.toggle('font-bold', isActive);
+        button.classList.toggle('text-slate-300', !isActive);
+    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+document.addEventListener('click', (event) => {
+    const trigger = event.target.closest('[data-dashboard-go]');
+    if (trigger) showDashboardView(trigger.dataset.dashboardGo);
+});
+
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => navigator.serviceWorker.register('/service-worker.js'));
+}

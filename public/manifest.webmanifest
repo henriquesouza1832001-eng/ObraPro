@@ -3,7 +3,13 @@
     "short_name": "ObraPro",
     "start_url": "/",
     "display": "standalone",
+    "scope": "/",
+    "orientation": "portrait-primary",
     "background_color": "#f4f6f5",
     "theme_color": "#176b4d",
-    "lang": "pt-BR"
+    "lang": "pt-BR",
+    "icons": [
+        { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+        { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+    ]
 }
