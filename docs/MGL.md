@@ -4,11 +4,15 @@
 
 MGL e um sistema externo existente para observabilidade e seguranca. ObraPro nao o reimplementa e nao conhece seu transporte no dominio.
 
+Na fase inicial, o MGL permanece desativado. A validacao do mockup e os primeiros acessos nao podem depender da latencia ou disponibilidade do MGL. A ativacao futura tera como finalidade alimentar um painel de observabilidade e seguranca depois que a experiencia inicial estiver estavel.
+
 ```text
 ObraPro -> SecurityTelemetry -> persistencia/outbox -> Queue -> MGL Adapter -> MGL
 ```
 
 `SecurityTelemetry` aceita um evento interno sanitizado. A persistencia local ocorre junto da operacao relevante quando necessario. Depois do commit, um job entrega uma representacao versionada pelo adapter configurado. Um provider nulo/local permite operacao com MGL desativado.
+
+Estado atual: `MGL_ENABLED=false`. Eventos permanecem locais e nenhuma entrega remota e realizada.
 
 ## Resiliencia
 
@@ -23,3 +27,5 @@ Metadados aceitaveis: event ID, versao, tipo, severidade, instante UTC, correlat
 ## Bloqueios atuais
 
 Endpoint, autenticacao, schema, assinatura, limites, SLAs e confirmacao de entrega dependem da documentacao oficial do MGL. O adapter remoto nao deve ser implementado antes disso.
+
+Tambem sao pre-condicoes para ativacao: mockup inicial estabilizado, metricas locais validadas, impacto de desempenho medido e painel MGL definido. Conectar Cloudflare nao ativa MGL automaticamente; sao decisoes independentes.
