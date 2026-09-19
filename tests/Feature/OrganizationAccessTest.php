@@ -94,6 +94,48 @@ class OrganizationAccessTest extends TestCase
         $this->actingAs($superAdmin)->get('/painel')->assertSee('Seguranca da plataforma');
     }
 
+    public function test_admin_can_update_member_role_and_status_with_audit_event(): void
+    {
+        [$admin, $organization] = $this->userInOrganization(MembershipRole::Admin);
+        $member = User::factory()->create();
+        $membership = OrganizationMembership::factory()->for($organization)->for($member)->create();
+
+        $this->actingAs($admin)->patch(route('organizations.members.update', [$organization, $membership]), [
+            'role' => MembershipRole::Supervisor->value,
+            'status' => MembershipStatus::Suspended->value,
+        ])->assertRedirect();
+
+        $this->assertDatabaseHas('organization_memberships', [
+            'id' => $membership->id,
+            'role' => MembershipRole::Supervisor->value,
+            'status' => MembershipStatus::Suspended->value,
+        ]);
+        $this->assertDatabaseHas('audit_events', ['action' => 'organization.membership.updated', 'subject_id' => (string) $membership->id]);
+    }
+
+    public function test_worker_cannot_update_membership(): void
+    {
+        [$worker, $organization] = $this->userInOrganization(MembershipRole::Worker);
+        $member = User::factory()->create();
+        $membership = OrganizationMembership::factory()->for($organization)->for($member)->create();
+
+        $this->actingAs($worker)->patch(route('organizations.members.update', [$organization, $membership]), [
+            'role' => MembershipRole::Supervisor->value,
+            'status' => MembershipStatus::Active->value,
+        ])->assertForbidden();
+    }
+
+    public function test_last_active_owner_cannot_be_removed(): void
+    {
+        [$owner, $organization] = $this->userInOrganization(MembershipRole::Owner);
+        $membership = $owner->organizationMemberships()->whereBelongsTo($organization)->firstOrFail();
+
+        $this->actingAs($owner)->patch(route('organizations.members.update', [$organization, $membership]), [
+            'role' => MembershipRole::Admin->value,
+            'status' => MembershipStatus::Active->value,
+        ])->assertStatus(422);
+    }
+
     /** @return array{User, Organization} */
     private function userInOrganization(MembershipRole $role): array
     {

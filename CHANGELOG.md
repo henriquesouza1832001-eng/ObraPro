@@ -6,6 +6,7 @@ Todas as mudancas relevantes do ObraPro sao registradas aqui. O formato segue Ke
 
 ### Added
 
+- Gestao inicial de membros por organizacao, com alteracao de papel/status, auditoria e protecao do ultimo Owner ativo.
 - Backlog operacional com sprints, cards, testes e criterios de aceite para o MVP e fases posteriores.
 - Decisao de produto: IA fica fora do MVP e sera adicionada somente como modulo posterior e opcional.
 - Preview Cloudflare passa a distinguir catálogo, detalhe de curso válido e curso inexistente.

@@ -5,6 +5,7 @@ use App\Http\Controllers\CourseController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EvidenceController;
 use App\Http\Controllers\ExecutionController;
+use App\Http\Controllers\OrganizationMemberController;
 use App\Http\Controllers\PlatformSecurityController;
 use App\Http\Controllers\WorkController;
 use Illuminate\Support\Facades\Route;
@@ -22,6 +23,8 @@ Route::middleware('guest')->group(function (): void {
 Route::middleware('auth')->group(function (): void {
     Route::get('/painel', DashboardController::class)->name('dashboard');
     Route::get('/painel/obras', [WorkController::class, 'index'])->name('works.index');
+    Route::get('/painel/organizacoes/{organization}/membros', [OrganizationMemberController::class, 'index'])->name('organizations.members.index');
+    Route::patch('/painel/organizacoes/{organization}/membros/{membership}', [OrganizationMemberController::class, 'update'])->name('organizations.members.update');
     Route::get('/painel/obras/{work}', [WorkController::class, 'show'])->name('works.show');
     Route::post('/painel/obras/{work}/procedimentos/{procedure}/execucoes', [ExecutionController::class, 'store'])->name('executions.store');
     Route::patch('/painel/execucoes/{execution}/passos/{executionStep}', [ExecutionController::class, 'updateStep'])->name('execution-steps.update');
