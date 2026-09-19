@@ -67,6 +67,12 @@ export default {
     async fetch(request, env) {
         const url = new URL(request.url);
 
+        if (url.pathname === '/') {
+            const homeUrl = new URL('/index.html', request.url);
+
+            return securityHeaders(await env.ASSETS.fetch(new Request(homeUrl, request)));
+        }
+
         if (url.pathname === '/entrar' && request.method === 'GET') {
             if (await isAuthenticated(request, env)) {
                 return redirect('/painel');
