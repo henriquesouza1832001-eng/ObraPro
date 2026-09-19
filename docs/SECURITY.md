@@ -14,6 +14,10 @@ O acesso tenant-aware usa `D1MembershipRepository.canAccessOrganization`: soment
 membership `active` da dupla usuario/organizacao concede acesso. IDs enviados pelo
 cliente nao substituem essa verificacao server-side.
 
+Recursos operacionais tambem validam `organization_id` na consulta ao D1 depois da
+membership. `D1OperationalAuthorization` cobre obras, procedimentos, checklists e
+execucoes; uma organizacao informada pelo cliente nao consegue ampliar o escopo.
+
 O sistema aplica deny-by-default, validacao e autorizacao server-side, CSRF do framework, escaping por padrao, queries parametrizadas, sessoes regeneradas, hash de senha suportado e rate limiting. Producao exige HTTPS, `APP_DEBUG=false`, cookies `Secure`, `HttpOnly` e `SameSite` apropriado.
 
 Headers iniciais: `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, protecao contra framing via CSP `frame-ancestors` ou `X-Frame-Options`, e CSP incremental depois de inventariar assets. HSTS so deve ser habilitado quando todo o dominio estiver em HTTPS.
