@@ -1,0 +1,99 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Models\Checklist;
+use App\Models\ChecklistItem;
+use App\Models\Execution;
+use App\Models\ExecutionStep;
+use App\Models\Organization;
+use App\Models\OrganizationMembership;
+use App\Models\Procedure;
+use App\Models\ProcedureStep;
+use App\Models\User;
+use App\Models\Work;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
+
+class WorkProcedureTest extends TestCase
+{
+    use RefreshDatabase;
+
+    public function test_anonymous_user_cannot_access_works(): void
+    {
+        $this->get('/painel/obras')->assertRedirect('/entrar');
+    }
+
+    public function test_member_sees_only_works_from_their_organization(): void
+    {
+        [$user, $work] = $this->workForMember();
+        $otherWork = Work::factory()->create();
+
+        $this->actingAs($user)->get('/painel/obras')->assertOk()->assertSee($work->name)->assertDontSee($otherWork->name);
+    }
+
+    public function test_member_can_open_procedure_steps_and_checklist(): void
+    {
+        [$user, $work] = $this->workForMember();
+        $procedure = Procedure::factory()->for($work)->create(['title' => 'Alvenaria de vedação']);
+        ProcedureStep::factory()->for($procedure)->create(['title' => 'Conferir o nível']);
+        $checklist = Checklist::factory()->for($procedure)->create();
+        ChecklistItem::factory()->for($checklist)->create(['label' => 'Blocos alinhados']);
+
+        $this->actingAs($user)->get('/painel/obras/'.$work->id)
+            ->assertOk()
+            ->assertSee('Alvenaria de vedação')
+            ->assertSee('Conferir o nível')
+            ->assertSee('Blocos alinhados');
+    }
+
+    public function test_member_cannot_open_another_organizations_work(): void
+    {
+        [$user] = $this->workForMember();
+        $otherWork = Work::factory()->create();
+
+        $this->actingAs($user)->get('/painel/obras/'.$otherWork->id)->assertNotFound();
+    }
+
+    public function test_member_can_start_and_complete_a_procedure_execution(): void
+    {
+        [$user, $work] = $this->workForMember();
+        $procedure = Procedure::factory()->for($work)->create();
+        $steps = ProcedureStep::factory()->count(2)->for($procedure)->sequence(
+            ['position' => 1],
+            ['position' => 2],
+        )->create();
+
+        $response = $this->actingAs($user)->post(route('executions.store', [$work, $procedure]));
+        $response->assertRedirect(route('works.show', $work));
+        $execution = Execution::query()->firstOrFail();
+
+        $this->assertDatabaseHas('executions', ['id' => $execution->id, 'status' => 'in_progress']);
+        $this->assertCount(2, $execution->steps);
+
+        foreach ($steps as $step) {
+            $executionStep = ExecutionStep::query()
+                ->where('execution_id', $execution->id)
+                ->where('procedure_step_id', $step->id)
+                ->firstOrFail();
+
+            $this->actingAs($user)->patch(route('execution-steps.update', [$execution, $executionStep]), [
+                'status' => 'completed',
+                'note' => 'Conferido no canteiro.',
+            ])->assertRedirect();
+        }
+
+        $this->assertDatabaseHas('executions', ['id' => $execution->id, 'status' => 'completed']);
+    }
+
+    /** @return array{User, Work} */
+    private function workForMember(): array
+    {
+        $organization = Organization::factory()->create();
+        $user = User::factory()->create();
+        OrganizationMembership::factory()->for($organization)->for($user)->admin()->create();
+        $work = Work::factory()->for($organization)->create();
+
+        return [$user, $work];
+    }
+}
