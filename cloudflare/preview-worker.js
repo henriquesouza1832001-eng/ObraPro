@@ -73,6 +73,12 @@ export default {
             return securityHeaders(await env.ASSETS.fetch(new Request(homeUrl, request)));
         }
 
+        if (url.pathname === '/cursos' || url.pathname.startsWith('/cursos/')) {
+            const coursesUrl = new URL('/courses.html', request.url);
+
+            return securityHeaders(await env.ASSETS.fetch(new Request(coursesUrl, request)));
+        }
+
         if (url.pathname === '/entrar' && request.method === 'GET') {
             if (await isAuthenticated(request, env)) {
                 return redirect('/painel');
