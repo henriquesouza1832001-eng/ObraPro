@@ -12,6 +12,18 @@ Todos os agentes, independentemente da ferramenta, devem ler nesta ordem:
 
 Arquivos especificos de ferramenta, como `CLAUDE.md` e `.cursor/rules/obrapro.mdc`, apenas apontam para essas fontes. Eles nao podem criar regras concorrentes.
 
+## Arquitetura alvo Cloudflare
+
+O runtime alvo esta migrando para Cloudflare Workers + TypeScript + D1. O Laravel existente e referencia funcional durante a transicao. As regras completas estao em docs/CLOUDFLARE-MIGRATION.md e devem ser lidas antes de editar o Worker.
+
+- Codex conduz contratos, schema D1, autenticacao, autorizacao, testes e revisao de seguranca.
+- Claude Code implementa handlers e telas somente nos cards atribuidos.
+- Outro agente trabalha somente nos arquivos declarados no card.
+- Dois agentes nao editam simultaneamente schema, binding, lockfile ou modulo.
+- D1 e acessado por binding; nunca guardar host, usuario, senha ou token no repositorio.
+- Nenhum agente inventa endpoint, tabela, preco, papel ou regra comercial.
+- Nunca apagar banco, migration, bucket, binding ou dado para fazer teste passar.
+
 ## Trabalho paralelo
 
 - Um agente por branch curta e por objetivo coerente.
