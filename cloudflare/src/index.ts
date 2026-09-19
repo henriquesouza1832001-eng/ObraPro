@@ -2,12 +2,15 @@ import type { Env } from './env';
 import { withSecurityHeaders, redirect } from './http/security';
 import { isAuthenticated, loginPage, sessionToken } from './auth/demoSession';
 import { MockCourseRepository, courseModules } from './data/mockCourseRepository';
+import { D1CourseRepository } from './data/d1CourseRepository';
 import type { CourseRepository } from './data/course';
 import { renderCourseCatalog, renderCourseDetail, renderCourseNotFound } from './pages/courses';
 import { renderComoFunciona } from './pages/comoFunciona';
 import { renderServerError } from './pages/serverError';
 
-const courseRepository: CourseRepository = new MockCourseRepository();
+function courseRepositoryFor(env: Env): CourseRepository {
+    return env.COURSES_DB ? new D1CourseRepository(env.COURSES_DB) : new MockCourseRepository();
+}
 
 function html(body: string, status = 200): Response {
     return new Response(body, { status, headers: { 'Content-Type': 'text/html; charset=UTF-8' } });
@@ -17,7 +20,7 @@ function json(body: unknown, status = 200): Response {
     return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json; charset=UTF-8' } });
 }
 
-async function handleCourseDetail(slug: string): Promise<Response> {
+async function handleCourseDetail(slug: string, courseRepository: CourseRepository): Promise<Response> {
     const course = await courseRepository.findCourseBySlug(slug);
 
     if (!course) {
@@ -28,6 +31,7 @@ async function handleCourseDetail(slug: string): Promise<Response> {
 }
 
 async function route(request: Request, env: Env): Promise<Response> {
+    const courseRepository = courseRepositoryFor(env);
     const url = new URL(request.url);
     const path = url.pathname;
 
@@ -58,7 +62,7 @@ async function route(request: Request, env: Env): Promise<Response> {
             return withSecurityHeaders(html(renderCourseCatalog(await courseRepository.listCourses())));
         }
 
-        return withSecurityHeaders(await handleCourseDetail(slug));
+        return withSecurityHeaders(await handleCourseDetail(slug, courseRepository));
     }
 
     if (path === '/entrar' && request.method === 'GET') {

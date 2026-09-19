@@ -38,6 +38,14 @@ Valores monetarios usam inteiros na menor unidade da moeda e codigo ISO de moeda
 
 O catalogo inicial usa `courses.access_type` (`free` ou `premium`) e `price_cents`, sem cobrança embutida na apresentação pública. Módulos e aulas têm posição única dentro do pai, e o seeder editorial usa `updateOrCreate` por slug/posição para ser repetível sem apagar dados.
 
+## Repositorio D1 do catalogo
+
+O `D1CourseRepository` consulta somente cursos publicados, usa parametros vinculados
+para o slug e calcula a quantidade de modulos por agregacao. O Worker usa esse
+repositorio apenas quando o binding `COURSES_DB` existe; sem binding, o mock editorial
+continua disponivel para preview. Nenhuma credencial ou endpoint de banco fica no
+repositorio.
+
 ## Migrations
 
 ### D1 em migracao
