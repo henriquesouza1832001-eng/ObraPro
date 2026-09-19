@@ -10,6 +10,7 @@ Todas as mudancas relevantes do ObraPro sao registradas aqui. O formato segue Ke
 
 ### Added
 
+- CF3-D1: hash de senha versionado com PBKDF2-SHA256 e comparacao em tempo constante; senhas curtas ou formatos invalidos sao rejeitados sem revelar detalhes ao cliente.
 - Suite automatizada (`npm run worker:test`, Vitest) para o Worker Cloudflare: cobre todas as rotas publicas (`/`, `/como-funciona`, `/cursos`, `/cursos/:slug` valido e inexistente, `/health`), os headers de seguranca minimos e o comportamento sanitizado quando o `D1CourseRepository` falha (500 amigavel, sem stack trace, rotas independentes continuam funcionando). Substitui a validacao manual via `wrangler dev`/curl usada ate aqui.
 - Sprint CF-2 (cards CF2-C1/CF2-C3): confirmada a integracao do catalogo publico com o `D1CourseRepository` do Codex (PR #35) — o contrato `Course`/`CourseRepository` ja existente nao precisou de nenhuma alteracao; `cloudflare/src/index.ts` seleciona `D1CourseRepository` quando o binding `COURSES_DB` existe e mantem `MockCourseRepository` como conteudo editorial de demonstracao quando o binding nao esta configurado (preview local).
 - CF3-D1: `D1SessionStore` gera tokens aleatorios, persiste somente hash SHA-256, valida expiracao/revogacao e atualiza `last_seen_at` sem expor o token ao banco.
