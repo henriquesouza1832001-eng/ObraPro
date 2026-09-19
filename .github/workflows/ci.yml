@@ -24,7 +24,7 @@ jobs:
               [[ "$HEAD" == "develop" || "$HEAD" == "hotfix" ]]
               ;;
             develop)
-              [[ "$HEAD" == "main" || "$HEAD" == feature/* || "$HEAD" == fix/* || "$HEAD" == chore/* || "$HEAD" == docs/* || "$HEAD" == refactor/* || "$HEAD" == test/* ]]
+              [[ "$HEAD" == "main" || "$HEAD" == feature/* || "$HEAD" == fix/* || "$HEAD" == chore/* || "$HEAD" == docs/* || "$HEAD" == refactor/* || "$HEAD" == test/* || "$HEAD" == claude/* || "$HEAD" == codex-* ]]
               ;;
             hotfix)
               [[ "$HEAD" == hotfix/* || "$HEAD" == "main" ]]
