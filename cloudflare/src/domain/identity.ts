@@ -25,3 +25,8 @@ export interface AuthSession {
     createdAt: string;
     lastSeenAt: string;
 }
+
+export interface AuthorizationContext {
+    userId: string;
+    organizationId: string;
+}

@@ -10,6 +10,10 @@ Senhas do fluxo real usam o formato versionado `PBKDF2-SHA256$iteracoes$salt$has
 Salt e hash sao aleatorios, a politica minima atual e de doze caracteres e a
 verificacao compara os bytes sem retornar detalhes do motivo da falha.
 
+O acesso tenant-aware usa `D1MembershipRepository.canAccessOrganization`: somente
+membership `active` da dupla usuario/organizacao concede acesso. IDs enviados pelo
+cliente nao substituem essa verificacao server-side.
+
 O sistema aplica deny-by-default, validacao e autorizacao server-side, CSRF do framework, escaping por padrao, queries parametrizadas, sessoes regeneradas, hash de senha suportado e rate limiting. Producao exige HTTPS, `APP_DEBUG=false`, cookies `Secure`, `HttpOnly` e `SameSite` apropriado.
 
 Headers iniciais: `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, protecao contra framing via CSP `frame-ancestors` ou `X-Frame-Options`, e CSP incremental depois de inventariar assets. HSTS so deve ser habilitado quando todo o dominio estiver em HTTPS.
