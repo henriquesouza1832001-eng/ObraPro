@@ -6,6 +6,7 @@ Todas as mudancas relevantes do ObraPro sao registradas aqui. O formato segue Ke
 
 ### Added
 
+- Sprint CF-2 (card CF2-C2): pagina de erro sanitizada no Worker Cloudflare para quando o repositorio de cursos (mock hoje, D1 depois) falhar em `/cursos` ou `/cursos/:slug`; nenhuma mensagem interna ou stack trace e exposta ao visitante, e as rotas independentes (`/`, `/como-funciona`, `/health`) continuam funcionando normalmente.
 - Novo `docs/CLOUDFLARE-SPRINTS.md` com o cronograma de sprints da migracao Cloudflare (CF-1 a CF-8), dividindo cards entre Claude Code (camada visual/PWA/rotas publicas) e Codex (D1, dominio, autenticacao, seguranca), e reforcando que merge em `main` e exclusivo do Codex com autorizacao explicita do responsavel pelo projeto.
 - Sprint 5 (S5-07): pagina publica "Como funciona" no Worker Cloudflare, com passos do produto e chamada para catalogo e login, sem exigir cadastro.
 - Fundacao TypeScript do Worker Cloudflare (`cloudflare/src`) substituindo o script JS avulso: roteamento tipado, headers de seguranca e sessao de demonstracao reorganizados em modulos.

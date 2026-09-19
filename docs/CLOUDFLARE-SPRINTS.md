@@ -47,13 +47,13 @@ Nenhum agente edita as pastas reservadas do outro. Claude nao edita `cloudflare/
 
 **Objetivo:** substituir o `MockCourseRepository` por dados reais do D1, sem mudar rotas nem contratos visuais.
 
-| Card | Dono | Descricao |
-|---|---|---|
-| CF2-D1 | Codex | Repositorio D1 (`D1CourseRepository`) implementando o mesmo formato de dados hoje consumido pelas paginas (`listCourses`, `findCourseBySlug`), reaproveitando `CourseSummary`/`CourseDetails` de `catalog.ts`. |
-| CF2-D2 | Codex | Seed idempotente do catalogo em D1 (sem apagar dados existentes), espelhando o conteudo editorial ja publicado. |
-| CF2-C1 | Claude | Ajustar `cloudflare/src/data/course.ts` para consumir o contrato de dominio exposto pelo Codex (alinhar `Course` com `CourseSummary`/`CourseDetails`: `id`, `level`, `isFeatured`) sem acessar D1 diretamente — a leitura continua passando por um repositorio injetado. |
-| CF2-C2 | Claude | Estados de carregamento/erro no catalogo e no detalhe (obra ainda nao publicada, curso despublicado) e teste manual de responsividade apos a troca de fonte de dados. |
-| CF2-C3 | Claude | Atualizar CHANGELOG.md e nota de "conteudo editorial" quando o dado passar a vir do D1 real. |
+| Card | Dono | Descricao | Status |
+|---|---|---|---|
+| CF2-D1 | Codex | Repositorio D1 (`D1CourseRepository`) implementando o mesmo formato de dados hoje consumido pelas paginas (`listCourses`, `findCourseBySlug`), reaproveitando `CourseSummary`/`CourseDetails` de `catalog.ts`. | Pendente |
+| CF2-D2 | Codex | Seed idempotente do catalogo em D1 (sem apagar dados existentes), espelhando o conteudo editorial ja publicado. | Pendente |
+| CF2-C1 | Claude | Ajustar `cloudflare/src/data/course.ts` para consumir o contrato de dominio exposto pelo Codex (alinhar `Course` com `CourseSummary`/`CourseDetails`: `id`, `level`, `isFeatured`) sem acessar D1 diretamente — a leitura continua passando por um repositorio injetado. | Bloqueado por CF2-D1 |
+| CF2-C2 | Claude | Estados de carregamento/erro no catalogo e no detalhe (obra ainda nao publicada, curso despublicado) e teste manual de responsividade apos a troca de fonte de dados. | Feito em parte: pagina de erro sanitizada (`renderServerError`) para falha do repositorio em `/cursos` e `/cursos/:slug`, com teste manual de falha simulada. Resta validar responsividade apos a troca real para D1 (depende de CF2-D1). |
+| CF2-C3 | Claude | Atualizar CHANGELOG.md e nota de "conteudo editorial" quando o dado passar a vir do D1 real. | Pendente (depende de CF2-D1) |
 
 **Testes:** rota `/cursos` e `/cursos/:slug` com dado real de D1 em ambiente `develop`; curso despublicado ou inexistente continua retornando 404; teste de regressao visual (desktop/mobile).
 

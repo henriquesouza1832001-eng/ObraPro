@@ -5,6 +5,7 @@ import { MockCourseRepository, courseModules } from './data/mockCourseRepository
 import type { CourseRepository } from './data/course';
 import { renderCourseCatalog, renderCourseDetail, renderCourseNotFound } from './pages/courses';
 import { renderComoFunciona } from './pages/comoFunciona';
+import { renderServerError } from './pages/serverError';
 
 const courseRepository: CourseRepository = new MockCourseRepository();
 
@@ -26,81 +27,103 @@ async function handleCourseDetail(slug: string): Promise<Response> {
     return html(renderCourseDetail(course, courseModules()));
 }
 
+async function route(request: Request, env: Env): Promise<Response> {
+    const url = new URL(request.url);
+    const path = url.pathname;
+
+    if (path === '/health') {
+        return json({ status: 'ok', service: 'obrapro-worker' });
+    }
+
+    if (path === '/') {
+        const homeUrl = new URL('/index.html', request.url);
+
+        return withSecurityHeaders(await env.ASSETS.fetch(new Request(homeUrl, request)));
+    }
+
+    if (path === '/como-funciona') {
+        return withSecurityHeaders(html(renderComoFunciona()));
+    }
+
+    if (path === '/cursos') {
+        const courses = await courseRepository.listCourses();
+
+        return withSecurityHeaders(html(renderCourseCatalog(courses)));
+    }
+
+    if (path.startsWith('/cursos/')) {
+        const slug = path.slice('/cursos/'.length).replace(/\/$/, '');
+
+        if (slug === '') {
+            return withSecurityHeaders(html(renderCourseCatalog(await courseRepository.listCourses())));
+        }
+
+        return withSecurityHeaders(await handleCourseDetail(slug));
+    }
+
+    if (path === '/entrar' && request.method === 'GET') {
+        if (await isAuthenticated(request, env)) {
+            return redirect('/painel');
+        }
+
+        return withSecurityHeaders(html(loginPage()));
+    }
+
+    if (path === '/entrar' && request.method === 'POST') {
+        const form = await request.formData();
+        const email = String(form.get('email') ?? '').trim().toLowerCase();
+        const password = String(form.get('password') ?? '');
+
+        if (email !== env.DEMO_EMAIL.toLowerCase() || password !== env.DEMO_PASSWORD) {
+            return withSecurityHeaders(html(loginPage(true), 422));
+        }
+
+        const token = await sessionToken(env.DEMO_EMAIL, env.SESSION_SECRET);
+
+        return redirect('/painel', `obrapro_preview=${token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=28800`);
+    }
+
+    if (path === '/sair' && request.method === 'POST') {
+        return redirect('/', 'obrapro_preview=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0');
+    }
+
+    if (path === '/painel') {
+        if (!await isAuthenticated(request, env)) {
+            return redirect('/entrar');
+        }
+
+        const dashboardUrl = new URL('/dashboard.html', request.url);
+
+        return withSecurityHeaders(await env.ASSETS.fetch(new Request(dashboardUrl, request)));
+    }
+
+    if (path === '/dashboard.html') {
+        return new Response('Not found', { status: 404 });
+    }
+
+    return withSecurityHeaders(await env.ASSETS.fetch(request));
+}
+
+/**
+ * Rotas publicas renderizadas pelo Worker (nao os assets estaticos) que devem
+ * cair na pagina de erro sanitizada em vez de vazar uma excecao nao tratada
+ * quando o repositorio de dados (mock hoje, D1 depois) falhar.
+ */
+const renderedRoutePrefixes = ['/como-funciona', '/cursos'];
+
 export default {
     async fetch(request: Request, env: Env): Promise<Response> {
-        const url = new URL(request.url);
-        const path = url.pathname;
+        try {
+            return await route(request, env);
+        } catch (error) {
+            const url = new URL(request.url);
+            console.error(`Falha ao processar ${url.pathname}:`, error);
 
-        if (path === '/health') {
-            return json({ status: 'ok', service: 'obrapro-worker' });
-        }
-
-        if (path === '/') {
-            const homeUrl = new URL('/index.html', request.url);
-
-            return withSecurityHeaders(await env.ASSETS.fetch(new Request(homeUrl, request)));
-        }
-
-        if (path === '/como-funciona') {
-            return withSecurityHeaders(html(renderComoFunciona()));
-        }
-
-        if (path === '/cursos') {
-            const courses = await courseRepository.listCourses();
-
-            return withSecurityHeaders(html(renderCourseCatalog(courses)));
-        }
-
-        if (path.startsWith('/cursos/')) {
-            const slug = path.slice('/cursos/'.length).replace(/\/$/, '');
-
-            if (slug === '') {
-                return withSecurityHeaders(html(renderCourseCatalog(await courseRepository.listCourses())));
+            if (renderedRoutePrefixes.some((prefix) => url.pathname === prefix || url.pathname.startsWith(`${prefix}/`))) {
+                return withSecurityHeaders(html(renderServerError(url.pathname), 500));
             }
 
-            return withSecurityHeaders(await handleCourseDetail(slug));
+            return withSecurityHeaders(new Response('Erro interno', { status: 500 }));
         }
-
-        if (path === '/entrar' && request.method === 'GET') {
-            if (await isAuthenticated(request, env)) {
-                return redirect('/painel');
-            }
-
-            return withSecurityHeaders(html(loginPage()));
-        }
-
-        if (path === '/entrar' && request.method === 'POST') {
-            const form = await request.formData();
-            const email = String(form.get('email') ?? '').trim().toLowerCase();
-            const password = String(form.get('password') ?? '');
-
-            if (email !== env.DEMO_EMAIL.toLowerCase() || password !== env.DEMO_PASSWORD) {
-                return withSecurityHeaders(html(loginPage(true), 422));
-            }
-
-            const token = await sessionToken(env.DEMO_EMAIL, env.SESSION_SECRET);
-
-            return redirect('/painel', `obrapro_preview=${token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=28800`);
-        }
-
-        if (path === '/sair' && request.method === 'POST') {
-            return redirect('/', 'obrapro_preview=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0');
-        }
-
-        if (path === '/painel') {
-            if (!await isAuthenticated(request, env)) {
-                return redirect('/entrar');
-            }
-
-            const dashboardUrl = new URL('/dashboard.html', request.url);
-
-            return withSecurityHeaders(await env.ASSETS.fetch(new Request(dashboardUrl, request)));
-        }
-
-        if (path === '/dashboard.html') {
-            return new Response('Not found', { status: 404 });
-        }
-
-        return withSecurityHeaders(await env.ASSETS.fetch(request));
     },
 };
