@@ -10,6 +10,7 @@ Todas as mudancas relevantes do ObraPro sao registradas aqui. O formato segue Ke
 
 ### Added
 
+- CF3-C1/C2: tela de login em `cloudflare/src/pages/login.ts` reescrita para consumir o login/logout real (`loginWithD1`/`logoutFromD1`) quando `AUTH_DB` existe, preservando o fallback de demonstração; mensagens de erro genéricas e acessíveis (`role="alert"`, `aria-describedby`), foco automático no campo de e-mail e link informativo para o catálogo público em vez de um formulário de cadastro inexistente (não há endpoint de criação de conta ainda — sinalizado como pendência). Cobertura automatizada: 27 testes no Worker, incluindo login com senha correta/incorreta, sessão válida/expirada em `/painel` e revogação de sessão em `/sair`.
 - CF3-D2: repositório de memberships ativas com autorização server-side por usuário e organização, sem confiar em IDs ou controles do frontend.
 - CF3-D1: repositório D1 de usuários e fluxo de login/logout real condicionado ao binding `AUTH_DB`; o preview sem binding continua usando o demo.
 - CF3-D1: hash de senha versionado com PBKDF2-SHA256 e comparacao em tempo constante; senhas curtas ou formatos invalidos sao rejeitados sem revelar detalhes ao cliente.
