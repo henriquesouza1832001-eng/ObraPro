@@ -6,7 +6,7 @@ Todas as mudancas relevantes do ObraPro sao registradas aqui. O formato segue Ke
 
 ### Added
 
-- Fundacao inicial do schema D1 para identidade, organizacoes, memberships e catalogo editorial, com constraints de tenant e migrations incrementais.
+- Regra de entrega em lotes de cinco sprints, com checkpoint manual obrigatorio e autorizacao do responsavel antes do lote seguinte.
 - Regra operacional de integracao: merge em main somente com pedido explicito do responsavel e leitura obrigatoria do diario compartilhado entre tarefas.
 - Decisao arquitetural: migracao gradual do runtime Laravel para Cloudflare Workers + TypeScript + D1, documentada em docs/CLOUDFLARE-MIGRATION.md.
 - Seeder de demonstração idempotente e compatível com deploys sem dependências de desenvolvimento, incluindo Laravel Cloud.
