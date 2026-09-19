@@ -35,10 +35,14 @@ Este documento transforma o roadmap em trabalho executavel. Cada card deve ser e
 - S1-03: Super Admin separado da operacao dos tenants.
 - S1-04: telas de pessoas, convite, suspensao e troca de papel.
 - S1-05: auditoria de alteracoes administrativas.
+- S1-06: convite seguro por e-mail, token de uso unico, expiracao e aceite.
+- S1-07: central de chamados de manutencao com rota, correlation ID e contexto sanitizado da sessao.
 
 **Testes:** anonimo, membership convidada/suspensa, papel insuficiente, tenant cruzado e Super Admin sem bypass.
 
 **Aceite:** um usuario ativo acessa sua organizacao; um usuario de outra organizacao recebe negacao segura; seguranca da plataforma aparece somente para Super Admin.
+
+O convite nao deve criar senha previsivel nem armazenar token em texto aberto.
 
 ## Sprint 2 - Catalogo de procedimentos
 
@@ -78,6 +82,7 @@ Este documento transforma o roadmap em trabalho executavel. Cada card deve ser e
 - S4-03: gestao de procedimentos e publicacao com resumo antes de confirmar.
 - S4-04: relatorio de checklists, evidencias pendentes e nao conformidades.
 - S4-05: configuracoes de organizacao e equipe.
+- S4-06: fila de chamados, triagem, status, prioridade e resposta para o solicitante.
 
 **Testes:** autorizacao por papel, filtros, ausencia de vazamento de tenant, estados vazios, erro de rede e performance das consultas.
 
@@ -93,10 +98,15 @@ Este documento transforma o roadmap em trabalho executavel. Cada card deve ser e
 - S5-04: progresso, retomada e conclusao verificavel.
 - S5-05: painel editorial para cursos, modulos e aulas.
 - S5-06: planos, beneficios e precos configuraveis, sem hardcode no frontend.
+- S5-07: landing page "Como funciona" acessivel por link de Instagram.
+- S5-08: cadastro/login como porta de entrada do painel; visitante ve apenas conteudo publico.
+- S5-09: tela inicial do painel seguindo o mockup, com progresso, categorias e atalhos reais.
 
 **Testes:** rotas publicas, slug inexistente, acesso gratuito, curso premium bloqueado, progresso e permissao editorial.
 
 **Aceite:** visitante entende o produto sem cadastro, acessa conteudo gratuito e sabe exatamente o que recebe antes de considerar uma compra.
+
+O painel nunca pode aparecer para visitante anonimo; cadastro e login devem retornar erros claros e manter o fluxo acessivel.
 
 ## Sprint 6 - Pagamentos e acesso comercial
 
@@ -162,3 +172,17 @@ Este documento transforma o roadmap em trabalho executavel. Cada card deve ser e
 3. Implementar S6 somente depois que direitos de acesso estiverem cobertos por testes.
 4. Fazer S7 e S8 antes de convidar usuarios reais para o canteiro.
 5. Avaliar S9 apenas com dados de uso e custos reais das sprints anteriores.
+
+## Regra de evolucao
+
+Toda melhoria descoberta durante testes ou uso real vira card em uma sprint futura, com origem, impacto, prioridade, teste e criterio de aceite. Correcoes urgentes podem entrar em `hotfix` somente quando reproduziveis, cobertas por teste e sincronizadas com `main`.
+
+## Checkpoint apos a Sprint 5
+
+As Sprints 2, 3, 4 e 5 serao executadas em sequencia. Ao terminar a Sprint 5, o desenvolvimento fica congelado para validacao conjunta antes da Sprint 6.
+
+**Validacao automatizada:** testes PHPUnit, Pint, build frontend, rotas, autorizacao por papel, isolamento de tenant, uploads privados, progresso de curso, estados vazios e falhas de validacao.
+
+**Validacao do produto:** o responsavel pelo projeto testa manualmente landing page, cadastro, login, tela inicial do mockup, categorias, procedimento, checklist, evidencia, cursos, painel, suporte e logout em desktop e celular.
+
+**Saida do checkpoint:** cada falha vira card com rota, passos para reproduzir, resultado esperado, resultado atual, prioridade e criterio de aceite. Nenhum pagamento, MGL ou IA entra antes desse aceite conjunto.
