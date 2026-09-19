@@ -1,0 +1,9 @@
+{
+    "name": "ObraPro",
+    "short_name": "ObraPro",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#f4f6f5",
+    "theme_color": "#176b4d",
+    "lang": "pt-BR"
+}

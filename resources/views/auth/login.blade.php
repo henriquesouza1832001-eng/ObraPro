@@ -1,0 +1,3 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Entrar | ObraPro</title></head>
+<body><main><h1>Entrar no ObraPro</h1><form method="POST" action="{{ route('login') }}">@csrf<label for="email">E-mail</label><input id="email" name="email" type="email" value="{{ old('email') }}" autocomplete="username" required>@error('email')<p role="alert">{{ $message }}</p>@enderror<label for="password">Senha</label><input id="password" name="password" type="password" autocomplete="current-password" required><button type="submit">Entrar</button></form></main></body></html>
