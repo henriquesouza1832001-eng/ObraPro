@@ -6,6 +6,9 @@ Todas as mudancas relevantes do ObraPro sao registradas aqui. O formato segue Ke
 
 ### Added
 
+- Catalogo publico funcional com 10 cursos, modulos e aulas cobrindo planejamento, estrutura, instalacoes, acabamentos, seguranca e gestao.
+- Paginas publicas de cursos com acesso gratuito ou avulso, duracao, nivel, modulos e aulas.
+- Seed idempotente do catalogo editorial para desenvolvimento e demonstracao.
 - Fundacao multi-tenant com organizacoes identificadas por ULID e memberships por usuario.
 - RBAC por organizacao com os papeis owner, admin, engineer, supervisor, worker e student.
 - Area inicial de seguranca da plataforma protegida por permissao exclusiva de Super Admin.

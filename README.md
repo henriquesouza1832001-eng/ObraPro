@@ -9,6 +9,7 @@ O ObraPro combina orientacoes passo a passo, cursos gratuitos e premium, gestao 
 - Mockup web responsivo e instalavel como PWA.
 - Login de demonstracao e painel com obras, procedimentos, checklists e nao conformidades.
 - Fundacao de organizacoes, memberships e papeis por tenant, com seguranca global isolada para Super Admin.
+- Catalogo publico navegavel em `/cursos`, com cursos gratuitos e avulsos por etapa da construcao.
 - Deploy de `develop` para Cloudflare Workers automatizado pelo GitHub Actions.
 - MGL permanece opcional e reservado a observabilidade e seguranca.
 - Cursos, planos configuraveis e gerador assistido estao nas proximas entregas.
@@ -48,6 +49,8 @@ php artisan serve
 Abra `http://127.0.0.1:8000`. O preview Cloudflare e gerado a partir de `cloudflare/public` e nao substitui o runtime Laravel de producao.
 
 Neste workspace, ferramentas portateis verificadas ficam em `.tools/` e nao sao versionadas. Use `./.tools/php/php.exe artisan test` para executar a suite sem alterar o sistema.
+
+O seeder `CourseCatalogSeeder` e idempotente e popula apenas o catalogo editorial inicial; ele nao apaga tabelas nem registros existentes.
 
 ## Qualidade
 

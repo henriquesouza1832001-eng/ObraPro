@@ -16,6 +16,8 @@ O painel e seccionado por contexto: operacao, conteudo, cursos, comercial, pesso
 
 A landing page deve funcionar para visitantes vindos do Instagram: proposta direta, exemplos reais, conteudo gratuito e acesso ao catalogo sem exigir cadastro imediato. Cursos informam claramente o que e gratuito, incluido ou avulso, duracao, nivel, instrutor e progresso.
 
+A primeira versao publica mantem uma trilha simples: catalogo por etapa, detalhe com modulos e aulas, duracao e chamada de acesso. O conteudo editorial inicial nao depende de fotos; hierarquia, checklists e exemplos textuais continuam legiveis enquanto a biblioteca de midia cresce.
+
 ## Estudo preliminar
 
 O questionario usa uma decisao por etapa, exemplos visuais, unidades explicitas e opcao "nao sei". Antes de gerar, resume terreno, ambientes, prioridades e limitacoes. O resultado separa sugestao, hipotese e alerta tecnico, permitindo voltar e alterar respostas sem recomecar.

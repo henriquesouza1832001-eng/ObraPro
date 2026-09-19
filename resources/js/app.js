@@ -33,6 +33,40 @@ document.addEventListener('click', (event) => {
     }
 });
 
+document.querySelectorAll('[data-screen="home"] .grid button').forEach((button) => {
+    button.dataset.go = 'category';
+});
+
+function showDemoFeedback(message) {
+    let feedback = document.querySelector('[data-demo-feedback]');
+
+    if (!feedback) {
+        feedback = document.createElement('div');
+        feedback.dataset.demoFeedback = '';
+        feedback.className = 'demo-feedback';
+        document.body.append(feedback);
+    }
+
+    feedback.textContent = message;
+    window.clearTimeout(feedback.timeout);
+    feedback.timeout = window.setTimeout(() => feedback.remove(), 3000);
+}
+
+document.addEventListener('click', (event) => {
+    const trigger = event.target.closest('button');
+
+    if (!trigger || trigger.dataset.go || trigger.dataset.dashboardGo || trigger.dataset.checkItem || trigger.dataset.finish !== undefined) {
+        return;
+    }
+
+    if (trigger.getAttribute('aria-label')?.includes('vídeo')) {
+        showDemoFeedback('Vídeo demonstrativo pronto para a próxima etapa.');
+        return;
+    }
+
+    showDemoFeedback('Esta ação está preparada para a próxima versão do seu ambiente.');
+});
+
 const checklist = [...document.querySelectorAll('[data-check-item]')];
 const checklistCount = document.querySelector('[data-check-count]');
 const finishButton = document.querySelector('[data-finish]');

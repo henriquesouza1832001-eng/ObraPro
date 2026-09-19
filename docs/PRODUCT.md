@@ -47,6 +47,7 @@ Fundacao documentada e testavel: aplicacao Laravel minima, autenticacao segura, 
 - Conteudo tecnico exige aprovacao humana competente.
 - Precos, planos e regras de acesso pertencem ao painel, nao ao codigo.
 - Conteudo gratuito deve gerar valor antes da oferta paga.
+- O catalogo inicial cobre as etapas da casa com aulas curtas, linguagem simples e preco visivel antes do cadastro.
 - Provedores de IA sao substituiveis e possuem limites de uso e custo.
 
 ## Indicadores futuros
