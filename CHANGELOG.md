@@ -20,6 +20,7 @@ Todas as mudancas relevantes do ObraPro sao registradas aqui. O formato segue Ke
 - Diretrizes para planos e precos configuraveis pelo painel administrativo.
 - Arquitetura proposta para estudos preliminares assistidos por IA com provedor substituivel.
 - Protocolo de colaboracao para Codex, Claude Code, Cursor e outros agentes.
+- Backend inicial de obras, procedimentos, etapas, checklists e execucoes com historico por versao.
 
 ### Security
 
@@ -27,6 +28,7 @@ Todas as mudancas relevantes do ObraPro sao registradas aqui. O formato segue Ke
 - Autorizacao de seguranca da plataforma e aplicada no servidor por Gate e coberta por testes negativos.
 - Cache da PWA limitado ao shell publico e assets versionados.
 - Credenciais de deploy e demonstracao armazenadas somente em secret managers.
+- Execucao de procedimento protegida por membership ativa, transacao de inicializacao e validacao de etapas.
 
 ## [0.1.0] - 2026-09-19
 

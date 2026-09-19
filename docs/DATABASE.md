@@ -11,10 +11,10 @@ ULIDs sao preferidos para entidades expostas em URLs, integracoes ou criadas off
 - `organizations`: tenant identificado por ULID, slug unico e estado ativo.
 - `users`: identidade global minima.
 - `organization_memberships`: associacao unica entre usuario e organizacao, com papel e estado.
-- `works`, `teams`: estrutura operacional da organizacao.
+- `works`, `teams`: estrutura operacional da organizacao. Obras sao tenant-scoped e acessiveis apenas por memberships ativas.
 - `procedures`, `procedure_steps`, `procedure_media`: conteudo versionado e aprovado.
 - `checklists`, `checklist_items`: verificacoes reutilizaveis.
-- `executions`, `execution_steps`: aplicacao de uma versao do procedimento.
+- `executions`, `execution_steps`: aplicacao transacional de uma versao do procedimento; as etapas sao copiadas no inicio para preservar o historico mesmo quando o catalogo evoluir.
 - `evidence`: metadados de arquivos privados.
 - `training`, `training_progress`: conteudo e progresso.
 - `courses`, `course_modules`, `lessons`: catalogo educacional modular e ordenado.
