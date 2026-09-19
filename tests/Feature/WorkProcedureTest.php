@@ -50,6 +50,25 @@ class WorkProcedureTest extends TestCase
             ->assertSee('Blocos alinhados');
     }
 
+    public function test_organization_admin_can_publish_procedure_with_steps(): void
+    {
+        [$user, $work] = $this->workForMember();
+        $procedure = Procedure::factory()->for($work)->create(['status' => 'in_review']);
+        ProcedureStep::factory()->for($procedure)->create();
+
+        $this->actingAs($user)->patch(route('procedures.status.update', $procedure), ['status' => 'published'])->assertRedirect();
+
+        $this->assertDatabaseHas('procedures', ['id' => $procedure->id, 'status' => 'published', 'approved_by' => $user->id]);
+    }
+
+    public function test_procedure_without_steps_cannot_be_published(): void
+    {
+        [$user, $work] = $this->workForMember();
+        $procedure = Procedure::factory()->for($work)->create(['status' => 'in_review']);
+
+        $this->actingAs($user)->patch(route('procedures.status.update', $procedure), ['status' => 'published'])->assertStatus(422);
+    }
+
     public function test_member_cannot_open_another_organizations_work(): void
     {
         [$user] = $this->workForMember();
