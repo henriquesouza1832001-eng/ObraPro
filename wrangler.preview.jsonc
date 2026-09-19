@@ -1,7 +1,7 @@
 {
     "$schema": "node_modules/wrangler/config-schema.json",
     "name": "obrapro-preview",
-    "main": "cloudflare/preview-worker.js",
+    "main": "cloudflare/src/index.ts",
   "compatibility_date": "2026-09-19",
   "assets": {
     "directory": "cloudflare/public",

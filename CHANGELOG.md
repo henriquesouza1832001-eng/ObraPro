@@ -6,6 +6,16 @@ Todas as mudancas relevantes do ObraPro sao registradas aqui. O formato segue Ke
 
 ### Added
 
+- Sprint 5 (S5-07): pagina publica "Como funciona" no Worker Cloudflare, com passos do produto e chamada para catalogo e login, sem exigir cadastro.
+- Fundacao TypeScript do Worker Cloudflare (`cloudflare/src`) substituindo o script JS avulso: roteamento tipado, headers de seguranca e sessao de demonstracao reorganizados em modulos.
+- Rota publica `GET /health` no Worker, retornando status JSON para monitoramento, sem depender do Laravel.
+- Catalogo e detalhe de curso (`/cursos`, `/cursos/:slug`) passam a ser renderizados a partir de um repositorio tipado (`CourseRepository`) com dados mockados, preparado para ser substituido por um repositorio D1 sem mudar as rotas; curso inexistente retorna 404 real.
+- Dependencias de desenvolvimento `wrangler`, `typescript` e `@cloudflare/workers-types` adicionadas para typecheck e build local do Worker (nenhuma dependencia de runtime/producao foi adicionada).
+
+### Removed
+
+- Paginas estaticas avulsas `cloudflare/public/courses.html` e `cloudflare/public/course-detail.html`, substituidas pela renderizacao tipada a partir do `CourseRepository`.
+- Script `cloudflare/preview-worker.js`, substituido pela fundacao TypeScript em `cloudflare/src`.
 - Sprint 2: fluxo de status de procedimentos com publicacao autorizada, requisito de etapas e auditoria.
 - Sprint 3: reabertura controlada de execucoes concluidas por gestor da organizacao.
 - Sprint 4: dashboard passa a calcular obras, procedimentos e execucoes a partir do tenant ativo.
