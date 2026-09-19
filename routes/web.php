@@ -7,6 +7,7 @@ use App\Http\Controllers\EvidenceController;
 use App\Http\Controllers\ExecutionController;
 use App\Http\Controllers\OrganizationMemberController;
 use App\Http\Controllers\PlatformSecurityController;
+use App\Http\Controllers\ProcedureController;
 use App\Http\Controllers\SupportTicketController;
 use App\Http\Controllers\WorkController;
 use Illuminate\Support\Facades\Route;
@@ -28,6 +29,7 @@ Route::middleware('auth')->group(function (): void {
     Route::post('/painel/suporte/chamados', [SupportTicketController::class, 'store'])->name('support-tickets.store');
     Route::patch('/painel/organizacoes/{organization}/membros/{membership}', [OrganizationMemberController::class, 'update'])->name('organizations.members.update');
     Route::get('/painel/obras/{work}', [WorkController::class, 'show'])->name('works.show');
+    Route::patch('/painel/procedimentos/{procedure}/status', [ProcedureController::class, 'updateStatus'])->name('procedures.status.update');
     Route::post('/painel/obras/{work}/procedimentos/{procedure}/execucoes', [ExecutionController::class, 'store'])->name('executions.store');
     Route::patch('/painel/execucoes/{execution}/passos/{executionStep}', [ExecutionController::class, 'updateStep'])->name('execution-steps.update');
     Route::post('/painel/execucoes/passos/{executionStep}/evidencias', [EvidenceController::class, 'store'])->name('evidence.store');
