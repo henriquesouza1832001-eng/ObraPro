@@ -6,6 +6,7 @@ Todas as mudancas relevantes do ObraPro sao registradas aqui. O formato segue Ke
 
 ### Added
 
+- Decisao de produto: IA fica fora do MVP e sera adicionada somente como modulo posterior e opcional.
 - Preview Cloudflare passa a distinguir catálogo, detalhe de curso válido e curso inexistente.
 - Catalogo publico funcional com 10 cursos, modulos e aulas cobrindo planejamento, estrutura, instalacoes, acabamentos, seguranca e gestao.
 - Paginas publicas de cursos com acesso gratuito ou avulso, duracao, nivel, modulos e aulas.

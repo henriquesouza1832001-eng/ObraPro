@@ -12,7 +12,7 @@ O ObraPro combina orientacoes passo a passo, cursos gratuitos e premium, gestao 
 - Catalogo publico navegavel em `/cursos`, com cursos gratuitos e avulsos por etapa da construcao.
 - Deploy de `develop` para Cloudflare Workers automatizado pelo GitHub Actions.
 - MGL permanece opcional e reservado a observabilidade e seguranca.
-- Cursos, planos configuraveis e gerador assistido estao nas proximas entregas.
+- Cursos e planos configuraveis estao nas proximas entregas; IA e o ultimo modulo planejado e nao bloqueia a plataforma.
 
 Preview: `https://obrapro-preview.henriquesouza.workers.dev`.
 
