@@ -26,3 +26,6 @@
 *.pem
 *.key
 secrets/
+.dev.vars
+/.wrangler
+/cloudflare/dist

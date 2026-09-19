@@ -6,10 +6,22 @@ Todas as mudancas relevantes do ObraPro sao registradas aqui. O formato segue Ke
 
 ### Added
 
+- Sprint CF-2 (card CF2-C2): pagina de erro sanitizada no Worker Cloudflare para quando o repositorio de cursos (mock hoje, D1 depois) falhar em `/cursos` ou `/cursos/:slug`; nenhuma mensagem interna ou stack trace e exposta ao visitante, e as rotas independentes (`/`, `/como-funciona`, `/health`) continuam funcionando normalmente.
+- Novo `docs/CLOUDFLARE-SPRINTS.md` com o cronograma de sprints da migracao Cloudflare (CF-1 a CF-8), dividindo cards entre Claude Code (camada visual/PWA/rotas publicas) e Codex (D1, dominio, autenticacao, seguranca), e reforcando que merge em `main` e exclusivo do Codex com autorizacao explicita do responsavel pelo projeto.
+- Sprint 5 (S5-07): pagina publica "Como funciona" no Worker Cloudflare, com passos do produto e chamada para catalogo e login, sem exigir cadastro.
+- Fundacao TypeScript do Worker Cloudflare (`cloudflare/src`) substituindo o script JS avulso: roteamento tipado, headers de seguranca e sessao de demonstracao reorganizados em modulos.
+- Rota publica `GET /health` no Worker, retornando status JSON para monitoramento, sem depender do Laravel.
+- Catalogo e detalhe de curso (`/cursos`, `/cursos/:slug`) passam a ser renderizados a partir de um repositorio tipado (`CourseRepository`) com dados mockados, preparado para ser substituido por um repositorio D1 sem mudar as rotas; curso inexistente retorna 404 real.
+- Dependencias de desenvolvimento `wrangler`, `typescript` e `@cloudflare/workers-types` adicionadas para typecheck e build local do Worker (nenhuma dependencia de runtime/producao foi adicionada).
 - Regra de entrega em lotes de cinco sprints, com checkpoint manual obrigatorio e autorizacao do responsavel antes do lote seguinte.
 - Regra operacional de integracao: merge em main somente com pedido explicito do responsavel e leitura obrigatoria do diario compartilhado entre tarefas.
 - Decisao arquitetural: migracao gradual do runtime Laravel para Cloudflare Workers + TypeScript + D1, documentada em docs/CLOUDFLARE-MIGRATION.md.
 - Seeder de demonstração idempotente e compatível com deploys sem dependências de desenvolvimento, incluindo Laravel Cloud.
+
+### Removed
+
+- Paginas estaticas avulsas `cloudflare/public/courses.html` e `cloudflare/public/course-detail.html`, substituidas pela renderizacao tipada a partir do `CourseRepository`.
+- Script `cloudflare/preview-worker.js`, substituido pela fundacao TypeScript em `cloudflare/src`.
 - Sprint 2: fluxo de status de procedimentos com publicacao autorizada, requisito de etapas e auditoria.
 - Sprint 3: reabertura controlada de execucoes concluidas por gestor da organizacao.
 - Sprint 4: dashboard passa a calcular obras, procedimentos e execucoes a partir do tenant ativo.
