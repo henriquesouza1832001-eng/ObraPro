@@ -136,6 +136,17 @@ class OrganizationAccessTest extends TestCase
         ])->assertStatus(422);
     }
 
+    public function test_last_active_owner_cannot_be_suspended(): void
+    {
+        [$owner, $organization] = $this->userInOrganization(MembershipRole::Owner);
+        $membership = $owner->organizationMemberships()->whereBelongsTo($organization)->firstOrFail();
+
+        $this->actingAs($owner)->patch(route('organizations.members.update', [$organization, $membership]), [
+            'role' => MembershipRole::Owner->value,
+            'status' => MembershipStatus::Suspended->value,
+        ])->assertStatus(422);
+    }
+
     /** @return array{User, Organization} */
     private function userInOrganization(MembershipRole $role): array
     {
