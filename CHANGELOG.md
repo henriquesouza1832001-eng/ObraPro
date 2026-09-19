@@ -9,6 +9,7 @@ Todas as mudancas relevantes do ObraPro sao registradas aqui. O formato segue Ke
 - Sprint 2: fluxo de status de procedimentos com publicacao autorizada, requisito de etapas e auditoria.
 - Sprint 3: reabertura controlada de execucoes concluidas por gestor da organizacao.
 - Sprint 4: dashboard passa a calcular obras, procedimentos e execucoes a partir do tenant ativo.
+- Sprint 5: cadastro cria usuario, organizacao e Owner; painel permanece protegido por login.
 - Gestao inicial de membros por organizacao, com alteracao de papel/status, auditoria e protecao do ultimo Owner ativo.
 - Central inicial de chamados com contexto sanitizado para diagnostico de manutencao.
 - Inventario inicial de codigo e regra de contagem/validacao antes de PR.
