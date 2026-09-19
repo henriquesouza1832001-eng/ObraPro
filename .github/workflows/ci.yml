@@ -73,7 +73,15 @@ jobs:
         run: composer audit --locked
 
       - name: Audit frontend dependencies
-        run: npm audit --audit-level=high
+        run: |
+          audit_output=$(npm audit --audit-level=high 2>&1) && { echo "$audit_output"; exit 0; }
+          audit_status=$?
+          echo "$audit_output"
+          if grep -Eq '503 Service Unavailable|performing maintenance' <<< "$audit_output"; then
+            echo '::warning::npm advisory service is temporarily unavailable'
+            exit 0
+          fi
+          exit "$audit_status"
 
   deploy-preview:
     if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
