@@ -26,6 +26,13 @@ O runtime alvo do ObraPro sera um Cloudflare Worker em TypeScript, com D1 como b
 9. O frontend nao acessa D1, R2 ou KV diretamente.
 10. Nenhum agente inventa endpoint, tabela, preco, papel ou regra comercial.
 
+### Validacao automatica
+
+O workflow de CI continua executando a qualidade do Laravel e, quando a fundacao
+do Worker estiver presente na branch, executa tambem `worker:typecheck` e
+`worker:build`. Essa condicao permite integrar a migracao por fatias sem exigir
+que branches antigas carreguem o runtime TypeScript antes da hora.
+
 ## Estrutura esperada
 
     src/

@@ -66,6 +66,14 @@ jobs:
       - name: Build frontend
         run: npm run build
 
+      - name: Typecheck Cloudflare Worker
+        if: hashFiles('cloudflare/tsconfig.json') != '' && hashFiles('package.json') != ''
+        run: npm run worker:typecheck
+
+      - name: Build Cloudflare Worker
+        if: hashFiles('wrangler.preview.jsonc') != '' && hashFiles('package.json') != ''
+        run: npm run worker:build
+
       - name: Run tests
         run: php artisan test
 

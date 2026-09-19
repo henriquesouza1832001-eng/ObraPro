@@ -1,5 +1,9 @@
 # Changelog
 
+## [Unreleased]
+
+- CI passa a validar typecheck e build do Worker Cloudflare quando a fundacao TypeScript estiver presente, sem interromper a transicao gradual do runtime Laravel.
+
 Todas as mudancas relevantes do ObraPro sao registradas aqui. O formato segue Keep a Changelog e o projeto usa versionamento semantico quando houver releases publicas.
 
 ## [Unreleased]
