@@ -12,6 +12,8 @@ RBAC define capacidades amplas; Policies validam tenant, recurso e estado. Ident
 
 Administradores de organizacao gerenciam operacao, conteudo, cursos e configuracoes comerciais dentro do tenant. Somente super administradores da plataforma acessam security events, operacoes de auditoria, configuracao de provedores, limites globais e MGL. Ocultar menus nao substitui Gate ou Policy server-side.
 
+A fundacao implementada exige organizacao e membership `active` para acesso ao tenant, com Policy por organizacao. Owner e admin podem administrar a organizacao; tenants inativos e memberships convidadas ou suspensas nao concedem acesso. O Gate `viewPlatformSecurity` exige `users.is_super_admin`, e esse atributo nao e mass assignable. Super Admin nao possui bypass global de Policies e nao acessa automaticamente organizacoes de clientes.
+
 ## Inteligencia artificial
 
 Chaves de provedores ficam em secret manager e nunca no banco ou browser. Entrada do usuario e resposta do modelo sao nao confiaveis, limitadas em tamanho e validadas contra schema. Chamadas possuem timeout, rate limit, quota por conta e limite de tokens/custo. Logs guardam IDs e metricas sanitizadas, nao prompts completos, plantas privadas ou credenciais.

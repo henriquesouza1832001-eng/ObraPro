@@ -16,12 +16,15 @@
             @foreach ([['overview', 'Dashboard'], ['works', 'Obras'], ['procedures', 'Procedimentos'], ['checklists', 'Checklists'], ['issues', 'Nao conformidades']] as [$view, $label])
                 <button class="rounded-md px-3 py-3 text-left {{ $loop->first ? 'bg-white/10 font-bold' : 'text-slate-300 hover:bg-white/10' }}" type="button" data-dashboard-go="{{ $view }}">{{ $label }}</button>
             @endforeach
+            @can('viewPlatformSecurity')
+                <a class="mt-3 rounded-md border border-white/15 px-3 py-3 text-slate-200 hover:bg-white/10" href="{{ route('platform-security') }}">Seguranca da plataforma</a>
+            @endcan
         </nav>
         <form class="mt-auto" method="POST" action="{{ route('logout') }}">@csrf<button class="w-full rounded-md border border-white/20 px-3 py-3 text-left text-sm" type="submit">Sair</button></form>
     </aside>
 
     <main class="min-w-0">
-        <header class="border-b border-slate-200 bg-white px-5 py-4 lg:px-8"><div class="flex items-center justify-between gap-4"><div><p class="text-xs font-bold uppercase text-slate-500">Obra ativa</p><h1 class="text-xl font-black">Residencial das Flores</h1><p class="text-sm text-slate-500">Belo Horizonte, MG</p></div><div class="flex items-center gap-3"><span class="hidden rounded-md bg-emerald-50 px-3 py-2 text-xs font-bold text-brand sm:block">Sincronizado</span><div class="flex size-10 items-center justify-center rounded-full bg-blue-100 font-bold text-action">{{ str(auth()->user()->name)->substr(0, 1)->upper() }}</div></div></div></header>
+        <header class="border-b border-slate-200 bg-white px-5 py-4 lg:px-8"><div class="flex items-center justify-between gap-4"><div><p class="text-xs font-bold uppercase text-slate-500">Organizacao ativa</p><h1 class="text-xl font-black">{{ $organization?->name ?? 'Ambiente de demonstracao' }}</h1><p class="text-sm text-slate-500">Residencial das Flores - Belo Horizonte, MG</p></div><div class="flex items-center gap-3"><span class="hidden rounded-md bg-emerald-50 px-3 py-2 text-xs font-bold text-brand sm:block">Sincronizado</span><div class="flex size-10 items-center justify-center rounded-full bg-blue-100 font-bold text-action">{{ str(auth()->user()->name)->substr(0, 1)->upper() }}</div></div></div></header>
 
         <div class="grid gap-6 p-5 lg:p-8" data-dashboard-view="overview">
             <section class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">

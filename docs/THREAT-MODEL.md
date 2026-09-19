@@ -27,7 +27,7 @@ O dispositivo e a rede sao nao confiaveis. Cada organizacao e uma fronteira logi
 | Cenario | Categoria | Controle principal |
 |---|---|---|
 | Credential stuffing e sessao roubada | Spoofing | rate limit, hash forte, regeneracao, MFA futura |
-| Alteracao de `organization_id` ou role | Tampering/Elevation | contexto server-side, fillable restrito, Policies |
+| Alteracao de `organization_id`, membership ou role | Tampering/Elevation | contexto server-side, fillable restrito, FKs, Policies e testes por papel |
 | Usuario nega mudanca administrativa | Repudiation | audit event imutavel e correlation ID |
 | IDOR e vazamento cross-tenant | Information disclosure | Policy por recurso, escopo tenant, testes negativos |
 | Upload malicioso/MIME spoofing | Tampering/DoS | limites, MIME real, storage privado, quarentena |
@@ -36,7 +36,8 @@ O dispositivo e a rede sao nao confiaveis. Cada organizacao e uma fronteira logi
 | QR Code concede acesso indevido | Elevation | identificador opaco, expiracao/revogacao, Policy |
 | Procedimento adulterado/desatualizado | Tampering | versao imutavel, aprovacao, checksum e auditoria |
 | Service worker mantem dados apos logout | Information disclosure | cache restrito e limpeza no logout |
-| Administrador comum acessa seguranca/MGL | Elevation/Disclosure | Gate exclusivo de super admin, Policy e testes negativos |
+| Administrador comum acessa seguranca/MGL | Elevation/Disclosure | Gate server-side exclusivo de super admin e testes negativos |
+| Super Admin cruza tenant sem vinculo | Elevation/Disclosure | ausencia de bypass global e membership ativa obrigatoria |
 | Prompt injection altera regra ou acessa outro tenant | Tampering/Disclosure | contrato limitado, schema, contexto minimo e autorizacao server-side |
 | IA gera planta insegura tratada como projeto | Tampering/Safety | rotulo de estudo preliminar, validacao deterministica e revisao profissional |
 | Abuso de tokens causa custo ou indisponibilidade | Denial of service | quota por tenant, rate limit, limite de tokens e circuit breaker |

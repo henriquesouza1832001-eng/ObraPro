@@ -8,9 +8,9 @@ ULIDs sao preferidos para entidades expostas em URLs, integracoes ou criadas off
 
 ## Modelo conceitual
 
-- `organizations`: tenant e configuracoes basicas.
+- `organizations`: tenant identificado por ULID, slug unico e estado ativo.
 - `users`: identidade global minima.
-- `organization_users`: associacao, status e papel por organizacao.
+- `organization_memberships`: associacao unica entre usuario e organizacao, com papel e estado.
 - `works`, `teams`: estrutura operacional da organizacao.
 - `procedures`, `procedure_steps`, `procedure_media`: conteudo versionado e aprovado.
 - `checklists`, `checklist_items`: verificacoes reutilizaveis.
@@ -29,6 +29,8 @@ ULIDs sao preferidos para entidades expostas em URLs, integracoes ou criadas off
 ## Invariantes
 
 Entidades tenant-owned carregam `organization_id`, foreign key e indice. Unicidade deve incluir tenant quando o valor for local a organizacao. Consultas recebem contexto de tenant confiavel. Exclusao de usuario nao apaga automaticamente auditoria exigida; pseudonimizacao e retencao serao definidas juridicamente.
+
+Uma membership possui estado `invited`, `active` ou `suspended` e papel `owner`, `admin`, `engineer`, `supervisor`, `worker` ou `student`. Somente memberships ativas concedem acesso. `users.is_super_admin` representa privilegio global da plataforma e nao cria membership nem acesso implicito a dados de clientes.
 
 Procedimentos publicados sao versionados e imutaveis; nova edicao cria versao. Execucoes referenciam a versao usada. Evidencias guardam storage key, owner, tipo, MIME verificado, tamanho, checksum, status e visibilidade, nunca o binario.
 

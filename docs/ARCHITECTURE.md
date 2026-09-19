@@ -16,7 +16,7 @@ Contracts / Events
 Infrastructure (DB, storage, adapters)
 ```
 
-Modulos planejados: Identity, Organizations, Works, Procedures, Training, Catalog, Commerce, PreliminaryDesign, AI, Execution, Checklists, Evidence, Media, Audit e Observability. Identity, Audit e Observability possuem fundacao executavel; os demais evoluem por fatias verticais.
+Modulos planejados: Identity, Organizations, Works, Procedures, Training, Catalog, Commerce, PreliminaryDesign, AI, Execution, Checklists, Evidence, Media, Audit e Observability. Identity, Organizations, Audit e Observability possuem fundacao executavel; os demais evoluem por fatias verticais.
 
 ## Regras de dependencia
 
@@ -29,6 +29,8 @@ Modulos planejados: Identity, Organizations, Works, Procedures, Training, Catalo
 ## Multi-tenancy
 
 Banco compartilhado com `organization_id` nas entidades tenant-owned. O tenant ativo deriva da associacao autenticada e toda Policy confirma acesso ao recurso. Global scopes podem reduzir erros, mas nao substituem Policies e testes. Operacoes de plataforma com acesso excepcional exigem justificativa, escopo temporal e audit event.
+
+O acesso organizacional deriva de `organization_memberships` ativas e do papel registrado no proprio vinculo. Os papeis owner e admin podem administrar a organizacao; os demais recebem capacidades operacionais especificas nas proximas fatias. Super Admin e uma capacidade global separada: ela libera recursos de seguranca da plataforma, mas nao ignora Policies nem concede acesso automatico a tenants.
 
 ## Fluxo de auditoria e seguranca
 
