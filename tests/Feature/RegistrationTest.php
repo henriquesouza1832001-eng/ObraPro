@@ -16,7 +16,7 @@ class RegistrationTest extends TestCase
     {
         $response = $this->post(route('register.store'), [
             'name' => 'Maria Silva', 'organization' => 'Obra da Maria',
-            'email' => 'maria@example.com', 'password' => 'senha-segura-123', 'password_confirmation' => 'senha-segura-123',
+            'email' => 'maria@example.com', 'password' => 'abcdefghijkl', 'password_confirmation' => 'abcdefghijkl',
         ]);
 
         $response->assertRedirect(route('dashboard'));
