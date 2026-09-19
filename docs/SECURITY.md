@@ -10,6 +10,14 @@ Headers iniciais: `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-or
 
 RBAC define capacidades amplas; Policies validam tenant, recurso e estado. Identificadores opacos nao substituem autorizacao. Testes negativos devem cobrir usuario anonimo, papel insuficiente, recurso de outro tenant e alteracao de IDs.
 
+Administradores de organizacao gerenciam operacao, conteudo, cursos e configuracoes comerciais dentro do tenant. Somente super administradores da plataforma acessam security events, operacoes de auditoria, configuracao de provedores, limites globais e MGL. Ocultar menus nao substitui Gate ou Policy server-side.
+
+## Inteligencia artificial
+
+Chaves de provedores ficam em secret manager e nunca no banco ou browser. Entrada do usuario e resposta do modelo sao nao confiaveis, limitadas em tamanho e validadas contra schema. Chamadas possuem timeout, rate limit, quota por conta e limite de tokens/custo. Logs guardam IDs e metricas sanitizadas, nao prompts completos, plantas privadas ou credenciais.
+
+Conteudo gerado exibe origem, versao e aviso de estudo preliminar. A IA nao pode aprovar tecnicamente uma planta, executar ferramentas arbitrarias, acessar dados de outro tenant ou escolher autorizacoes.
+
 ## Uploads
 
 Privados por padrao, tamanho limitado, MIME detectado no servidor, extensoes permitidas, nome aleatorio e storage fora da raiz publica. Downloads passam por Policy. Processamento futuro ocorre isolado e arquivos podem ficar em quarentena ate verificacao.

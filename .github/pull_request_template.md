@@ -10,6 +10,8 @@ Descreva o problema e o resultado esperado.
 - [ ] Logs e eventos nao contem secrets ou PII desnecessaria
 - [ ] Migrations, rollback e compatibilidade avaliados quando aplicavel
 - [ ] Documentacao e `.env.example` atualizados quando necessario
+- [ ] `CHANGELOG.md` atualizado para mudancas visiveis, de seguranca, arquitetura, dados ou operacao
+- [ ] Documentos afetados revisados conforme `docs/AI-COLLABORATION.md`
 
 ## Risco e rollback
 

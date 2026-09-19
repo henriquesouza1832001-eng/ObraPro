@@ -167,3 +167,28 @@ This project has domain-specific skills available in `**/skills/**`. You MUST ac
 - Run `vendor/bin/phpunit` to call the test runner directly. It accepts the same file path and `--filter=testName` arguments.
 
 </laravel-boost-guidelines>
+
+## ObraPro project contract
+
+These rules apply to every human and AI contributor, including Codex, Claude Code and Cursor.
+
+### Required reading
+
+Before editing, read `README.md`, `docs/AI-COLLABORATION.md` and every domain document affected by the task. `AGENTS.md` is the primary instruction file. Tool-specific files may point here but must not override it.
+
+### Product boundaries
+
+- Keep the experience understandable for first-time builders and efficient for experienced professionals.
+- Technical content and AI output require clear provenance, versioning and human review.
+- AI-generated floor plans are preliminary studies, never executable, structural or legally approved designs.
+- Administrators manage content, courses, catalog and commercial configuration. Only platform super administrators access security events, audit operations, provider credentials and MGL settings.
+- MGL is an optional security and observability destination. Normal requests and authentication must not depend on it.
+
+### Delivery contract
+
+- Work on a short-lived branch and merge through a pull request into `develop`.
+- Preserve unrelated and unknown changes. Never rewrite shared migration history or another agent's work.
+- Update `CHANGELOG.md` for every user-visible, security, architecture, data or operational change.
+- Update only the affected documentation according to `docs/AI-COLLABORATION.md`; documentation must describe the code that actually exists.
+- Keep secrets in environment or platform secret managers. Never commit or paste credentials into tracked files.
+- Finish with relevant tests, formatting, build and security checks. Record validation, risk and rollback in the pull request.
