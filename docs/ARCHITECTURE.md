@@ -49,6 +49,8 @@ ObraPro application
 
 O commit da acao de negocio nao depende da disponibilidade do MGL. A entrega externa usa fila, retry com backoff e registro de falha. O adapter sera implementado somente com contrato oficial.
 
+Durante a validacao do mockup inicial, somente a observabilidade local fica ativa. Cloudflare e MGL permanecem fora do caminho das requisicoes. A futura conexao Cloudflare sera avaliada depois da estabilizacao da experiencia; a futura integracao MGL consumira eventos de forma assincrona para compor um painel de observabilidade e seguranca.
+
 ## Decisoes pendentes
 
-Escolher provedor de object storage, estrategia final de tenancy, protocolo MGL, mecanismo de antimalware, politica de retencao por categoria e provedor de identidade corporativa. Registrar decisoes relevantes como ADRs quando se tornarem concretas.
+Validar o mockup inicial antes de escolher a configuracao Cloudflare. Permanecem pendentes: provedor/configuracao de object storage, estrategia final de tenancy, protocolo e painel MGL, mecanismo de antimalware, politica de retencao por categoria e provedor de identidade corporativa. Registrar decisoes relevantes como ADRs quando se tornarem concretas.
