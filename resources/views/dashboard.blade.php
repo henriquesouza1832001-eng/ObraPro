@@ -29,7 +29,7 @@
 
         <div class="grid gap-6 p-5 lg:p-8" data-dashboard-view="overview">
             <section class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                @foreach ([['Andamento da obra','68%','text-brand'],['Procedimentos','124','text-ink'],['Checklists concluidos','892','text-action'],['Nao conformidades','12','text-safety']] as [$label,$value,$color])
+                @foreach ([['Obras ativas', $works->count(), 'text-brand'], ['Procedimentos', $procedureCount, 'text-ink'], ['Execucoes concluidas', $completedExecutionCount, 'text-action'], ['Em andamento', $activeExecutionCount, 'text-safety']] as [$label,$value,$color])
                     <article class="rounded-md border border-slate-200 bg-white p-5 shadow-sm"><p class="text-sm font-bold text-slate-500">{{ $label }}</p><strong class="mt-4 block text-3xl {{ $color }}">{{ $value }}</strong></article>
                 @endforeach
             </section>
