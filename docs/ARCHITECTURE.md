@@ -16,7 +16,7 @@ Contracts / Events
 Infrastructure (DB, storage, adapters)
 ```
 
-Modulos planejados: Identity, Organizations, Works, Procedures, Training, Execution, Checklists, Evidence, Media, Audit e Observability. Apenas Identity, Audit e Observability recebem fundacao executavel na Sprint 0.
+Modulos planejados: Identity, Organizations, Works, Procedures, Training, Catalog, Commerce, PreliminaryDesign, AI, Execution, Checklists, Evidence, Media, Audit e Observability. Identity, Audit e Observability possuem fundacao executavel; os demais evoluem por fatias verticais.
 
 ## Regras de dependencia
 
@@ -49,8 +49,21 @@ ObraPro application
 
 O commit da acao de negocio nao depende da disponibilidade do MGL. A entrega externa usa fila, retry com backoff e registro de falha. O adapter sera implementado somente com contrato oficial.
 
-Durante a validacao do mockup inicial, somente a observabilidade local fica ativa. Cloudflare e MGL permanecem fora do caminho das requisicoes. A futura conexao Cloudflare sera avaliada depois da estabilizacao da experiencia; a futura integracao MGL consumira eventos de forma assincrona para compor um painel de observabilidade e seguranca.
+O preview PWA e publicado em Cloudflare Workers por GitHub Actions depois dos checks de `develop`. Esse preview usa assets estaticos versionados e autenticacao de demonstracao no Worker; nao representa o runtime Laravel de producao. MGL permanece fora do caminho das requisicoes e consumira eventos assincronos somente quando seu contrato oficial estiver disponivel.
+
+## IA e motor de estudo preliminar
+
+```text
+Questionario validado
+   -> PreliminaryDesign Action
+   -> AI Provider Contract (interpretacao estruturada)
+   -> schema e regras deterministicas
+   -> motor de distribuicao espacial
+   -> estudo versionado para revisao humana
+```
+
+Groq e candidato inicial para prototipacao por possuir camada gratuita e limites explicitos. OpenRouter ou outro provedor pode ser usado como alternativa. Nenhum SDK especifico atravessa o contrato de dominio. Chaves ficam no secret manager, chamadas usam timeout e limite de tokens, e respostas sao validadas antes da persistencia.
 
 ## Decisoes pendentes
 
-Validar o mockup inicial antes de escolher a configuracao Cloudflare. Permanecem pendentes: provedor/configuracao de object storage, estrategia final de tenancy, protocolo e painel MGL, mecanismo de antimalware, politica de retencao por categoria e provedor de identidade corporativa. Registrar decisoes relevantes como ADRs quando se tornarem concretas.
+Permanecem pendentes: runtime Laravel de producao, provedor/configuracao de object storage, estrategia final de tenancy, gateway de pagamento, provedor de IA inicial, algoritmo geometrico, protocolo e painel MGL, mecanismo de antimalware, politica de retencao por categoria e identidade corporativa. Registrar decisoes duradouras como ADRs quando se tornarem concretas.

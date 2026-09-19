@@ -36,8 +36,12 @@ O dispositivo e a rede sao nao confiaveis. Cada organizacao e uma fronteira logi
 | QR Code concede acesso indevido | Elevation | identificador opaco, expiracao/revogacao, Policy |
 | Procedimento adulterado/desatualizado | Tampering | versao imutavel, aprovacao, checksum e auditoria |
 | Service worker mantem dados apos logout | Information disclosure | cache restrito e limpeza no logout |
+| Administrador comum acessa seguranca/MGL | Elevation/Disclosure | Gate exclusivo de super admin, Policy e testes negativos |
+| Prompt injection altera regra ou acessa outro tenant | Tampering/Disclosure | contrato limitado, schema, contexto minimo e autorizacao server-side |
+| IA gera planta insegura tratada como projeto | Tampering/Safety | rotulo de estudo preliminar, validacao deterministica e revisao profissional |
+| Abuso de tokens causa custo ou indisponibilidade | Denial of service | quota por tenant, rate limit, limite de tokens e circuit breaker |
 | SSRF em importacao/midia | Spoofing/Disclosure | allowlist de destinos, bloqueio de redes privadas |
 
 ## Riscos e revisao
 
-MFA, antimalware, politica legal de retencao, seguranca de dispositivo offline e contrato MGL ainda estao pendentes. Rever este documento ao adicionar uploads, compartilhamento, APIs, integracoes, sincronizacao offline ou privilegios administrativos.
+MFA, antimalware, politica legal de retencao, seguranca de dispositivo offline, gateway de pagamento, provedor de IA e contrato MGL ainda estao pendentes. Rever este documento ao adicionar uploads, pagamentos, compartilhamento, APIs, IA, integracoes, sincronizacao offline ou privilegios administrativos.

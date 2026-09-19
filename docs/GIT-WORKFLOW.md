@@ -8,6 +8,12 @@
 
 Commits diretos nas tres branches permanentes sao proibidos. Toda alteracao passa por pull request, revisao e checks obrigatorios.
 
+## Multiplos agentes
+
+Codex, Claude Code, Cursor e agentes humanos seguem o mesmo fluxo. Cada agente trabalha em branch propria e consulta `docs/AI-COLLABORATION.md`. Antes de iniciar trabalho paralelo, dividir o escopo por modulo ou arquivos para evitar edicao concorrente de migrations, rotas, lockfiles e templates centrais.
+
+Todo PR atualiza `CHANGELOG.md` quando houver mudanca observavel, de seguranca, arquitetura, dados ou operacao. O autor descreve testes, riscos, rollback e dependencias de outras branches. Arquivos especificos de ferramenta nao podem alterar as regras de branch.
+
 ## Desenvolvimento normal
 
 1. Atualizar `develop` a partir do remoto.
