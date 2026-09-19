@@ -9,6 +9,7 @@ Todas as mudancas relevantes do ObraPro sao registradas aqui. O formato segue Ke
 - Gestao inicial de membros por organizacao, com alteracao de papel/status, auditoria e protecao do ultimo Owner ativo.
 - Central inicial de chamados com contexto sanitizado para diagnostico de manutencao.
 - Inventario inicial de codigo e regra de contagem/validacao antes de PR.
+- Fluxo documentado de cherry-pick controlado para hotfixes sem bypass de PR ou CI.
 - Backlog operacional com sprints, cards, testes e criterios de aceite para o MVP e fases posteriores.
 - Decisao de produto: IA fica fora do MVP e sera adicionada somente como modulo posterior e opcional.
 - Preview Cloudflare passa a distinguir catálogo, detalhe de curso válido e curso inexistente.

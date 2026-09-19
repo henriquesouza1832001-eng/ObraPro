@@ -30,6 +30,39 @@ Todo PR atualiza `CHANGELOG.md` quando houver mudanca observavel, de seguranca, 
 4. Apos CI e revisao, abrir PR de `hotfix` para `main`.
 5. Depois do merge, sincronizar `hotfix` com `main` e abrir PR de `main` para `develop` para evitar regressao futura.
 
+## Cherry-pick controlado
+
+`cherry-pick` e permitido para transportar uma correcao pequena e ja validada entre linhas de desenvolvimento. Ele nao substitui PR, CI, revisao ou auditoria.
+
+### Hotfix a partir de `main`
+
+```powershell
+git fetch origin
+git switch hotfix
+git pull --ff-only origin hotfix
+git switch -c hotfix/<descricao-curta>
+git cherry-pick <commit-testado>
+php artisan test --compact
+vendor/bin/pint --dirty --format agent
+git diff --check
+git push -u origin hotfix/<descricao-curta>
+gh pr create --base hotfix --head hotfix/<descricao-curta>
+```
+
+O commit escolhido deve ser pequeno, ter origem identificavel e nao depender de migrations, secrets ou arquivos que nao estejam presentes em `main`. Se houver conflito, parar, revisar manualmente e repetir os testes; nunca resolver conflito apagando mudancas desconhecidas.
+
+### Sincronizacao depois do hotfix
+
+Depois da aprovacao e merge do PR para `hotfix`, abrir PR de `hotfix` para `main`. Em seguida, abrir PR de `main` para `develop`. Atualizar `hotfix` a partir de `main` somente por fast-forward quando possivel.
+
+### Comandos que continuam proibidos
+
+- push direto em `main`, `develop` ou `hotfix`;
+- force push ou reset destrutivo em branch compartilhada;
+- cherry-pick de commit sem testes ou com segredo;
+- merge local que contorne os checks obrigatorios;
+- usar hotfix para incluir funcionalidade nova.
+
 ## Protecoes exigidas no GitHub
 
 Configurar rulesets para `main`, `develop` e `hotfix` com:

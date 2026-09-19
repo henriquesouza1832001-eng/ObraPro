@@ -14,3 +14,4 @@ Este arquivo nao define convencoes paralelas. Em caso de divergencia, `AGENTS.md
 - Catalogo, planos, precos, permissao e conteudo devem ser modelados para administracao futura; nao fixar regras comerciais irreversiveis em JavaScript ou texto de interface.
 - Toda alteracao relevante exige testes proporcionais, formatacao, build quando afetar frontend, atualizacao do `CHANGELOG.md` e dos documentos realmente afetados.
 - Toda entrega deve acontecer em branch curta por pull request para `develop`; nunca fazer push direto em `main`, `develop` ou `hotfix`.
+- `cherry-pick` e permitido somente para transportar correcao pequena, testada e auditavel para uma branch `hotfix/*`; ainda exige PR, CI e sincronizacao posterior com `main` e `develop`.
