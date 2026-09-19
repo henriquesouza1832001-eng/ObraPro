@@ -46,6 +46,11 @@ repositorio apenas quando o binding `COURSES_DB` existe; sem binding, o mock edi
 continua disponivel para preview. Nenhuma credencial ou endpoint de banco fica no
 repositorio.
 
+A migration `0002_seed_editorial_catalog.sql` fornece o catalogo inicial de dez
+cursos, tres modulos e tres aulas por modulo. Os IDs sao determinísticos e os
+inserts usam `INSERT OR IGNORE`; executar novamente nao apaga nem sobrescreve
+alteracoes editoriais existentes.
+
 ## Migrations
 
 ### D1 em migracao
