@@ -3,6 +3,7 @@ import { withSecurityHeaders, redirect } from './http/security';
 import { isAuthenticated, loginPage, sessionToken } from './auth/demoSession';
 import { MockCourseRepository, courseModules } from './data/mockCourseRepository';
 import { D1CourseRepository } from './data/d1CourseRepository';
+import { authenticateRequest, loginWithD1, logoutFromD1, sessionCookie } from './auth/realSession';
 import type { CourseRepository } from './data/course';
 import { renderCourseCatalog, renderCourseDetail, renderCourseNotFound } from './pages/courses';
 import { renderComoFunciona } from './pages/comoFunciona';
@@ -66,7 +67,7 @@ async function route(request: Request, env: Env): Promise<Response> {
     }
 
     if (path === '/entrar' && request.method === 'GET') {
-        if (await isAuthenticated(request, env)) {
+        if ((env.AUTH_DB && await authenticateRequest(request, env)) || (!env.AUTH_DB && await isAuthenticated(request, env))) {
             return redirect('/painel');
         }
 
@@ -78,21 +79,34 @@ async function route(request: Request, env: Env): Promise<Response> {
         const email = String(form.get('email') ?? '').trim().toLowerCase();
         const password = String(form.get('password') ?? '');
 
-        if (email !== env.DEMO_EMAIL.toLowerCase() || password !== env.DEMO_PASSWORD) {
+        const realToken = await loginWithD1(email, password, env);
+
+        if (env.AUTH_DB && !realToken) {
             return withSecurityHeaders(html(loginPage(true), 422));
         }
 
-        const token = await sessionToken(env.DEMO_EMAIL, env.SESSION_SECRET);
+        if (!env.AUTH_DB && (email !== env.DEMO_EMAIL.toLowerCase() || password !== env.DEMO_PASSWORD)) {
+            return withSecurityHeaders(html(loginPage(true), 422));
+        }
 
-        return redirect('/painel', `obrapro_preview=${token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=28800`);
+        const token = realToken ?? await sessionToken(env.DEMO_EMAIL, env.SESSION_SECRET);
+        const cookie = realToken ? sessionCookie(realToken) : `obrapro_preview=${token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=28800`;
+
+        return redirect('/painel', cookie);
     }
 
     if (path === '/sair' && request.method === 'POST') {
-        return redirect('/', 'obrapro_preview=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0');
+        await logoutFromD1(request, env);
+
+        return redirect('/', env.AUTH_DB ? sessionCookie('', 0) : 'obrapro_preview=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0');
     }
 
     if (path === '/painel') {
-        if (!await isAuthenticated(request, env)) {
+        const authenticated = env.AUTH_DB
+            ? await authenticateRequest(request, env)
+            : await isAuthenticated(request, env);
+
+        if (!authenticated) {
             return redirect('/entrar');
         }
 
