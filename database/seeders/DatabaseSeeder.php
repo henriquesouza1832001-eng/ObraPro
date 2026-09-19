@@ -13,6 +13,7 @@ use App\Models\User;
 use App\Models\Work;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
@@ -25,19 +26,24 @@ class DatabaseSeeder extends Seeder
     {
         $this->call(CourseCatalogSeeder::class);
 
-        $organization = Organization::factory()->create([
-            'name' => 'Obra Residencial das Flores',
-            'slug' => 'residencial-das-flores',
-        ]);
+        $organization = Organization::query()->updateOrCreate(
+            ['slug' => 'residencial-das-flores'],
+            ['name' => 'Obra Residencial das Flores', 'is_active' => true],
+        );
 
-        $admin = User::factory()->create([
-            'name' => 'Administrador de Demonstracao',
-            'email' => 'admin@example.com',
-        ]);
+        $admin = User::query()->updateOrCreate(
+            ['email' => 'admin@example.com'],
+            [
+                'name' => 'Administrador de Demonstracao',
+                'password' => Hash::make('password'),
+                'email_verified_at' => now(),
+            ],
+        );
 
-        OrganizationMembership::factory()->for($organization)->for($admin)->create([
-            'role' => MembershipRole::Admin,
-        ]);
+        OrganizationMembership::query()->updateOrCreate(
+            ['organization_id' => $organization->id, 'user_id' => $admin->id],
+            ['role' => MembershipRole::Admin, 'status' => 'active'],
+        );
 
         $work = Work::query()->updateOrCreate(['organization_id' => $organization->id, 'slug' => 'residencial-das-flores'], [
             'name' => 'Residencial das Flores', 'status' => 'active', 'city' => 'Belo Horizonte', 'state' => 'MG',

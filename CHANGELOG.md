@@ -6,6 +6,7 @@ Todas as mudancas relevantes do ObraPro sao registradas aqui. O formato segue Ke
 
 ### Added
 
+- Seeder de demonstração idempotente e compatível com deploys sem dependências de desenvolvimento, incluindo Laravel Cloud.
 - Sprint 2: fluxo de status de procedimentos com publicacao autorizada, requisito de etapas e auditoria.
 - Sprint 3: reabertura controlada de execucoes concluidas por gestor da organizacao.
 - Sprint 4: dashboard passa a calcular obras, procedimentos e execucoes a partir do tenant ativo.
