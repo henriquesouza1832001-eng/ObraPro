@@ -15,3 +15,13 @@ export interface OrganizationMembership {
     role: MembershipRole;
     status: MembershipStatus;
 }
+
+export interface AuthSession {
+    id: string;
+    userId: string;
+    tokenHash: string;
+    expiresAt: string;
+    revokedAt: string | null;
+    createdAt: string;
+    lastSeenAt: string;
+}
