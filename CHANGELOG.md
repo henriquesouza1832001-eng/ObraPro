@@ -6,6 +6,9 @@ Todas as mudancas relevantes do ObraPro sao registradas aqui. O formato segue Ke
 
 ### Added
 
+- Fundacao multi-tenant com organizacoes identificadas por ULID e memberships por usuario.
+- RBAC por organizacao com os papeis owner, admin, engineer, supervisor, worker e student.
+- Area inicial de seguranca da plataforma protegida por permissao exclusiva de Super Admin.
 - Preview PWA responsivo com login de demonstracao e painel administrativo navegavel.
 - Deploy automatico de `develop` para Cloudflare Workers via GitHub Actions.
 - Catalogo planejado de cursos gratuitos, premium e vendidos separadamente.
@@ -15,6 +18,8 @@ Todas as mudancas relevantes do ObraPro sao registradas aqui. O formato segue Ke
 
 ### Security
 
+- Acesso a tenants exige membership ativa; Super Admin nao recebe acesso implicito aos dados das organizacoes.
+- Autorizacao de seguranca da plataforma e aplicada no servidor por Gate e coberta por testes negativos.
 - Cache da PWA limitado ao shell publico e assets versionados.
 - Credenciais de deploy e demonstracao armazenadas somente em secret managers.
 

@@ -8,6 +8,7 @@ O ObraPro combina orientacoes passo a passo, cursos gratuitos e premium, gestao 
 
 - Mockup web responsivo e instalavel como PWA.
 - Login de demonstracao e painel com obras, procedimentos, checklists e nao conformidades.
+- Fundacao de organizacoes, memberships e papeis por tenant, com seguranca global isolada para Super Admin.
 - Deploy de `develop` para Cloudflare Workers automatizado pelo GitHub Actions.
 - MGL permanece opcional e reservado a observabilidade e seguranca.
 - Cursos, planos configuraveis e gerador assistido estao nas proximas entregas.
