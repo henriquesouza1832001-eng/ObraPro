@@ -20,9 +20,9 @@ class ProcedureFactory extends Factory
     {
         return [
             'work_id' => Work::factory(),
-            'slug' => fake()->unique()->slug(),
-            'title' => fake()->sentence(4),
-            'summary' => fake()->sentence(12),
+            'slug' => $this->faker->unique()->slug(),
+            'title' => $this->faker->sentence(4),
+            'summary' => $this->faker->sentence(12),
             'stage' => 'Alvenaria',
             'version' => 1,
             'status' => 'published',

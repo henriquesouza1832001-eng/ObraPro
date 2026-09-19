@@ -18,9 +18,9 @@ class CourseFactory extends Factory
     public function definition(): array
     {
         return [
-            'slug' => fake()->unique()->slug(),
-            'title' => fake()->sentence(4),
-            'description' => fake()->sentence(14),
+            'slug' => $this->faker->unique()->slug(),
+            'title' => $this->faker->sentence(4),
+            'description' => $this->faker->sentence(14),
             'category' => 'Geral',
             'level' => 'beginner',
             'access_type' => 'free',
