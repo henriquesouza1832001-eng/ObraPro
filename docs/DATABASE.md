@@ -41,3 +41,5 @@ O catalogo inicial usa `courses.access_type` (`free` ou `premium`) e `price_cent
 ## Migrations
 
 Nao modificar migration compartilhada ja executada. Usar novas migrations, constraints portaveis e rollback avaliado. Mudancas destrutivas exigem plano de migracao, backup e verificacao. Seeds de desenvolvimento nao incluem PII real.
+
+Evidencias sao vinculadas a uma etapa de execucao, armazenadas por chave privada e registram nome original, MIME validado, tamanho e checksum SHA-256. O binario nao fica em URL publica.

@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Checklist;
 use App\Models\ChecklistItem;
+use App\Models\Evidence;
 use App\Models\Execution;
 use App\Models\ExecutionStep;
 use App\Models\Organization;
@@ -13,6 +14,8 @@ use App\Models\ProcedureStep;
 use App\Models\User;
 use App\Models\Work;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class WorkProcedureTest extends TestCase
@@ -84,6 +87,26 @@ class WorkProcedureTest extends TestCase
         }
 
         $this->assertDatabaseHas('executions', ['id' => $execution->id, 'status' => 'completed']);
+    }
+
+    public function test_member_can_attach_private_evidence_to_an_execution_step(): void
+    {
+        Storage::fake('local');
+        [$user, $work] = $this->workForMember();
+        $procedure = Procedure::factory()->for($work)->create();
+        $step = ProcedureStep::factory()->for($procedure)->create();
+        $execution = Execution::factory()->for($work)->for($procedure)->for($user, 'starter')->create();
+        $executionStep = ExecutionStep::factory()->for($execution)->for($step, 'procedureStep')->create();
+        $file = UploadedFile::fake()->create('nivel.jpg', 100, 'image/jpeg');
+
+        $this->actingAs($user)->post(route('evidence.store', $executionStep), [
+            'file' => $file,
+            'note' => 'Nivel conferido.',
+        ])->assertRedirect();
+
+        $evidence = Evidence::query()->firstOrFail();
+        $this->assertSame('image/jpeg', $evidence->mime_type);
+        Storage::disk('local')->assertExists($evidence->storage_key);
     }
 
     /** @return array{User, Work} */
