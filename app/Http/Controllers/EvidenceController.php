@@ -6,6 +6,8 @@ use App\Http\Requests\StoreEvidenceRequest;
 use App\Models\Evidence;
 use App\Models\ExecutionStep;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class EvidenceController extends Controller
 {
@@ -26,5 +28,16 @@ class EvidenceController extends Controller
         ]);
 
         return back()->with('status', 'Evidencia registrada.');
+    }
+
+    public function download(Evidence $evidence): StreamedResponse
+    {
+        abort_unless(auth()->user()?->belongsToOrganization($evidence->executionStep->execution->work->organization), 404);
+
+        return response()->streamDownload(
+            fn (): mixed => print Storage::disk('local')->get($evidence->storage_key),
+            $evidence->original_name,
+            ['Content-Type' => $evidence->mime_type]
+        );
     }
 }

@@ -33,3 +33,4 @@ Categorias de retencao devem ser configuraveis e aprovadas por responsaveis juri
 ## Resposta a incidentes
 
 Preservar evidencias, limitar acesso, rotacionar secrets comprometidos, registrar linha do tempo e avaliar comunicacoes legais. Stack traces e detalhes internos nunca aparecem para usuarios. Correlation IDs permitem localizar eventos sem expor o erro.
+- Downloads de evidencias passam por rota autenticada e autorizada pela organizacao da execucao; o disco privado nunca e exposto diretamente.

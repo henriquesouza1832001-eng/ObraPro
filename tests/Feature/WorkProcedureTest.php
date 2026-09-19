@@ -107,6 +107,25 @@ class WorkProcedureTest extends TestCase
         $evidence = Evidence::query()->firstOrFail();
         $this->assertSame('image/jpeg', $evidence->mime_type);
         Storage::disk('local')->assertExists($evidence->storage_key);
+
+        $this->actingAs($user)->get(route('evidence.download', $evidence))
+            ->assertOk()
+            ->assertHeader('Content-Disposition', 'attachment; filename=nivel.jpg');
+    }
+
+    public function test_member_cannot_download_evidence_from_another_organization(): void
+    {
+        Storage::fake('local');
+        [, $work] = $this->workForMember();
+        $procedure = Procedure::factory()->for($work)->create();
+        $step = ProcedureStep::factory()->for($procedure)->create();
+        $execution = Execution::factory()->for($work)->for($procedure)->create();
+        $executionStep = ExecutionStep::factory()->for($execution)->for($step, 'procedureStep')->create();
+        $evidence = Evidence::factory()->for($executionStep)->create();
+        Storage::disk('local')->put($evidence->storage_key, 'private');
+        $otherUser = User::factory()->create();
+
+        $this->actingAs($otherUser)->get(route('evidence.download', $evidence))->assertNotFound();
     }
 
     /** @return array{User, Work} */
