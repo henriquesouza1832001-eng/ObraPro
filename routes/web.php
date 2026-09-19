@@ -26,6 +26,7 @@ Route::middleware('auth')->group(function (): void {
     Route::post('/painel/obras/{work}/procedimentos/{procedure}/execucoes', [ExecutionController::class, 'store'])->name('executions.store');
     Route::patch('/painel/execucoes/{execution}/passos/{executionStep}', [ExecutionController::class, 'updateStep'])->name('execution-steps.update');
     Route::post('/painel/execucoes/passos/{executionStep}/evidencias', [EvidenceController::class, 'store'])->name('evidence.store');
+    Route::get('/painel/evidencias/{evidence}/download', [EvidenceController::class, 'download'])->name('evidence.download');
     Route::get('/painel/seguranca', PlatformSecurityController::class)->name('platform-security');
     Route::post('/sair', [AuthController::class, 'destroy'])->name('logout');
 });

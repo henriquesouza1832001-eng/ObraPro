@@ -30,6 +30,7 @@ Todas as mudancas relevantes do ObraPro sao registradas aqui. O formato segue Ke
 - Credenciais de deploy e demonstracao armazenadas somente em secret managers.
 - Execucao de procedimento protegida por membership ativa, transacao de inicializacao e validacao de etapas.
 - Evidencias privadas por etapa, com validacao de upload, checksum SHA-256 e registro de observacao.
+- Download autenticado de evidencias com bloqueio de acesso entre organizacoes.
 
 ## [0.1.0] - 2026-09-19
 
