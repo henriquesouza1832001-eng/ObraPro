@@ -40,6 +40,10 @@ O diario local compartilhado fica em C:\projetos\Obra Pro\AI-COLLABORATION-LOG.m
 - Nenhum agente deve fazer merge em main por iniciativa propria.
 - Hotfix em main tambem exige pedido explicito, PR, checks verdes e sincronizacao posterior com develop.
 
+## Checkpoints de sprints
+
+O trabalho e executado em lotes de cinco sprints. Ao terminar a quinta sprint, Codex e Claude interrompem novas implementacoes, atualizam o diario com testes, riscos, pendencias e PRs, e aguardam os testes manuais e a decisao do responsavel pelo projeto. Nenhum agente inicia o proximo lote sem autorizacao explicita. O escopo pode ser encorpado dentro do lote quando os cards mantiverem criterio de aceite e cobertura proporcional.
+
 ## Contrato de entrega
 
 Cada PR deve conter codigo e documentacao suficientes para outro agente continuar sem contexto privado. Atualize somente os documentos afetados:
