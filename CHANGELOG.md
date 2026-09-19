@@ -10,6 +10,7 @@ Todas as mudancas relevantes do ObraPro sao registradas aqui. O formato segue Ke
 
 ### Added
 
+- Suite automatizada (`npm run worker:test`, Vitest) para o Worker Cloudflare: cobre todas as rotas publicas (`/`, `/como-funciona`, `/cursos`, `/cursos/:slug` valido e inexistente, `/health`), os headers de seguranca minimos e o comportamento sanitizado quando o `D1CourseRepository` falha (500 amigavel, sem stack trace, rotas independentes continuam funcionando). Substitui a validacao manual via `wrangler dev`/curl usada ate aqui.
 - Sprint CF-2 (cards CF2-C1/CF2-C3): confirmada a integracao do catalogo publico com o `D1CourseRepository` do Codex (PR #35) — o contrato `Course`/`CourseRepository` ja existente nao precisou de nenhuma alteracao; `cloudflare/src/index.ts` seleciona `D1CourseRepository` quando o binding `COURSES_DB` existe e mantem `MockCourseRepository` como conteudo editorial de demonstracao quando o binding nao esta configurado (preview local).
 - Sprint CF-2 (card CF2-D2): seed editorial D1 idempotente com dez cursos, módulos e aulas iniciais, sem apagar ou sobrescrever registros existentes.
 - Sprint CF-2 (card CF2-D1): repositorio `D1CourseRepository` para listar e consultar cursos publicados via binding D1, com parametros vinculados, ordenacao editorial e fallback de preview sem binding.
