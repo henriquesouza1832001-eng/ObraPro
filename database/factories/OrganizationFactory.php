@@ -18,11 +18,11 @@ class OrganizationFactory extends Factory
      */
     public function definition(): array
     {
-        $name = fake()->unique()->company();
+        $name = $this->faker->unique()->company();
 
         return [
             'name' => $name,
-            'slug' => Str::slug($name).'-'.fake()->unique()->numberBetween(100, 9999),
+            'slug' => Str::slug($name).'-'.$this->faker->unique()->numberBetween(100, 9999),
             'is_active' => true,
         ];
     }
