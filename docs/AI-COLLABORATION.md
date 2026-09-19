@@ -26,6 +26,8 @@ O runtime alvo esta migrando para Cloudflare Workers + TypeScript + D1. O Larave
 
 ## Trabalho paralelo
 
+O diario local compartilhado fica em C:\projetos\Obra Pro\AI-COLLABORATION-LOG.md. Antes de iniciar qualquer tarefa, cada agente deve reler o diario. Depois de qualquer commit, merge, bloqueio ou atualizacao relevante do outro agente, deve reler o diario antes de continuar.
+
 - Um agente por branch curta e por objetivo coerente.
 - Antes de editar, registrar no PR o escopo, arquivos provaveis e dependencias de outras branches.
 - Evitar dois agentes editando simultaneamente migrations, rotas centrais, lockfiles ou o mesmo template.
@@ -33,6 +35,10 @@ O runtime alvo esta migrando para Cloudflare Workers + TypeScript + D1. O Larave
 - Integracoes entre branches acontecem por PR para `develop`; nenhum agente faz push direto nas branches permanentes.
 - Mudancas de banco usam novas migrations. Nunca reescrever migration compartilhada.
 - Secrets, dados pessoais e credenciais nunca entram em prompts, commits, fixtures ou logs.
+- Merge em develop ocorre somente por PR com checks aprovados.
+- Merge em main exige pedido explicito do responsavel pelo projeto nesta conversa.
+- Nenhum agente deve fazer merge em main por iniciativa propria.
+- Hotfix em main tambem exige pedido explicito, PR, checks verdes e sincronizacao posterior com develop.
 
 ## Contrato de entrega
 
