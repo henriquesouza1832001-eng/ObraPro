@@ -29,6 +29,7 @@ Todas as mudancas relevantes do ObraPro sao registradas aqui. O formato segue Ke
 - Cache da PWA limitado ao shell publico e assets versionados.
 - Credenciais de deploy e demonstracao armazenadas somente em secret managers.
 - Execucao de procedimento protegida por membership ativa, transacao de inicializacao e validacao de etapas.
+- Evidencias privadas por etapa, com validacao de upload, checksum SHA-256 e registro de observacao.
 
 ## [0.1.0] - 2026-09-19
 
