@@ -53,6 +53,10 @@ alteracoes editoriais existentes.
 
 ## Migrations
 
+A migration `0003_auth_sessions.sql` cria sessoes persistentes com hash do token,
+expiracao, revogacao e indice por usuario. O token bruto nunca e armazenado no D1;
+o relacionamento com `users` usa `ON DELETE RESTRICT` para preservar a rastreabilidade.
+
 ### D1 em migracao
 
 O schema inicial do Worker fica em cloudflare/migrations/0001_identity_and_catalog.sql. Ele cobre identidade, organizacoes, memberships e catalogo. A migration usa SQLite portavel, constraints explicitas e IF NOT EXISTS para permitir execucao repetivel em ambiente local. A aplicacao real em D1 deve ser feita por Wrangler no ambiente correto, nunca por reset.
