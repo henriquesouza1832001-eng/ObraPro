@@ -132,6 +132,17 @@ class WorkProcedureTest extends TestCase
             ->assertHeader('Content-Disposition', 'attachment; filename=nivel.jpg');
     }
 
+    public function test_organization_admin_can_reopen_completed_execution(): void
+    {
+        [$user, $work] = $this->workForMember();
+        $procedure = Procedure::factory()->for($work)->create();
+        $execution = Execution::factory()->for($work)->for($procedure)->create(['status' => 'completed', 'completed_at' => now()]);
+
+        $this->actingAs($user)->patch(route('executions.reopen', $execution))->assertRedirect();
+
+        $this->assertDatabaseHas('executions', ['id' => $execution->id, 'status' => 'in_progress', 'completed_at' => null]);
+    }
+
     public function test_member_cannot_download_evidence_from_another_organization(): void
     {
         Storage::fake('local');

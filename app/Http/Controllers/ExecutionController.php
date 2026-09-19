@@ -54,4 +54,14 @@ class ExecutionController extends Controller
 
         return back()->with('status', 'Etapa atualizada.');
     }
+
+    public function reopen(Execution $execution): RedirectResponse
+    {
+        abort_unless(auth()->user()?->canManageOrganization($execution->work->organization), 403);
+        abort_unless($execution->status === 'completed', 422);
+
+        $execution->update(['status' => 'in_progress', 'completed_at' => null]);
+
+        return back()->with('status', 'Execucao reaberta para conferencia.');
+    }
 }
