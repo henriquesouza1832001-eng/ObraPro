@@ -176,3 +176,13 @@ O painel nunca pode aparecer para visitante anonimo; cadastro e login devem reto
 ## Regra de evolucao
 
 Toda melhoria descoberta durante testes ou uso real vira card em uma sprint futura, com origem, impacto, prioridade, teste e criterio de aceite. Correcoes urgentes podem entrar em `hotfix` somente quando reproduziveis, cobertas por teste e sincronizadas com `main`.
+
+## Checkpoint apos a Sprint 5
+
+As Sprints 2, 3, 4 e 5 serao executadas em sequencia. Ao terminar a Sprint 5, o desenvolvimento fica congelado para validacao conjunta antes da Sprint 6.
+
+**Validacao automatizada:** testes PHPUnit, Pint, build frontend, rotas, autorizacao por papel, isolamento de tenant, uploads privados, progresso de curso, estados vazios e falhas de validacao.
+
+**Validacao do produto:** o responsavel pelo projeto testa manualmente landing page, cadastro, login, tela inicial do mockup, categorias, procedimento, checklist, evidencia, cursos, painel, suporte e logout em desktop e celular.
+
+**Saida do checkpoint:** cada falha vira card com rota, passos para reproduzir, resultado esperado, resultado atual, prioridade e criterio de aceite. Nenhum pagamento, MGL ou IA entra antes desse aceite conjunto.
