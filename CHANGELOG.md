@@ -6,6 +6,7 @@ Todas as mudancas relevantes do ObraPro sao registradas aqui. O formato segue Ke
 
 ### Added
 
+- Preview Cloudflare passa a distinguir catálogo, detalhe de curso válido e curso inexistente.
 - Catalogo publico funcional com 10 cursos, modulos e aulas cobrindo planejamento, estrutura, instalacoes, acabamentos, seguranca e gestao.
 - Paginas publicas de cursos com acesso gratuito ou avulso, duracao, nivel, modulos e aulas.
 - Seed idempotente do catalogo editorial para desenvolvimento e demonstracao.

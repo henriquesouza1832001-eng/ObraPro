@@ -16,6 +16,8 @@ O ObraPro combina orientacoes passo a passo, cursos gratuitos e premium, gestao 
 
 Preview: `https://obrapro-preview.henriquesouza.workers.dev`.
 
+No preview estático, `/cursos` mostra o catálogo e `/cursos/{slug}` abre o detalhe correspondente. O Laravel continua sendo o backend com banco, migrations e regras de publicação; o Worker serve apenas a demonstração pública até o runtime Laravel ser hospedado.
+
 ## Comece por aqui
 
 Leia [AGENTS.md](AGENTS.md) antes de contribuir. Agentes de IA tambem devem seguir [docs/AI-COLLABORATION.md](docs/AI-COLLABORATION.md). A arquitetura e um monolito modular Laravel; auditoria, eventos de seguranca e observabilidade sao responsabilidades separadas.

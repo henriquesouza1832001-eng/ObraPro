@@ -1,4 +1,9 @@
 const encoder = new TextEncoder();
+const courseSlugs = new Set([
+    'planejamento-da-obra', 'fundacoes-seguras', 'estrutura-de-concreto', 'alvenaria-na-pratica',
+    'telhado-e-cobertura', 'instalacoes-hidraulicas', 'instalacoes-eletricas', 'revestimentos-e-pisos',
+    'portas-janelas-e-impermeabilizacao', 'seguranca-e-qualidade-no-canteiro',
+]);
 
 function securityHeaders(response) {
     const secured = new Response(response.body, response);
@@ -73,10 +78,22 @@ export default {
             return securityHeaders(await env.ASSETS.fetch(new Request(homeUrl, request)));
         }
 
-        if (url.pathname === '/cursos' || url.pathname.startsWith('/cursos/')) {
+        if (url.pathname === '/cursos') {
             const coursesUrl = new URL('/courses.html', request.url);
 
             return securityHeaders(await env.ASSETS.fetch(new Request(coursesUrl, request)));
+        }
+
+        if (url.pathname.startsWith('/cursos/')) {
+            const slug = url.pathname.slice('/cursos/'.length).replace(/\/$/, '');
+
+            if (!courseSlugs.has(slug)) {
+                return securityHeaders(new Response('Curso nao encontrado', { status: 404 }));
+            }
+
+            const courseUrl = new URL('/course-detail.html', request.url);
+
+            return securityHeaders(await env.ASSETS.fetch(new Request(courseUrl, request)));
         }
 
         if (url.pathname === '/entrar' && request.method === 'GET') {

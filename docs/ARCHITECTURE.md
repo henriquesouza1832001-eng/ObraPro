@@ -53,6 +53,8 @@ O commit da acao de negocio nao depende da disponibilidade do MGL. A entrega ext
 
 O preview PWA e publicado em Cloudflare Workers por GitHub Actions depois dos checks de `develop`. Esse preview usa assets estaticos versionados e autenticacao de demonstracao no Worker; nao representa o runtime Laravel de producao. MGL permanece fora do caminho das requisicoes e consumira eventos assincronos somente quando seu contrato oficial estiver disponivel.
 
+Rotas do preview que representam recursos do Laravel devem preservar o contexto: `/cursos` lista o catalogo, `/cursos/{slug}` exibe o detalhe valido e slugs desconhecidos retornam `404`. O Worker nao pode transformar um detalhe em uma nova listagem silenciosamente.
+
 ## IA e motor de estudo preliminar
 
 ```text
