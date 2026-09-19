@@ -66,6 +66,24 @@ jobs:
       - name: Build frontend
         run: npm run build
 
+      - name: Typecheck Cloudflare Worker
+        if: hashFiles('cloudflare/tsconfig.json') != '' && hashFiles('package.json') != ''
+        run: |
+          if npm run | grep -q 'worker:typecheck'; then
+            npm run worker:typecheck
+          else
+            echo 'worker:typecheck ainda nao esta disponivel nesta fatia da migracao'
+          fi
+
+      - name: Build Cloudflare Worker
+        if: hashFiles('wrangler.preview.jsonc') != '' && hashFiles('package.json') != ''
+        run: |
+          if npm run | grep -q 'worker:build'; then
+            npm run worker:build
+          else
+            echo 'worker:build ainda nao esta disponivel nesta fatia da migracao'
+          fi
+
       - name: Run tests
         run: php artisan test
 
