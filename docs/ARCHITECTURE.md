@@ -68,6 +68,8 @@ Questionario validado
 
 Groq e candidato inicial para prototipacao por possuir camada gratuita e limites explicitos. OpenRouter ou outro provedor pode ser usado como alternativa. Nenhum SDK especifico atravessa o contrato de dominio. Chaves ficam no secret manager, chamadas usam timeout e limite de tokens, e respostas sao validadas antes da persistencia.
 
+Decisao atual: IA nao faz parte do MVP nem do caminho critico. O catalogo, os procedimentos, checklists, registros, pagamentos e operacao devem funcionar sem qualquer provedor de IA. O contrato acima permanece documentado apenas como extensao futura, para evitar acoplamento quando essa etapa for priorizada.
+
 ## Decisoes pendentes
 
 Permanecem pendentes: runtime Laravel de producao, provedor/configuracao de object storage, estrategia final de tenancy, gateway de pagamento, provedor de IA inicial, algoritmo geometrico, protocolo e painel MGL, mecanismo de antimalware, politica de retencao por categoria e identidade corporativa. Registrar decisoes duradouras como ADRs quando se tornarem concretas.

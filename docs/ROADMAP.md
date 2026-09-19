@@ -20,9 +20,9 @@ Landing page publica, conteudos vindos de redes sociais, catalogo de cursos, mod
 
 Checklists, execucoes, evidencias, filas de upload e nao conformidades basicas. Validar fluxo de campo com usuarios reais.
 
-## Sprint 5 - Estudo preliminar assistido
+## Sprint 5 - Estudo preliminar assistido (posterior)
 
-Questionario versionado, contrato de provedor de IA, primeira integracao com camada gratuita, resposta estruturada e limites de uso. Em seguida, motor deterministico de distribuicao espacial, visualizacao, revisao humana e exportacao claramente marcada como estudo preliminar.
+Fica deliberadamente depois do MVP e da primeira versao comercial. Questionario versionado, contrato de provedor de IA, resposta estruturada e limites de uso somente entram quando o fluxo principal estiver validado. Em seguida, motor deterministico de distribuicao espacial, visualizacao, revisao humana e exportacao claramente marcada como estudo preliminar. A plataforma deve funcionar integralmente sem IA.
 
 ## Infraestrutura atual e posterior
 
