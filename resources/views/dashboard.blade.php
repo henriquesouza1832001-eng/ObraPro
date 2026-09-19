@@ -16,6 +16,7 @@
             @foreach ([['overview', 'Dashboard'], ['works', 'Obras'], ['procedures', 'Procedimentos'], ['checklists', 'Checklists'], ['issues', 'Nao conformidades']] as [$view, $label])
                 <button class="rounded-md px-3 py-3 text-left {{ $loop->first ? 'bg-white/10 font-bold' : 'text-slate-300 hover:bg-white/10' }}" type="button" data-dashboard-go="{{ $view }}">{{ $label }}</button>
             @endforeach
+            <a class="rounded-md px-3 py-3 text-left text-slate-300 hover:bg-white/10" href="{{ route('courses.index') }}">Cursos e conteúdos</a>
             @can('viewPlatformSecurity')
                 <a class="mt-3 rounded-md border border-white/15 px-3 py-3 text-slate-200 hover:bg-white/10" href="{{ route('platform-security') }}">Seguranca da plataforma</a>
             @endcan

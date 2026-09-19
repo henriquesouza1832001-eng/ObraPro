@@ -111,6 +111,7 @@
                 </div>
             </section>
         </div>
+        <a class="mx-auto mt-8 flex max-w-5xl items-center justify-between gap-4 rounded-md bg-ink p-5 text-white" href="{{ route('courses.index') }}"><span><strong class="block">Quer aprender a obra inteira?</strong><small class="text-slate-300">Veja cursos simples, do planejamento ao acabamento.</small></span><span class="touch-button shrink-0 bg-white text-ink">Ver cursos</span></a>
     </main>
 </div>
 

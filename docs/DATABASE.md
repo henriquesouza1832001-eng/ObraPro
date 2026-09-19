@@ -36,6 +36,8 @@ Procedimentos publicados sao versionados e imutaveis; nova edicao cria versao. E
 
 Valores monetarios usam inteiros na menor unidade da moeda e codigo ISO de moeda. Regras de acesso sao historicas: alterar um plano nao remove silenciosamente direitos ja adquiridos. Saidas de IA preservam versao do schema, modelo e estado de revisao sem armazenar prompts livres desnecessarios.
 
+O catalogo inicial usa `courses.access_type` (`free` ou `premium`) e `price_cents`, sem cobrança embutida na apresentação pública. Módulos e aulas têm posição única dentro do pai, e o seeder editorial usa `updateOrCreate` por slug/posição para ser repetível sem apagar dados.
+
 ## Migrations
 
 Nao modificar migration compartilhada ja executada. Usar novas migrations, constraints portaveis e rollback avaliado. Mudancas destrutivas exigem plano de migracao, backup e verificacao. Seeds de desenvolvimento nao incluem PII real.
