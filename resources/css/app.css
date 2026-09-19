@@ -6,4 +6,32 @@
 @theme {
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
+    --color-ink: #10233f;
+    --color-brand: #176b4d;
+    --color-brand-dark: #10513a;
+    --color-action: #1267e8;
+    --color-safety: #f47b20;
+    --color-surface: #f4f7f6;
+}
+
+@layer base {
+    button,
+    a,
+    input {
+        @apply focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-action;
+    }
+}
+
+@layer components {
+    .screen-panel {
+        @apply hidden;
+    }
+
+    .screen-panel.is-active {
+        @apply block;
+    }
+
+    .touch-button {
+        @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-md px-5 text-sm font-bold transition-colors;
+    }
 }
