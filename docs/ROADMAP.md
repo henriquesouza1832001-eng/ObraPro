@@ -1,5 +1,7 @@
 # Roadmap
 
+O plano operacional detalhado, com cards, testes e criterios de aceite, esta em [SPRINTS.md](SPRINTS.md). Este arquivo conserva a visao macro e as dependencias de infraestrutura.
+
 ## Sprint 0 - Fundacao
 
 Documentacao, Laravel minimo, autenticacao, contratos de auditoria/security telemetry, observabilidade local, isolamento MGL, health check, base PWA, CI e testes de seguranca essenciais.
