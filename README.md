@@ -27,6 +27,8 @@ Documentos principais:
 - [Produto](docs/PRODUCT.md)
 - [Roadmap](docs/ROADMAP.md)
 - [Sprints e cards](docs/SPRINTS.md)
+- [Migracao para Cloudflare](docs/CLOUDFLARE-MIGRATION.md)
+- [Sprints da migracao Cloudflare](docs/CLOUDFLARE-SPRINTS.md)
 - [Inventario de codigo](docs/CODE-INVENTORY.md)
 - [Arquitetura](docs/ARCHITECTURE.md)
 - [Banco de dados](docs/DATABASE.md)
