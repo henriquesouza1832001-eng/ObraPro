@@ -6,6 +6,8 @@ Todas as mudancas relevantes do ObraPro sao registradas aqui. O formato segue Ke
 
 ### Added
 
+- `docs/CLOUDFLARE-MIGRATION.md` ganha a secao "Regras de frontend rapido e simples de manter", cobrindo orcamento de payload, proibicao de framework de UI no Worker, tratamento obrigatorio dos estados carregando/sucesso/erro em chamadas privadas e o processo manual (ate hoje nao documentado) de sincronizar `cloudflare/public/build/` com o output de `npm run build`.
+- CF6-C2 (Spec 2): formulario de suporte do painel (`cloudflare/public/dashboard.js`) passa a diferenciar erro de validacao, erro de acesso a organizacao, indisponibilidade do servico e falha generica de rede ao consumir `POST /api/painel/suporte/chamados`, mostrando mensagem em portugues especifica para cada codigo de erro ja retornado pelo contrato existente (`support_ticket_invalid`, `organization_access_denied`, `operational_data_unavailable`, `authentication_required`), alem de validar campos obrigatorios no cliente antes do envio. Nenhum endpoint, tabela ou binding novo foi criado.
 - CF6-C1/C2: painel Cloudflare passa a navegar entre secoes e consumir organizacoes, obras e chamados pelas APIs privadas do Worker. Dados operacionais so aparecem com sessao D1 real; o preview de demonstracao fica identificado e nao guarda chamados ou descricoes em armazenamento local.
 - Fechamento CF1-CF5: API privada do Worker para organizacoes ativas, obras, chamados e evidencias. As rotas exigem sessao D1, membership ativa quando ha tenant e `Cache-Control: no-store`; upload detecta JPEG, PNG, WebP ou PDF pelo conteudo, calcula SHA-256 e compensa o objeto R2 se a persistencia D1 falhar.
 - CI passa a validar typecheck e build do Worker Cloudflare quando a fundacao TypeScript estiver presente, sem interromper a transicao gradual do runtime Laravel.
@@ -37,6 +39,7 @@ Todas as mudancas relevantes do ObraPro sao registradas aqui. O formato segue Ke
 
 ### Removed
 
+- Tentativa local de fluxo de suporte por paginas (`cloudflare/src/auth/currentUser.ts`, `cloudflare/src/pages/support.ts`, `cloudflare/src/pages/support.test.ts`): duplicava a leitura de sessao e gravava chamados via `AUTH_DB` em vez do contrato ja publicado (`OPERATIONS_DB`, `POST /api/painel/suporte/chamados`, consumido pelo `dashboard.js`). Conteudo original preservado no historico do commit local `eecc1d5` para auditoria.
 - Paginas estaticas avulsas `cloudflare/public/courses.html` e `cloudflare/public/course-detail.html`, substituidas pela renderizacao tipada a partir do `CourseRepository`.
 - Script `cloudflare/preview-worker.js`, substituido pela fundacao TypeScript em `cloudflare/src`.
 - Sprint 2: fluxo de status de procedimentos com publicacao autorizada, requisito de etapas e auditoria.

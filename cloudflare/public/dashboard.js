@@ -161,6 +161,18 @@
         status.setAttribute('role', kind === 'error' ? 'alert' : 'status');
     }
 
+    const supportErrorMessages = {
+        authentication_required: 'Sua sessao expirou. Atualize a pagina e entre novamente para abrir o chamado.',
+        operational_data_unavailable: 'O servico de chamados esta indisponivel no momento. Tente novamente em instantes.',
+        organization_access_denied: 'Voce nao tem acesso a organizacao selecionada. Escolha outra ou deixe em branco.',
+        support_ticket_invalid: 'Verifique o titulo e a descricao do chamado antes de enviar.',
+    };
+
+    function supportErrorMessageFor(error) {
+        const code = error && typeof error === 'object' ? error.body?.error : undefined;
+        return (code && supportErrorMessages[code]) || 'Nao foi possivel enviar agora. Confira sua conexao e tente novamente.';
+    }
+
     function configureSupport() {
         const form = document.querySelector('#support-form');
         if (!form) return;
@@ -168,6 +180,11 @@
             event.preventDefault();
             if (!state.realData) {
                 showSupportStatus('Chamados estao disponiveis somente para contas conectadas a uma organizacao.', 'error');
+                return;
+            }
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                showSupportStatus('Preencha o titulo e a descricao do chamado antes de enviar.', 'error');
                 return;
             }
             const submit = form.querySelector('button[type="submit"]');
@@ -182,8 +199,8 @@
                 });
                 form.reset();
                 showSupportStatus(`Chamado registrado. Referencia: ${result.data.id}`);
-            } catch (_) {
-                showSupportStatus('Nao foi possivel enviar agora. Confira sua conexao e tente novamente.', 'error');
+            } catch (error) {
+                showSupportStatus(supportErrorMessageFor(error), 'error');
             } finally {
                 submit.disabled = false;
             }
