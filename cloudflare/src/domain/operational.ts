@@ -70,6 +70,10 @@ export interface PublishedChecklistSummary {
     title: string;
 }
 
+export interface PublishedChecklistDetails extends PublishedChecklistSummary {
+    items: ChecklistItem[];
+}
+
 export interface ChecklistItem {
     id: string;
     checklistId: string;

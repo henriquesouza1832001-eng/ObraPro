@@ -209,6 +209,37 @@ async function route(request: Request, env: Env): Promise<Response> {
         return procedure ? privateJson({ data: procedure }) : privateJson({ error: 'procedure_not_found' }, 404);
     }
 
+    const checklistDetailMatch = path.match(/^\/api\/painel\/checklists\/([A-Za-z0-9_-]{1,128})$/);
+    if (checklistDetailMatch && request.method === 'GET') {
+        const session = await privateApiSession(request, env);
+        if (!session) {
+            return privateJson({ error: 'authentication_required' }, 401);
+        }
+
+        const organizationId = organizationIdFrom(url);
+        if (!organizationId) {
+            return privateJson({ error: 'organization_id_required' }, 400);
+        }
+
+        if (!env.OPERATIONS_DB) {
+            return privateJson({ error: 'operational_data_unavailable' }, 503);
+        }
+
+        const memberships = new D1MembershipRepository(env.OPERATIONS_DB);
+        if (!await memberships.canAccessOrganization(session.userId, organizationId)) {
+            return privateJson({ error: 'organization_access_denied' }, 403);
+        }
+
+        const checklistId = checklistDetailMatch[1];
+        if (!checklistId) {
+            return privateJson({ error: 'checklist_not_found' }, 404);
+        }
+
+        const checklist = await new D1OperationalRepository(env.OPERATIONS_DB).findPublishedChecklist(organizationId, checklistId);
+
+        return checklist ? privateJson({ data: checklist }) : privateJson({ error: 'checklist_not_found' }, 404);
+    }
+
     if (path === '/api/painel/suporte/chamados' && request.method === 'POST') {
         const session = await privateApiSession(request, env);
         if (!session) {

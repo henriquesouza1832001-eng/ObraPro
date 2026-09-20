@@ -1,4 +1,4 @@
-import type { PublishedChecklistSummary, PublishedProcedureDetails, PublishedProcedureSummary, ProcedureStep, Work, WorkStatus } from '../domain/operational';
+import type { ChecklistItem, PublishedChecklistDetails, PublishedChecklistSummary, PublishedProcedureDetails, PublishedProcedureSummary, ProcedureStep, Work, WorkStatus } from '../domain/operational';
 
 interface WorkRow {
     id: string;
@@ -39,6 +39,15 @@ interface ProcedureStepRow {
     safety_note: string | null;
     when_to_call_professional: string | null;
     materials_json: string | null;
+}
+
+interface ChecklistItemRow {
+    id: string;
+    checklist_id: string;
+    position: number;
+    label: string;
+    what_good_looks_like: string | null;
+    common_error: string | null;
 }
 
 function mapWork(row: WorkRow): Work {
@@ -144,6 +153,41 @@ export class D1OperationalRepository {
                 safetyNote: step.safety_note,
                 whenToCallProfessional: step.when_to_call_professional,
                 materials: parseMaterials(step.materials_json),
+            })),
+        };
+    }
+
+    public async findPublishedChecklist(organizationId: string, checklistId: string): Promise<PublishedChecklistDetails | null> {
+        const checklist = await this.database.prepare(`
+            SELECT id, organization_id, procedure_id, title
+            FROM checklists
+            WHERE id = ? AND organization_id = ? AND status = 'published'
+            LIMIT 1
+        `).bind(checklistId, organizationId).first<ChecklistRow>();
+
+        if (!checklist) {
+            return null;
+        }
+
+        const items = await this.database.prepare(`
+            SELECT id, checklist_id, position, label, what_good_looks_like, common_error
+            FROM checklist_items
+            WHERE checklist_id = ?
+            ORDER BY position ASC
+        `).bind(checklist.id).all<ChecklistItemRow>();
+
+        return {
+            id: checklist.id,
+            organizationId: checklist.organization_id,
+            procedureId: checklist.procedure_id,
+            title: checklist.title,
+            items: items.results.map((item): ChecklistItem => ({
+                id: item.id,
+                checklistId: item.checklist_id,
+                position: item.position,
+                label: item.label,
+                whatGoodLooksLike: item.what_good_looks_like,
+                commonError: item.common_error,
             })),
         };
     }
