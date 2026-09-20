@@ -294,6 +294,42 @@ async function route(request: Request, env: Env): Promise<Response> {
         return updated ? privateJson({ data: { id: executionStepId, status } }) : privateJson({ error: 'execution_step_not_found' }, 404);
     }
 
+    const executionDetailMatch = path.match(/^\/api\/painel\/execucoes\/([A-Za-z0-9_-]{1,128})$/);
+    if (executionDetailMatch && request.method === 'GET') {
+        const session = await privateApiSession(request, env);
+        if (!session) {
+            return privateJson({ error: 'authentication_required' }, 401);
+        }
+
+        const organizationId = organizationIdFrom(url);
+        if (!organizationId) {
+            return privateJson({ error: 'organization_id_required' }, 400);
+        }
+
+        if (!env.OPERATIONS_DB) {
+            return privateJson({ error: 'operational_data_unavailable' }, 503);
+        }
+
+        const executionId = executionDetailMatch[1];
+        if (!executionId) {
+            return privateJson({ error: 'execution_not_found' }, 404);
+        }
+
+        const memberships = new D1MembershipRepository(env.OPERATIONS_DB);
+        if (!await memberships.canAccessOrganization(session.userId, organizationId)) {
+            return privateJson({ error: 'organization_access_denied' }, 403);
+        }
+
+        const authorization = new D1OperationalAuthorization(env.OPERATIONS_DB, memberships);
+        if (!await authorization.canAccessExecution(session.userId, organizationId, executionId)) {
+            return privateJson({ error: 'execution_access_denied' }, 403);
+        }
+
+        const execution = await new D1OperationalRepository(env.OPERATIONS_DB).findExecution(organizationId, executionId);
+
+        return execution ? privateJson({ data: execution }) : privateJson({ error: 'execution_not_found' }, 404);
+    }
+
     const procedureDetailMatch = path.match(/^\/api\/painel\/procedimentos\/([A-Za-z0-9_-]{1,128})$/);
     if (procedureDetailMatch && request.method === 'GET') {
         const session = await privateApiSession(request, env);

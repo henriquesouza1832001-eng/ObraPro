@@ -141,6 +141,7 @@
         work_access_denied: 'Voce nao tem acesso a obra selecionada.',
         execution_invalid: 'Selecione uma obra valida antes de iniciar a execucao.',
         execution_access_denied: 'Voce nao tem acesso a esta execucao.',
+        execution_not_found: 'Esta execucao nao foi encontrada.',
         execution_step_not_found: 'Esta etapa nao foi encontrada na execucao.',
         execution_step_invalid: 'Nao foi possivel atualizar esta etapa. Tente novamente.',
     };
@@ -246,17 +247,19 @@
         if (button) button.disabled = true;
         procedureDetailStatus('Iniciando execucao...');
         try {
-            const result = await requestJson('/api/painel/execucoes', {
+            const created = await requestJson('/api/painel/execucoes', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ organization_id: organization.id, work_id: workId, procedure_id: procedureId }),
             });
+            const detail = await requestJson(`/api/painel/execucoes/${encodeURIComponent(created.data.id)}?organization_id=${encodeURIComponent(organization.id)}`);
             const work = state.works.find((item) => item.id === workId);
             state.execution = {
-                id: result.data.id,
+                id: detail.data.id,
+                organizationId: organization.id,
                 procedureTitle: state.currentProcedure.title,
                 workName: work ? work.name : 'Obra selecionada',
-                steps: state.currentProcedure.steps.map((step) => ({ ...step, status: 'pending', note: '' })),
+                steps: detail.data.steps.map((step) => ({ ...step, note: step.note || '' })),
             };
             showView('execution');
             renderExecutionChecklist();
@@ -273,29 +276,60 @@
         return { done, total: state.execution.steps.length };
     }
 
+    function executionStatus(text, kind = 'info') {
+        const box = document.querySelector('#execution-status');
+        if (!box) return;
+        const styles = { error: 'border-red-200 bg-red-50 text-red-700', info: 'border-slate-200 bg-white text-slate-600' };
+        box.className = `mt-4 rounded-md border p-3 text-sm ${styles[kind] || styles.info}`;
+        box.textContent = text;
+        box.classList.remove('hidden');
+        box.setAttribute('role', kind === 'error' ? 'alert' : 'status');
+    }
+
     function renderExecutionChecklist() {
         const content = document.querySelector('#execution-content');
         if (!content || !state.execution) return;
         const { done, total } = executionProgress();
         const percent = total ? Math.round((done / total) * 100) : 0;
-        const allResolved = done === total;
+        const allResolved = total > 0 && done === total;
         content.innerHTML = `
-            <p class="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800" role="status">Execucao iniciada no servidor (referencia ${escapeHtml(state.execution.id)}). A marcacao de cada etapa abaixo fica somente neste dispositivo por enquanto: o Worker ainda nao publica uma rota para ler e salvar o progresso etapa a etapa. Nada aqui e enviado ao servidor alem do inicio da execucao.</p>
-            <div class="mt-4 flex items-center justify-between"><h2 class="text-2xl font-black">${escapeHtml(state.execution.procedureTitle)}</h2><span class="text-sm font-bold text-slate-500">${done}/${total}</span></div>
+            <div class="flex items-center justify-between"><h2 class="text-2xl font-black">${escapeHtml(state.execution.procedureTitle)}</h2><span class="text-sm font-bold text-slate-500">${done}/${total}</span></div>
             <p class="text-sm text-slate-500">${escapeHtml(state.execution.workName)}</p>
             <div class="mt-2 h-3 overflow-hidden rounded-full bg-slate-100"><div class="h-full rounded-full bg-brand" style="width:${percent}%"></div></div>
+            <p class="mt-4 hidden rounded-md border p-3 text-sm" id="execution-status"></p>
             <ol class="mt-6 grid gap-4">${state.execution.steps.map((step, index) => `
                 <li class="rounded-md border border-slate-200 bg-white p-4 shadow-sm">
                     <div class="flex items-center justify-between gap-3"><h3 class="font-bold">${step.position}. ${escapeHtml(step.title)}</h3><span class="rounded-md px-3 py-1 text-xs font-bold ${step.status === 'completed' ? 'bg-emerald-50 text-emerald-700' : step.status === 'skipped' ? 'bg-slate-100 text-slate-600' : 'bg-amber-50 text-amber-800'}">${{ pending: 'Pendente', completed: 'Concluida', skipped: 'Pulada' }[step.status]}</span></div>
                     <p class="mt-1 text-sm text-slate-600">${escapeHtml(step.instruction)}</p>
+                    ${step.safetyNote ? `<p class="mt-2 rounded-md bg-amber-50 p-2 text-xs font-bold text-amber-800">Seguranca: ${escapeHtml(step.safetyNote)}</p>` : ''}
                     <label class="mt-3 grid gap-1 text-xs font-bold text-slate-500" for="execution-note-${index}">Observacao (opcional)<textarea class="min-h-16 rounded-md border border-slate-300 p-2 font-normal text-ink" id="execution-note-${index}" data-execution-note="${index}">${escapeHtml(step.note)}</textarea></label>
                     <div class="mt-3 flex gap-2">
-                        <button class="touch-button bg-brand text-white" type="button" data-execution-complete="${index}" ${step.status === 'completed' ? 'disabled' : ''}>Concluir etapa</button>
-                        <button class="touch-button border border-slate-300 bg-white text-ink" type="button" data-execution-skip="${index}" ${step.status === 'skipped' ? 'disabled' : ''}>Pular etapa</button>
+                        <button class="touch-button bg-brand text-white disabled:cursor-not-allowed disabled:opacity-60" type="button" data-execution-complete="${index}" ${step.status === 'completed' ? 'disabled' : ''}>Concluir etapa</button>
+                        <button class="touch-button border border-slate-300 bg-white text-ink disabled:cursor-not-allowed disabled:opacity-60" type="button" data-execution-skip="${index}" ${step.status === 'skipped' ? 'disabled' : ''}>Pular etapa</button>
                     </div>
                 </li>`).join('')}</ol>
-            <button class="touch-button mt-6 bg-action text-white disabled:cursor-not-allowed disabled:opacity-60" type="button" id="conclude-execution" ${allResolved ? '' : 'disabled'}>Concluir execucao</button>
-            ${!allResolved ? '<p class="mt-2 text-xs text-slate-500">Resolva todas as etapas (concluida ou pulada) para liberar a conclusao.</p>' : ''}`;
+            <button class="touch-button mt-6 bg-action text-white disabled:cursor-not-allowed disabled:opacity-60" type="button" id="conclude-execution" ${allResolved ? '' : 'disabled'}>Ver conclusao</button>
+            ${!allResolved ? '<p class="mt-2 text-xs text-slate-500">Resolva todas as etapas (concluida ou pulada) para ver a conclusao.</p>' : ''}`;
+    }
+
+    async function updateExecutionStepStatus(index, status) {
+        const step = state.execution?.steps[index];
+        if (!step) return;
+        const note = document.querySelector(`#execution-note-${index}`)?.value ?? step.note ?? '';
+        renderExecutionChecklist();
+        executionStatus('Salvando etapa...');
+        try {
+            await requestJson(`/api/painel/execucoes/${encodeURIComponent(state.execution.id)}/etapas/${encodeURIComponent(step.id)}?organization_id=${encodeURIComponent(state.execution.organizationId)}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status, note: note || null }),
+            });
+            step.status = status;
+            step.note = note;
+            renderExecutionChecklist();
+        } catch (error) {
+            executionStatus(operationalErrorMessageFor(error), 'error');
+        }
     }
 
     function renderExecutionConclusion() {
@@ -306,11 +340,11 @@
         const skipped = state.execution.steps.filter((step) => step.status === 'skipped').length;
         content.innerHTML = `
             <div class="mx-auto max-w-lg text-center">
-                <span class="inline-flex size-16 items-center justify-center rounded-full bg-emerald-50 text-3xl text-emerald-600">&check;</span>
-                <h2 class="mt-4 text-2xl font-black">Etapa concluida!</h2>
+                <svg class="mx-auto size-16 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="currentColor" opacity="0.1"/><path d="M7 12.5l3 3 7-7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <h2 class="mt-4 text-2xl font-black">Etapas registradas!</h2>
                 <p class="mt-2 text-slate-600">Voce executou <strong>${escapeHtml(state.execution.procedureTitle)}</strong> em <strong>${escapeHtml(state.execution.workName)}</strong>.</p>
-                <p class="mt-4 text-sm text-slate-500">${done}/${total} etapas resolvidas &mdash; ${completed} concluidas, ${skipped} puladas.</p>
-                <p class="mt-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">Este resumo e local. A confirmacao definitiva no servidor depende do Codex publicar a leitura de execucao (ainda pendente).</p>
+                <p class="mt-4 text-sm text-slate-500">${done}/${total} etapas resolvidas e salvas no servidor &mdash; ${completed} concluidas, ${skipped} puladas.</p>
+                <p class="mt-4 rounded-md border border-slate-200 bg-white p-3 text-xs text-slate-500">A execucao permanece "em andamento" no servidor: ainda nao existe um contrato para marca-la como concluida por inteiro.</p>
                 <div class="mt-6 flex flex-wrap justify-center gap-3">
                     <button class="touch-button bg-action text-white" type="button" data-dashboard-go="procedures">Ver todos os procedimentos</button>
                     <button class="touch-button border border-slate-300 bg-white text-ink" type="button" data-dashboard-go="overview">Voltar ao inicio</button>
@@ -472,14 +506,12 @@
         }
         const completeStepButton = event.target.closest('[data-execution-complete]');
         if (completeStepButton && state.execution) {
-            state.execution.steps[Number(completeStepButton.dataset.executionComplete)].status = 'completed';
-            renderExecutionChecklist();
+            updateExecutionStepStatus(Number(completeStepButton.dataset.executionComplete), 'completed');
             return;
         }
         const skipStepButton = event.target.closest('[data-execution-skip]');
         if (skipStepButton && state.execution) {
-            state.execution.steps[Number(skipStepButton.dataset.executionSkip)].status = 'skipped';
-            renderExecutionChecklist();
+            updateExecutionStepStatus(Number(skipStepButton.dataset.executionSkip), 'skipped');
             return;
         }
         const concludeButton = event.target.closest('#conclude-execution');
