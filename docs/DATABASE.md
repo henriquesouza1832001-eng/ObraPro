@@ -23,6 +23,7 @@ ULIDs sao preferidos para entidades expostas em URLs, integracoes ou criadas off
 - `preliminary_designs`, `design_requirements`, `design_versions`: solicitacao, requisitos e resultados versionados.
 - `ai_generations`: metadados sanitizados de provedor, modelo, uso, estado e custo; nunca API keys.
 - `audit_events`: trilha de negocio/administracao.
+- `admin_audit_events`: trilha D1 das alteracoes do catalogo feitas por Super Admin, com ator, recurso, estado e horario.
 - `security_events`: eventos de seguranca sanitizados.
 - `security_event_deliveries`: estado de entrega para provedores externos.
 
