@@ -10,6 +10,7 @@ O ObraPro combina orientacoes passo a passo, cursos gratuitos e premium, gestao 
 - Login real quando os bindings D1 estao configurados, com fallback de demonstracao apenas no preview sem banco.
 - Fundacao de organizacoes, memberships e papeis por tenant, com seguranca global isolada para Super Admin.
 - Catalogo publico navegavel em `/cursos`, com cursos gratuitos e avulsos por etapa da construcao.
+- Catalogo editorial com 45 treinamentos ISC Direcional importados, agrupados nos modulos 20, 30, 40 e 50.
 - API privada do Worker para organizacoes ativas, obras, chamados e evidencias; todas exigem sessao real, membership ativa e `Cache-Control: no-store`.
 - Deploy de `develop` para Cloudflare Workers automatizado pelo GitHub Actions.
 - MGL permanece opcional e reservado a observabilidade e seguranca.

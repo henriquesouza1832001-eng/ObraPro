@@ -4,7 +4,14 @@ Todas as mudancas relevantes do ObraPro sao registradas aqui. O formato segue Ke
 
 ## [Unreleased]
 
+### Added
+
+- Catalogo ISC Direcional: 45 treinamentos passam a ser publicados por migration incremental, classificados por etapa e apresentados com busca, filtros dinamicos e carregamento progressivo. Os materiais continuam identificados como estudo sujeito a revisao tecnica.
+- Correcao da classificacao dos 44 IDs importados com prefixo `isc-isc-`, mantendo o catalogo separado por etapa em vez de agrupa-los em uma categoria generica.
+
 ### Changed
+
+- Seguranca do Worker: todas as respostas agora incluem uma Content Security Policy compatível com os scripts e estilos inline existentes, bloqueio de objetos e framing, além dos headers mínimos já aplicados; teste de regressão cobre a política no catálogo público.
 
 - Identidade visual ObraPro ("caderno de obra que ensina"), primeira rodada, seguindo feedback do responsavel de que a interface estava generica: `cloudflare/src/pages/layout.ts` troca a fonte de Arial para uma pilha sem serifa do sistema (-apple-system/Segoe UI/Roboto), fundo geral passa de cinza (#f4f7f6) para marfim claro (#faf7f0), cabecalho publico fica navy solido com borda inferior laranja e link ativo com sublinhado laranja (antes header branco neutro), botao "Entrar" fica laranja sobre navy (assinatura de marca mais forte), bordas maximas em 8px em cards/botoes/filtros. Nova classe `.page-head` ganha divisor tracejado ("fita de projeto"). `home.ts`: bloco de saudacao/busca/categorias agora e uma faixa navy/laranja de destaque (nao mais fundo branco neutro), cada categoria ganha uma frase curta (rotulo editorial, nao dado de curso) alem de icone/nome/contagem, cards de curso na home ganham faixa colorida no topo por categoria e marcadores reais de modulos/duracao (antes so mostravam titulo e descricao). `courses.ts`: cards do catalogo ganham a mesma faixa colorida por categoria (nova constante `categoryAccent`, compartilhada com `home.ts` para evitar cores divergentes). `lesson.ts`: alerta de seguranca reestilizado como "Aviso técnico ObraPro" com icone e borda lateral laranja, em vez de card generico. Nao foi alterada nenhuma logica de contrato, estado (erro/vazio/carregando/sucesso) ou dado exibido — tudo continua vindo dos mesmos campos reais ja consumidos. Limitacao registrada: este ambiente nao tem navegador/renderizador disponivel para gerar uma captura de tela real; a validacao foi feita por leitura do HTML gerado nos testes (`worker:test`, que renderiza o corpo real via `MockCourseRepository`) e revisao manual do CSS/marcacao, nao por inspecao visual em pixels — validacao visual final depende do preview publicado. Suite 67/67, sem teste novo (nenhum texto de asserção dependia dos elementos alterados).
 

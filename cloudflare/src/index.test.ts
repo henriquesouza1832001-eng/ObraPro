@@ -261,6 +261,16 @@ describe('rotas publicas do Worker', () => {
         expect(body).toContain('cursos encontrados');
     });
 
+    it('GET /cursos aplica busca editorial sem expor cursos fora do resultado', async () => {
+        const response = await worker.fetch(get('/cursos?busca=planejamento'), baseEnv());
+        const body = await response.text();
+
+        expect(response.status).toBe(200);
+        expect(body).toContain('1 curso encontrado');
+        expect(body).toContain('planejamento-da-obra');
+        expect(body).not.toContain('fundacoes-seguras');
+    });
+
     it('GET /cursos/:slug valido retorna 200 com o detalhe do curso', async () => {
         const response = await worker.fetch(get('/cursos/planejamento-da-obra'), baseEnv());
         const body = await response.text();
@@ -309,6 +319,8 @@ describe('rotas publicas do Worker', () => {
         expect(response.headers.get('X-Content-Type-Options')).toBe('nosniff');
         expect(response.headers.get('X-Frame-Options')).toBe('DENY');
         expect(response.headers.get('Referrer-Policy')).toBe('strict-origin-when-cross-origin');
+        expect(response.headers.get('Content-Security-Policy')).toContain("default-src 'self'");
+        expect(response.headers.get('Content-Security-Policy')).toContain("frame-ancestors 'none'");
     });
 });
 
