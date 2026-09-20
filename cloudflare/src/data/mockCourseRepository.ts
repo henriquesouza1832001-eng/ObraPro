@@ -27,7 +27,10 @@ const lessonTitles: Array<{ title: string; durationMinutes: number }> = [
 ];
 
 export function courseModules(): CourseModule[] {
-    return moduleTitles.map((title) => ({ title, lessons: lessonTitles }));
+    return moduleTitles.map((title, moduleIndex) => ({
+        title,
+        lessons: lessonTitles.map((lesson, lessonIndex) => ({ ...lesson, id: `mock-lesson-${moduleIndex + 1}-${lessonIndex + 1}` })),
+    }));
 }
 
 export class MockCourseRepository implements CourseRepository {
