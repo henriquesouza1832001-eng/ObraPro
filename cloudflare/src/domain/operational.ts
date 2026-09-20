@@ -29,6 +29,21 @@ export interface Procedure {
     approvedAt: string | null;
 }
 
+export interface PublishedProcedureSummary {
+    id: string;
+    organizationId: string;
+    workId: string | null;
+    slug: string;
+    title: string;
+    summary: string;
+    stage: string;
+    version: number;
+}
+
+export interface PublishedProcedureDetails extends PublishedProcedureSummary {
+    steps: ProcedureStep[];
+}
+
 export interface ProcedureStep {
     id: string;
     procedureId: string;
@@ -46,6 +61,17 @@ export interface Checklist {
     procedureId: string;
     title: string;
     status: ContentStatus;
+}
+
+export interface PublishedChecklistSummary {
+    id: string;
+    organizationId: string;
+    procedureId: string;
+    title: string;
+}
+
+export interface PublishedChecklistDetails extends PublishedChecklistSummary {
+    items: ChecklistItem[];
 }
 
 export interface ChecklistItem {
