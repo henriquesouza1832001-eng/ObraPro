@@ -24,6 +24,7 @@ import { D1CourseEnrollmentRepository } from './data/courseEnrollmentRepository'
 import { D1LessonContentRepository } from './data/lessonContentRepository';
 import { D1UserRepository } from './auth/userRepository';
 import { D1CatalogAuthorization } from './auth/catalogAuthorization';
+import { D1AdminRepository } from './data/adminRepository';
 
 function courseRepositoryFor(env: Env): CourseRepository {
     return env.COURSES_DB ? new D1CourseRepository(env.COURSES_DB) : new MockCourseRepository();
@@ -126,6 +127,30 @@ async function route(request: Request, env: Env): Promise<Response> {
         return json({ status: 'ok', service: 'obrapro-worker' });
     }
 
+    const adminCatalogRead = path === '/api/admin/catalogo' && request.method === 'GET';
+    const adminAuditRead = path === '/api/admin/auditoria' && request.method === 'GET';
+    if (adminCatalogRead || adminAuditRead) {
+        const session = await privateApiSession(request, env);
+        if (!session) {
+            return privateJson({ error: 'authentication_required' }, 401);
+        }
+        if (!env.COURSES_DB || !env.AUTH_DB) {
+            return privateJson({ error: 'catalog_data_unavailable' }, 503);
+        }
+        if (!await new D1CatalogAuthorization(new D1UserRepository(env.AUTH_DB)).canManageCatalog(session.userId)) {
+            return privateJson({ error: 'catalog_admin_required' }, 403);
+        }
+
+        const repository = new D1AdminRepository(env.COURSES_DB);
+        if (adminCatalogRead) {
+            return privateJson({ data: await repository.listCatalog() });
+        }
+
+        const requestedLimit = Number(new URL(request.url).searchParams.get('limit') ?? '50');
+
+        return privateJson({ data: await repository.listAuditEvents(Number.isFinite(requestedLimit) ? requestedLimit : 50) });
+    }
+
     const coursePublicationMatch = path.match(/^\/api\/admin\/cursos\/([^/]+)\/publicacao$/);
     const modulePublicationMatch = path.match(/^\/api\/admin\/modulos\/([^/]+)\/publicacao$/);
     if ((coursePublicationMatch || modulePublicationMatch) && request.method === 'PATCH') {
@@ -157,6 +182,16 @@ async function route(request: Request, env: Env): Promise<Response> {
         if (result.meta.changes !== 1) {
             return privateJson({ error: 'catalog_item_not_found' }, 404);
         }
+
+        await new D1AdminRepository(env.COURSES_DB).recordAuditEvent({
+            id: crypto.randomUUID(),
+            actorUserId: session.userId,
+            action: 'catalog.publication.set',
+            resourceType: coursePublicationMatch ? 'course' : 'instruction_module',
+            resourceId: slugOrId,
+            metadata: { published },
+            createdAt: new Date().toISOString(),
+        });
 
         return privateJson({ data: { slug: slugOrId, published } });
     }
