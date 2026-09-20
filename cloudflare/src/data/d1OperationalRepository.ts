@@ -191,6 +191,45 @@ export class D1OperationalRepository {
             })),
         };
     }
+
+    public async startExecution(input: {
+        id: string;
+        organizationId: string;
+        workId: string;
+        procedureId: string;
+        startedBy: string;
+        startedAt: string;
+    }): Promise<void> {
+        const procedure = await this.database.prepare(`
+            SELECT id FROM procedures
+            WHERE id = ? AND organization_id = ? AND status = 'published'
+            LIMIT 1
+        `).bind(input.procedureId, input.organizationId).first<{ id: string }>();
+
+        if (!procedure) {
+            throw new Error('procedure_not_found');
+        }
+
+        const steps = await this.database.prepare(`
+            SELECT id FROM procedure_steps
+            WHERE procedure_id = ?
+            ORDER BY position ASC
+        `).bind(input.procedureId).all<{ id: string }>();
+
+        const statements = [this.database.prepare(`
+            INSERT INTO executions (id, organization_id, work_id, procedure_id, started_by, status, started_at, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, 'in_progress', ?, ?, ?)
+        `).bind(input.id, input.organizationId, input.workId, input.procedureId, input.startedBy, input.startedAt, input.startedAt, input.startedAt)];
+
+        for (const step of steps.results) {
+            statements.push(this.database.prepare(`
+                INSERT INTO execution_steps (id, execution_id, procedure_step_id, status, created_at, updated_at)
+                VALUES (?, ?, ?, 'pending', ?, ?)
+            `).bind(crypto.randomUUID(), input.id, step.id, input.startedAt, input.startedAt));
+        }
+
+        await this.database.batch(statements);
+    }
 }
 
 function parseMaterials(value: string | null): string[] {

@@ -7,6 +7,7 @@ import { MockCourseRepository, courseModules } from './data/mockCourseRepository
 import { D1CourseRepository } from './data/d1CourseRepository';
 import { authenticateRequest, authenticatedSession, loginWithD1, logoutFromD1, sessionCookie } from './auth/realSession';
 import { D1OperationalRepository } from './data/d1OperationalRepository';
+import { D1OperationalAuthorization } from './auth/operationalAuthorization';
 import { D1SupportTicketRepository } from './auth/supportTicketRepository';
 import { validateSupportTicket } from './domain/support';
 import { D1EvidenceAuthorization } from './auth/evidenceAuthorization';
@@ -176,6 +177,63 @@ async function route(request: Request, env: Env): Promise<Response> {
         const checklists = await new D1OperationalRepository(env.OPERATIONS_DB).listPublishedChecklists(organizationId);
 
         return privateJson({ data: checklists });
+    }
+
+    if (path === '/api/painel/execucoes' && request.method === 'POST') {
+        const session = await privateApiSession(request, env);
+        if (!session) {
+            return privateJson({ error: 'authentication_required' }, 401);
+        }
+
+        if (!env.OPERATIONS_DB) {
+            return privateJson({ error: 'operational_data_unavailable' }, 503);
+        }
+
+        let body: Record<string, unknown>;
+        try {
+            const parsed = await request.json<unknown>();
+            body = parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed as Record<string, unknown> : {};
+        } catch {
+            return privateJson({ error: 'execution_invalid' }, 400);
+        }
+
+        const organizationId = optionalOrganizationId(body.organization_id);
+        const workId = typeof body.work_id === 'string' && /^[A-Za-z0-9_-]{1,128}$/.test(body.work_id) ? body.work_id : null;
+        const procedureId = typeof body.procedure_id === 'string' && /^[A-Za-z0-9_-]{1,128}$/.test(body.procedure_id) ? body.procedure_id : null;
+        if (!organizationId || !workId || !procedureId) {
+            return privateJson({ error: 'execution_invalid' }, 400);
+        }
+
+        const memberships = new D1MembershipRepository(env.OPERATIONS_DB);
+        if (!await memberships.canAccessOrganization(session.userId, organizationId)) {
+            return privateJson({ error: 'organization_access_denied' }, 403);
+        }
+
+        const authorization = new D1OperationalAuthorization(env.OPERATIONS_DB, memberships);
+        if (!await authorization.canAccessWork(session.userId, organizationId, workId)) {
+            return privateJson({ error: 'work_access_denied' }, 403);
+        }
+
+        try {
+            const executionId = crypto.randomUUID();
+            const startedAt = new Date().toISOString();
+            await new D1OperationalRepository(env.OPERATIONS_DB).startExecution({
+                id: executionId,
+                organizationId,
+                workId,
+                procedureId,
+                startedBy: session.userId,
+                startedAt,
+            });
+
+            return privateJson({ data: { id: executionId, status: 'in_progress' } }, 201);
+        } catch (error) {
+            if (error instanceof Error && error.message === 'procedure_not_found') {
+                return privateJson({ error: 'procedure_not_found' }, 404);
+            }
+
+            throw error;
+        }
     }
 
     const procedureDetailMatch = path.match(/^\/api\/painel\/procedimentos\/([A-Za-z0-9_-]{1,128})$/);
