@@ -54,4 +54,21 @@ export class D1LessonContentRepository {
 
         return row ? mapContent(row) : null;
     }
+
+    public async findPublishedForCourse(courseSlug: string, lessonId: string): Promise<LessonContent | null> {
+        const row = await this.database.prepare(`
+            SELECT lcv.lesson_id, lcv.version, lcv.body, lcv.materials_json,
+                lcv.tools_json, lcv.steps_json, lcv.safety_notes
+            FROM lesson_content_versions AS lcv
+            INNER JOIN lessons AS l ON l.id = lcv.lesson_id
+            INNER JOIN course_modules AS cm ON cm.id = l.course_module_id
+            INNER JOIN courses AS c ON c.id = cm.course_id
+            WHERE c.slug = ? AND c.is_published = 1 AND lcv.lesson_id = ?
+                AND lcv.status = 'published' AND lcv.published_at IS NOT NULL
+            ORDER BY lcv.version DESC
+            LIMIT 1
+        `).bind(courseSlug, lessonId).first<LessonContentRow>();
+
+        return row ? mapContent(row) : null;
+    }
 }

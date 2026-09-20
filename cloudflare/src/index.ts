@@ -20,6 +20,7 @@ import { renderComoFunciona } from './pages/comoFunciona';
 import { renderServerError } from './pages/serverError';
 import { D1CourseProgressRepository } from './data/courseProgressRepository';
 import { D1CourseEnrollmentRepository } from './data/courseEnrollmentRepository';
+import { D1LessonContentRepository } from './data/lessonContentRepository';
 import { D1UserRepository } from './auth/userRepository';
 import { D1CatalogAuthorization } from './auth/catalogAuthorization';
 
@@ -194,6 +195,34 @@ async function route(request: Request, env: Env): Promise<Response> {
         }
 
         return privateJson({ data: access });
+    }
+
+    const lessonContentMatch = path.match(/^\/api\/cursos\/([^/]+)\/aulas\/([^/]+)\/conteudo$/);
+    if (lessonContentMatch && request.method === 'GET') {
+        const session = await privateApiSession(request, env);
+        if (!session) {
+            return privateJson({ error: 'authentication_required' }, 401);
+        }
+        if (!env.COURSES_DB) {
+            return privateJson({ error: 'course_data_unavailable' }, 503);
+        }
+
+        const courseSlug = decodeURIComponent(lessonContentMatch[1] ?? '');
+        const lessonId = decodeURIComponent(lessonContentMatch[2] ?? '');
+        const access = await new D1CourseEnrollmentRepository(env.COURSES_DB).accessFor(session.userId, courseSlug);
+        if (!access) {
+            return privateJson({ error: 'course_not_found' }, 404);
+        }
+        if (!access.enrolled) {
+            return privateJson({ error: 'course_access_required' }, 403);
+        }
+
+        const content = await new D1LessonContentRepository(env.COURSES_DB).findPublishedForCourse(courseSlug, lessonId);
+        if (!content) {
+            return privateJson({ error: 'lesson_content_not_found' }, 404);
+        }
+
+        return privateJson({ data: content });
     }
 
     if (path === '/api/painel/organizacoes' && request.method === 'GET') {
