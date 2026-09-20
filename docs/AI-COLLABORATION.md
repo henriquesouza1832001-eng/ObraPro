@@ -28,6 +28,8 @@ O runtime alvo esta migrando para Cloudflare Workers + TypeScript + D1. O Larave
 
 O diario local compartilhado fica em C:\projetos\Obra Pro\AI-COLLABORATION-LOG.md. Antes de iniciar qualquer tarefa, cada agente deve reler o diario. Depois de qualquer commit, merge, bloqueio ou atualizacao relevante do outro agente, deve reler o diario antes de continuar.
 
+Todos os horarios do diario e dos registros de colaboracao devem usar o horario de Brasilia, UTC-3, no formato `YYYY-MM-DD HH:mm`.
+
 - Um agente por branch curta e por objetivo coerente.
 - Antes de editar, registrar no PR o escopo, arquivos provaveis e dependencias de outras branches.
 - Evitar dois agentes editando simultaneamente migrations, rotas centrais, lockfiles ou o mesmo template.

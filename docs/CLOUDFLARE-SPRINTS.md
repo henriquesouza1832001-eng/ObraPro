@@ -71,7 +71,7 @@ Nenhum agente edita as pastas reservadas do outro. Claude nao edita `cloudflare/
 | CF3-C2 | Claude | Estados de erro de login (credenciais invalidas, conta suspensa) com mensagens claras em portugues, mantendo acessibilidade (foco, leitura por teclado). | Feito com ressalva: a mensagem de erro e generica ("Nao foi possivel entrar com esses dados...") por design de seguranca — nem `loginWithD1` nem `D1UserRepository` distinguem "conta suspensa" de "senha incorreta" hoje, e mensagens especificas revelariam se um e-mail existe. `role="alert"` + `aria-describedby` + foco automatico no campo de e-mail implementados. Se o Codex expuser um estado de conta suspensa no futuro, a mensagem pode ser diferenciada sem mudar o restante da tela. |
 | CF3-C3 | Claude | Remover `demoSession.ts` somente apos o contrato real estar disponivel e revisado pelo Codex; ate la o login de demonstracao continua ativo. | Parcial: a renderizacao (`loginPage`) ja saiu de `demoSession.ts` para `pages/login.ts`; a logica de sessao de demonstracao (`sessionToken`/`isAuthenticated`) continua em `demoSession.ts` como fallback ativo quando `AUTH_DB` nao existe (ambiente de preview sem binding). Remocao completa so deve acontecer com aprovacao explicita do responsavel, conforme o card pede. |
 
-**Testes:** `npm run worker:typecheck`, `npm run worker:test` (27/27, incluindo 8 novos testes de login/logout real: `/entrar` demo vs real, login com senha correta define cookie `HttpOnly`/`Secure`/`SameSite=Lax` e redireciona a `/painel`, senha incorreta retorna 422 sanitizado sem cookie, `/painel` com/sem sessao valida, `/sair` revoga a sessao), `npm run worker:build`; teste manual via `wrangler dev` confirmando que o fluxo demo (sem `AUTH_DB`) continua identico ao anterior.
+**Testes:** `npm run worker:typecheck`, `npm run worker:test` (46 testes, incluindo login/logout real, tenant cruzado, suporte e evidencia privada) e `npm run worker:build`. O fallback demo continua propositalmente ativo apenas sem `AUTH_DB`.
 
 **Aceite:** um usuario real consegue entrar, ver apenas sua organizacao, e o login de demonstracao e desligado com aprovacao explicita registrada no diario. (Isolamento por organizacao depende de `AuthorizationContext`/`D1MembershipRepository` do Codex serem consumidos pelo painel — ainda nao coberto pela camada visual, ver Sprint CF-4/CF-6.)
 
@@ -79,16 +79,16 @@ Nenhum agente edita as pastas reservadas do outro. Claude nao edita `cloudflare/
 
 **Objetivo:** portar o nucleo operacional do Laravel para o Worker.
 
-| Card | Dono | Descricao |
-|---|---|---|
-| CF4-D1 | Codex | Migrations D1 de obras, procedimentos, etapas, checklists e execucoes; contratos de dominio correspondentes. |
-| CF4-D2 | Codex | Regras de autorizacao por tenant e testes de isolamento entre organizacoes. |
-| CF4-C1 | Claude | Telas de execucao (uma acao principal por tela), checklist e progresso, seguindo `docs/UX.md`. |
-| CF4-C2 | Claude | Estados vazio (nenhuma obra ativa), carregamento e erro de rede no painel operacional. |
+| Card | Dono | Descricao | Status |
+|---|---|---|---|
+| CF4-D1 | Codex | Migrations D1 de obras, procedimentos, etapas, checklists e execucoes; contratos de dominio correspondentes. | Feito: `0004_operational_core.sql`, contratos tipados e `D1OperationalRepository`. |
+| CF4-D2 | Codex | Regras de autorizacao por tenant e testes de isolamento entre organizacoes. | Feito: rotas `GET /api/painel/organizacoes` e `GET /api/painel/obras?organization_id=...` exigem sessao D1, membership ativa e `no-store`; tenant cruzado retorna 403. |
+| CF4-C1 | Claude | Telas de execucao (uma acao principal por tela), checklist e progresso, seguindo `docs/UX.md`. | Pendente: o dashboard visual atual e estatico; a API de obras ja esta disponivel para integracao. |
+| CF4-C2 | Claude | Estados vazio (nenhuma obra ativa), carregamento e erro de rede no painel operacional. | Pendente: depende de a interface consumir as rotas reais. |
 
 **Testes:** inicio/conclusao de execucao, checklist obrigatorio, tenant cruzado bloqueado, leitura mobile.
 
-**Aceite:** o fluxo de campo (abrir procedimento, marcar checklist, registrar evidencia pendente) funciona no Worker com paridade funcional ao Laravel.
+**Aceite:** parcial. A base e leitura de obras estao no Worker; fluxo visual de campo, procedimentos e checklists ainda precisa consumir a API antes de declarar paridade com Laravel.
 
 ## Sprint CF-5 — Evidencias privadas (R2) e chamados de suporte
 
@@ -96,46 +96,93 @@ Nenhum agente edita as pastas reservadas do outro. Claude nao edita `cloudflare/
 
 | Card | Dono | Descricao | Status |
 |---|---|---|---|
-| CF5-D1 | Codex | Binding R2, contrato de evidencia (storage key, checksum, MIME validado), download autorizado por Policy. | Feito em parte: `domain/evidence.ts` (`validateEvidenceUpload`, calculo deterministico de `storageKey`) e `auth/evidenceAuthorization.ts` (`canDownload`) existem; **nao ha repositorio de persistencia** (nenhum `create`/insert de metadata de evidencia em D1) nem rota de upload real. |
-| CF5-D2 | Codex | Migration e contrato de chamados de suporte com contexto sanitizado. | Feito: migration `0006_support_tickets.sql`, `domain/support.ts` (`validateSupportTicket`, `sanitizeSupportContext`) e `auth/supportTicketRepository.ts` (`D1SupportTicketRepository.create`/`findForUser`) prontos e utilizados pela camada visual. |
-| CF5-C1 | Claude | Tela de upload/anexo de evidencia (captura, preview, estado de envio) e tela de abertura/acompanhamento de chamado. | Feito **so a parte de chamados**: `cloudflare/src/pages/support.ts` + rotas `/chamados` (GET formulario, POST criar, GET `/chamados/:id` acompanhar) exigindo sessao real via novo helper `auth/currentUser.ts` (`getAuthenticatedUserId`, construido sobre o `D1SessionStore` ja publicado pelo Codex, sem duplicar logica de autenticacao nem tocar `realSession.ts`). **Upload de evidencia continua bloqueado**: alem de faltar o repositorio de persistencia (ver CF5-D1), a evidencia e ligada a um `executionStepId` que so existiria via o repositorio operacional do CF4 (tambem nao publicado) — nao ha como escolher "para qual execucao" anexar uma evidencia sem inventar esse dado. |
-| CF5-C2 | Claude | Estado de fila offline-friendly na interface (pendente, enviando, concluido, falha) conforme `docs/PWA.md`. | Feito para o formulario de chamados: submissao funciona sem JavaScript (POST tradicional); quando `navigator.onLine` e falso, o chamado fica em fila no `localStorage` e e reenviado automaticamente no evento `online`, com os quatro estados (pendente/enviando/concluido/falha) exibidos de forma acessivel (`role="status"`/`role="alert"`). Nao se aplica a evidencias ainda, pelo mesmo motivo do CF5-C1. |
+| CF5-D1 | Codex | Binding R2, contrato de evidencia (storage key, checksum, MIME validado), download autorizado por Policy. | Feito em codigo: `POST /api/painel/evidencias` detecta MIME pelo conteudo, limita tamanho, calcula checksum, grava R2 privado e metadata D1; download exige tenant. Requer binding R2 real para smoke test. |
+| CF5-D2 | Codex | Migration e contrato de chamados de suporte com contexto sanitizado. | Feito: `POST /api/painel/suporte/chamados` e consulta do proprio solicitante; contexto allowlisted. |
+| CF5-C1 | Claude | Tela de upload/anexo de evidencia (captura, preview, estado de envio) e tela de abertura/acompanhamento de chamado. | Pendente: rotas estao prontas para integracao visual. |
+| CF5-C2 | Claude | Estado de fila offline-friendly na interface (pendente, enviando, concluido, falha) conforme `docs/PWA.md`. | Pendente: fila offline pertence ao proximo trabalho de PWA. |
 
-**Testes:** `npm run worker:typecheck`, `npm run worker:test` (50/50, incluindo 14 novos testes de chamados: renderizacao do formulario/fila offline, criacao com sucesso, validacao de titulo/descricao vazios, consulta do proprio chamado, 404 para chamado inexistente/de outro usuario), `npm run worker:build`; teste manual via `wrangler dev` confirmando que `/chamados` sem sessao redireciona para `/entrar` e as demais rotas publicas continuam intactas.
+**Testes:** upload valido/invalido, download bloqueado entre organizacoes, chamado criado e visivel para o solicitante.
 
-**Aceite:** chamado funciona ponta a ponta no Worker (abrir, confirmar, consultar), restrito ao proprio usuario. Evidencia **nao** funciona ponta a ponta ainda — falta repositorio de persistencia (Codex) e o repositorio operacional do CF4 (Codex) para saber a qual execucao anexar o arquivo; nenhum binario e exposto publicamente porque nada e aceito ainda.
+**Aceite:** parcial. Backend e rotas privadas estao prontos e testados com R2 simulado; configuracao de binding real e interface de upload/chamado ainda precisam de smoke test manual.
 
-## Sprint CF-6 — Painel administrativo, auditoria e security events
+## Proximo lote proposto: CF-6 a CF-10
 
-**Objetivo:** portar o painel de gestao e a area exclusiva de Super Admin.
+Este lote foi autorizado pelo responsavel em 2026-09-19. A CF6 esta em andamento sob responsabilidade temporaria do Codex enquanto Claude Code estiver indisponivel. A ordem elimina primeiro os mockups estaticos e as lacunas de ambiente antes de introduzir venda ou IA.
 
-| Card | Dono | Descricao |
-|---|---|---|
-| CF6-D1 | Codex | Contratos de auditoria e security events; Gate equivalente a `viewPlatformSecurity`. |
-| CF6-C1 | Claude | Telas de painel (obras, procedimentos, cursos, pessoas, relatorios) com busca, filtros e tabelas acessiveis. |
-| CF6-C2 | Claude | Area de seguranca visivel somente quando o contrato do Codex confirmar Super Admin (sem logica de autorizacao no frontend). |
+## Sprint CF-6 — Painel operacional ligado ao ambiente real
 
-**Testes:** autorizacao por papel, ausencia de vazamento de tenant, area de seguranca oculta para nao-Super Admin.
-
-**Aceite:** gestor opera o painel no Worker com os mesmos limites de autorizacao do Laravel.
-
-## Sprint CF-7 — PWA offline, pagamentos e integracoes externas
-
-**Objetivo:** paridade de PWA/offline e inicio do fluxo comercial, sem lógica de pagamento real ainda em producao.
+**Objetivo:** substituir os dados hardcoded do painel por chamadas autenticadas ao Worker e validar D1/R2 de `develop` sem expor dados de tenant.
 
 | Card | Dono | Descricao |
 |---|---|---|
-| CF7-D1 | Codex | Contrato de pedido/pagamento (estado, idempotencia, webhook) e Queue de eventos. |
-| CF7-C1 | Claude | Cache do shell, fila local de checklist/evidencia e telas de plano/checkout (sem processar pagamento real). |
-| CF7-C2 | Claude | Testes de instalacao PWA, offline/online, atualizacao de service worker. |
+| CF6-C1 | Codex (temporario) | Fazer `dashboard.html` consumir `GET /api/painel/organizacoes` e `GET /api/painel/obras`, com estados vazio/carregando/erro e sem acesso direto a D1. Feito: navegacao, leitura real, estado vazio/erro e selecao explicita de organizacao implementados. |
+| CF6-C2 | Codex (temporario) | Conectar abertura e consulta de chamados; criar tela de evidencia com captura, validacao client-side e feedback de envio, sem simular sucesso offline. Em andamento: abertura de chamado pelo contrato privado implementada; consulta e evidencia aguardam a tela de execucao. |
+| CF6-D1 | Codex | Revisar contratos de leitura necessarios para procedimento, checklist e execucao; publicar apenas endpoints tenant-aware que tenham repositorio, policy e testes. |
+| CF6-D2 | Codex | Configurar e documentar bindings reais `AUTH_DB`, `OPERATIONS_DB` e `EVIDENCE_BUCKET` por ambiente, sem IDs ou secrets no repositorio; executar smoke test controlado. |
 
-**Testes:** conforme `docs/PWA.md` (offline/online, conflito, logout, atualizacao) e testes de webhook do Codex (assinatura, replay, duplicidade).
+**Testes:** sessao demo bloqueada das APIs privadas, organizacao inativa e tenant cruzado negados, estados visualmente acessiveis, upload e download privado em ambiente de `develop`.
 
-**Aceite:** app instalavel funciona offline para o essencial; nenhum acesso comercial e liberado sem confirmacao de pagamento auditavel.
+**Aceite:** usuario real ve somente suas obras; painel sem obra mostra estado vazio claro; chamado e evidencia tem retorno verdadeiro do servidor; preview deixa de depender de cards operacionais hardcoded.
 
-## Sprint CF-8 — MGL e IA (posterior e opcional)
+## Sprint CF-7 — Execucao de campo e checklists
 
-Mantido fora do caminho critico, conforme `docs/ARCHITECTURE.md` e `docs/CLOUDFLARE-MIGRATION.md`. Só entra em planejamento apos a Sprint CF-7 estar validada e com autorizacao explicita do responsavel do projeto.
+**Objetivo:** tornar o passo a passo utilizavel no celular, com progresso persistido e evidencias privadas por etapa.
+
+| Card | Dono | Descricao |
+|---|---|---|
+| CF7-D1 | Codex | Rotas para procedimentos, etapas, checklists e execucoes com validacao transacional, versionamento e autorizacao por tenant. |
+| CF7-C1 | Claude | Telas mobile de procedimento, checklist e conclusao com uma acao principal por tela e retomada de progresso. |
+| CF7-C2 | Claude | Exibir erros de validacao e indisponibilidade com acao de tentar novamente, sem perder dados ja confirmados. |
+
+**Testes:** inicio/conclusao de execucao, etapa obrigatoria, reabertura autorizada, concorrencia basica, tenant cruzado e leitura em viewport mobile.
+
+**Aceite:** uma pessoa inicia um procedimento, marca etapas, anexa evidencia, interrompe e retoma sem confundir o que ja foi salvo.
+
+## Sprint CF-8 — Administracao, catalogo e seguranca de plataforma
+
+**Objetivo:** entregar o painel administrativo modular para gestao de cursos, pessoas e configuracoes, isolando por completo a area de Super Admin.
+
+| Card | Dono | Descricao |
+|---|---|---|
+| CF8-D1 | Codex | Contratos de administracao de organizacao, catalogo e auditoria; policy explicita para security events e configuracoes globais de Super Admin. |
+| CF8-C1 | Claude | Telas seccionadas de cursos, modulos, aulas, equipe e configuracoes com busca, filtros e confirmacoes compreensiveis. |
+| CF8-C2 | Claude | Area de seguranca aparece somente com permissao devolvida pelo contrato; nunca inferir papel no navegador. |
+
+**Testes:** administrador de organizacao nao acessa seguranca global, Super Admin nao recebe bypass implicito de tenant, alteracoes administrativas auditadas e tabelas acessiveis.
+
+**Aceite:** administradores gerenciam conteudo e equipe sem acessar recursos de seguranca; somente Super Admin ve eventos, credenciais de provedores e configuracoes MGL.
+
+## Sprint CF-9 — Direitos comerciais e PIX por adaptador
+
+**Objetivo:** preparar venda de cursos e planos com preco configuravel, sem confiar no navegador e sem acoplar o dominio a um provedor de pagamento.
+
+| Card | Dono | Descricao |
+|---|---|---|
+| CF9-D1 | Codex | Modelo de produto, preco congelado, pedido, entitlement e adaptador PIX; webhook autenticado, idempotente e auditado. |
+| CF9-C1 | Claude | Landing e catalogo mostram gratuito, incluso e avulso vindos do contrato; checkout informa valor e estado sem prometer confirmacao antes do webhook. |
+| CF9-C2 | Claude | Area "Meus acessos" e recuperacao visual de compra pendente/falha, com suporte contextual. |
+
+**Testes:** assinatura e replay de webhook, duplicidade, valor divergente, pagamento pendente/confirmado/falho, revogacao e curso premium bloqueado.
+
+**Aceite:** nenhum curso pago e liberado por retorno do browser; cada concessao tem pedido, valor, evento de pagamento e historico auditavel.
+
+## Sprint CF-10 — PWA, operacao e readiness de lancamento
+
+**Objetivo:** transformar o fluxo validado em um produto instalavel e operavel antes de convidar usuarios reais.
+
+| Card | Dono | Descricao |
+|---|---|---|
+| CF10-D1 | Codex | Rate limit, logs sanitizados, health checks, backup/restore documentado, rollback e verificacao de dependencias. |
+| CF10-C1 | Claude | Cache do shell e de conteudo permitido, fila local para checklist/evidencia, estados de sincronizacao e limpeza no logout. |
+| CF10-C2 | Claude | Testes de instalacao, atualizacao e responsividade em Android, iPhone, desktop e navegadores suportados. |
+
+**Testes:** offline/online, repeticao de envio, conflito, logout, atualizacao de service worker, restore e indisponibilidade de observabilidade opcional.
+
+**Aceite:** usuario entende o que esta salvo, pendente ou falhou; a plataforma opera sem MGL e possui processo testado de recuperacao e rollback.
+
+## Depois do lancamento inicial: IA opcional
+
+MGL continua opcional, fora do caminho critico e exclusivo para observabilidade/seguranca. IA somente volta ao planejamento depois da CF10, com fornecedor substituivel, limite de custo, revisao humana e aviso claro de que estudos preliminares nao sao projetos tecnicos, estruturais ou legais.
 
 ## Checkpoint de sincronizacao
 
