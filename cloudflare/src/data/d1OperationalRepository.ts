@@ -1,4 +1,4 @@
-import type { PublishedProcedureSummary, Work, WorkStatus } from '../domain/operational';
+import type { PublishedChecklistSummary, PublishedProcedureSummary, Work, WorkStatus } from '../domain/operational';
 
 interface WorkRow {
     id: string;
@@ -21,6 +21,13 @@ interface ProcedureRow {
     summary: string;
     stage: string;
     version: number;
+}
+
+interface ChecklistRow {
+    id: string;
+    organization_id: string;
+    procedure_id: string;
+    title: string;
 }
 
 function mapWork(row: WorkRow): Work {
@@ -68,6 +75,22 @@ export class D1OperationalRepository {
             summary: row.summary,
             stage: row.stage,
             version: row.version,
+        }));
+    }
+
+    public async listPublishedChecklists(organizationId: string): Promise<PublishedChecklistSummary[]> {
+        const result = await this.database.prepare(`
+            SELECT id, organization_id, procedure_id, title
+            FROM checklists
+            WHERE organization_id = ? AND status = 'published'
+            ORDER BY title ASC
+        `).bind(organizationId).all<ChecklistRow>();
+
+        return result.results.map((row) => ({
+            id: row.id,
+            organizationId: row.organization_id,
+            procedureId: row.procedure_id,
+            title: row.title,
         }));
     }
 }

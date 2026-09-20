@@ -59,6 +59,13 @@ export interface Checklist {
     status: ContentStatus;
 }
 
+export interface PublishedChecklistSummary {
+    id: string;
+    organizationId: string;
+    procedureId: string;
+    title: string;
+}
+
 export interface ChecklistItem {
     id: string;
     checklistId: string;
