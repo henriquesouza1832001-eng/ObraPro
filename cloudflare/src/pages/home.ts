@@ -1,6 +1,6 @@
 import type { Course } from '../data/course';
-import { publicPage } from './layout';
-import { categoryAccent, categoryBucket, priceLabel } from './courses';
+import { escapeHtml, publicPage } from './layout';
+import { categoryAccent, categoryKey, priceLabel } from './courses';
 
 /**
  * Home publica de aprendizagem, fiel ao mockup do responsavel: saudacao, busca
@@ -21,6 +21,7 @@ const homeStyles = `.home-hero{padding:44px 5vw 34px;background:#10233f;color:#f
 .category-card span.count{font-size:11px;opacity:.85;margin-top:auto}
 .category-card.outline{color:#10233f;background:#fff}
 .section-title{display:flex;align-items:end;justify-content:space-between;gap:12px;margin:38px 0 14px;flex-wrap:wrap}
+.section-note{display:block;color:#60706a;font-size:12px;margin-top:4px}
 .section-title h2{font-size:19px;margin:0}
 .section-title a{color:#1267e8;font-weight:700;font-size:14px}
 .course-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}
@@ -54,42 +55,40 @@ const categoryStyle: Record<string, { bg: string; icon: string }> = {
     },
 };
 
-const categoryLabels: Array<{ key: string; label: string; tagline: string }> = [
-    { key: 'fundacoes', label: 'Fundações', tagline: 'Base segura para toda obra' },
-    { key: 'alvenaria', label: 'Alvenaria', tagline: 'Paredes alinhadas e firmes' },
-    { key: 'hidraulica', label: 'Hidráulica', tagline: 'Água e esgoto sem retrabalho' },
-    { key: 'eletrica', label: 'Elétrica', tagline: 'Instalações com segurança' },
-    { key: 'acabamentos', label: 'Acabamentos', tagline: 'O capricho que se vê' },
-    { key: 'outros', label: 'Outros', tagline: 'Mais etapas da construção' },
-];
-
 function categoryCard(key: string, label: string, tagline: string, count: number): string {
-    const style = categoryStyle[key];
-    const outline = !style;
+    const style = categoryStyle[key] ?? { bg: categoryAccent[key] ?? '#64748b', icon: '<circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/>' };
     const iconMarkup = style
         ? `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">${style.icon}</svg>`
         : '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>';
 
-    return `<a class="category-card${outline ? ' outline' : ''}" style="${style ? `background:${style.bg}` : ''}" href="/cursos?categoria=${key}">${iconMarkup}<strong>${label}</strong><small>${tagline}</small><span class="count">${count === 1 ? '1 curso' : `${count} cursos`}</span></a>`;
+    return `<a class="category-card" style="background:${style.bg}" href="/cursos?categoria=${encodeURIComponent(key)}">${iconMarkup}<strong>${escapeHtml(label)}</strong><small>${escapeHtml(tagline)}</small><span class="count">${count === 1 ? '1 curso' : `${count} cursos`}</span></a>`;
 }
 
 function courseRow(courses: Course[]): string {
     return `<div class="course-row">${courses.map((course) => {
-        const accent = categoryAccent[categoryBucket(course.category)] ?? '#94a3b8';
+        const accent = categoryAccent[categoryKey(course.category)] ?? '#94a3b8';
 
-        return `<a class="card" style="border-top-color:${accent}" href="/cursos/${course.slug}" data-course-title="${course.title.toLowerCase()}"><span class="tag">${course.category}</span><h3>${course.title}</h3><p>${course.description}</p><div class="markers"><span>${course.modulesCount} módulos</span><span>${course.durationMinutes} min</span></div></a>`;
+        return `<a class="card" style="border-top-color:${accent}" href="/cursos/${encodeURIComponent(course.slug)}" data-course-title="${escapeHtml(course.title.toLocaleLowerCase('pt-BR'))}"><span class="tag">${escapeHtml(course.category)}</span><h3>${escapeHtml(course.title)}</h3><p>${escapeHtml(course.description)}</p><div class="markers"><span>${course.modulesCount} módulos</span><span>${course.durationMinutes} min</span></div></a>`;
     }).join('')}</div>`;
 }
 
 export function renderLearningHome(courses: Course[]): string {
-    const counts: Record<string, number> = { fundacoes: 0, alvenaria: 0, hidraulica: 0, eletrica: 0, acabamentos: 0, outros: 0 };
+    const counts: Record<string, number> = {};
+    const labels = new Map<string, { label: string; count: number }>();
     courses.forEach((course) => {
-        const key = categoryBucket(course.category);
+        const key = categoryKey(course.category);
         counts[key] = (counts[key] ?? 0) + 1;
+        labels.set(key, { label: course.category, count: counts[key] });
     });
 
     const freeCourses = courses.filter((course) => course.accessType === 'free');
     const premiumCourses = courses.filter((course) => course.accessType === 'premium');
+    const categoryLabels = [...labels.entries()]
+        .sort((left, right) => right[1].count - left[1].count || left[1].label.localeCompare(right[1].label, 'pt-BR'))
+        .slice(0, 8)
+        .map(([key, value]) => ({ key, label: value.label, tagline: `Aprenda ${value.label.toLocaleLowerCase('pt-BR')} por etapas` }));
+    const freePreview = freeCourses.slice(0, 6);
+    const premiumPreview = premiumCourses.slice(0, 6);
 
     const body = `
         <section class="home-hero">
@@ -104,8 +103,8 @@ export function renderLearningHome(courses: Course[]): string {
             <div class="categories">${categoryLabels.map(({ key, label, tagline }) => categoryCard(key, label, tagline, counts[key] ?? 0)).join('')}</div>
         </section>
         <main class="content" style="padding-top:0">
-            ${freeCourses.length > 0 ? `<div class="section-title"><h2>Cursos gratuitos para começar</h2><a href="/cursos">Ver catálogo completo</a></div>${courseRow(freeCourses)}` : ''}
-            ${premiumCourses.length > 0 ? `<div class="section-title"><h2>Cursos completos e premium</h2><a href="/cursos">Ver catálogo completo</a></div>${courseRow(premiumCourses)}` : ''}
+            ${freeCourses.length > 0 ? `<div class="section-title"><div><h2>Cursos gratuitos para começar</h2><small class="section-note">${freeCourses.length} cursos disponíveis</small></div><a href="/cursos?acesso=free">Ver todos</a></div>${courseRow(freePreview)}` : ''}
+            ${premiumCourses.length > 0 ? `<div class="section-title"><div><h2>Cursos completos e premium</h2><small class="section-note">${premiumCourses.length} cursos disponíveis</small></div><a href="/cursos?acesso=premium">Ver todos</a></div>${courseRow(premiumPreview)}` : ''}
             ${courses.length === 0 ? '<p class="empty" style="margin-top:24px;padding:32px;border:1px dashed #b9c5c0;border-radius:7px;text-align:center;color:#60706a">Nenhum curso publicado no momento. Volte em breve — novo conteúdo está a caminho.</p>' : ''}
             <p class="empty-search" id="home-empty-search">Nenhum curso encontrado para essa busca.</p>
         </main>
