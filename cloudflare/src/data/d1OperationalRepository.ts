@@ -230,6 +230,34 @@ export class D1OperationalRepository {
 
         await this.database.batch(statements);
     }
+
+    public async updateExecutionStep(input: {
+        organizationId: string;
+        executionId: string;
+        executionStepId: string;
+        status: 'pending' | 'completed' | 'skipped';
+        note: string | null;
+        updatedAt: string;
+    }): Promise<boolean> {
+        const result = await this.database.prepare(`
+            UPDATE execution_steps
+            SET status = ?, note = ?, completed_at = ?, updated_at = ?
+            WHERE id = ?
+                AND execution_id IN (
+                    SELECT id FROM executions WHERE id = ? AND organization_id = ? AND status = 'in_progress'
+                )
+        `).bind(
+            input.status,
+            input.note,
+            input.status === 'completed' ? input.updatedAt : null,
+            input.updatedAt,
+            input.executionStepId,
+            input.executionId,
+            input.organizationId,
+        ).run();
+
+        return result.meta.changes > 0;
+    }
 }
 
 function parseMaterials(value: string | null): string[] {

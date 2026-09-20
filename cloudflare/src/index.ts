@@ -236,6 +236,64 @@ async function route(request: Request, env: Env): Promise<Response> {
         }
     }
 
+    const executionStepMatch = path.match(/^\/api\/painel\/execucoes\/([A-Za-z0-9_-]{1,128})\/etapas\/([A-Za-z0-9_-]{1,128})$/);
+    if (executionStepMatch && request.method === 'PATCH') {
+        const session = await privateApiSession(request, env);
+        if (!session) {
+            return privateJson({ error: 'authentication_required' }, 401);
+        }
+
+        const organizationId = organizationIdFrom(url);
+        if (!organizationId || !env.OPERATIONS_DB) {
+            return privateJson({ error: organizationId ? 'operational_data_unavailable' : 'organization_id_required' }, organizationId ? 503 : 400);
+        }
+
+        const executionId = executionStepMatch[1];
+        const executionStepId = executionStepMatch[2];
+        if (!executionId || !executionStepId) {
+            return privateJson({ error: 'execution_step_invalid' }, 400);
+        }
+
+        const memberships = new D1MembershipRepository(env.OPERATIONS_DB);
+        if (!await memberships.canAccessOrganization(session.userId, organizationId)) {
+            return privateJson({ error: 'organization_access_denied' }, 403);
+        }
+
+        const authorization = new D1OperationalAuthorization(env.OPERATIONS_DB, memberships);
+        if (!await authorization.canAccessExecution(session.userId, organizationId, executionId)) {
+            return privateJson({ error: 'execution_access_denied' }, 403);
+        }
+
+        let body: Record<string, unknown>;
+        try {
+            const parsed = await request.json<unknown>();
+            body = parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed as Record<string, unknown> : {};
+        } catch {
+            return privateJson({ error: 'execution_step_invalid' }, 400);
+        }
+
+        const status = body.status;
+        if (status !== 'pending' && status !== 'completed' && status !== 'skipped') {
+            return privateJson({ error: 'execution_step_invalid' }, 400);
+        }
+
+        const note = body.note === undefined || body.note === null ? null : typeof body.note === 'string' ? body.note.trim().slice(0, 2000) : undefined;
+        if (note === undefined) {
+            return privateJson({ error: 'execution_step_invalid' }, 400);
+        }
+
+        const updated = await new D1OperationalRepository(env.OPERATIONS_DB).updateExecutionStep({
+            organizationId,
+            executionId,
+            executionStepId,
+            status,
+            note,
+            updatedAt: new Date().toISOString(),
+        });
+
+        return updated ? privateJson({ data: { id: executionStepId, status } }) : privateJson({ error: 'execution_step_not_found' }, 404);
+    }
+
     const procedureDetailMatch = path.match(/^\/api\/painel\/procedimentos\/([A-Za-z0-9_-]{1,128})$/);
     if (procedureDetailMatch && request.method === 'GET') {
         const session = await privateApiSession(request, env);
