@@ -17,6 +17,15 @@ export interface AdminCatalogCourse {
     durationMinutes: number;
     published: boolean;
     lessonsCount: number;
+    lessons: AdminCatalogLesson[];
+}
+
+export interface AdminCatalogLesson {
+    id: string;
+    title: string;
+    moduleTitle: string;
+    position: number;
+    durationMinutes: number;
 }
 
 export interface AdminAuditEvent {
@@ -44,6 +53,11 @@ interface CatalogRow {
     course_duration_minutes: number | null;
     course_published: number | null;
     lessons_count: number | null;
+    lesson_id: string | null;
+    lesson_title: string | null;
+    lesson_module_title: string | null;
+    lesson_position: number | null;
+    lesson_duration_minutes: number | null;
 }
 
 interface AuditRow {
@@ -76,13 +90,18 @@ export class D1AdminRepository {
                 im.is_published AS module_published, c.id AS course_id, c.slug AS course_slug,
                 c.title AS course_title, c.category AS course_category,
                 c.access_type AS course_access_type, c.duration_minutes AS course_duration_minutes,
-                c.is_published AS course_published, COUNT(l.id) AS lessons_count
+                c.is_published AS course_published,
+                (SELECT COUNT(*) FROM lessons AS lesson_count
+                    INNER JOIN course_modules AS count_module ON count_module.id = lesson_count.course_module_id
+                    WHERE count_module.course_id = c.id) AS lessons_count,
+                l.id AS lesson_id, l.title AS lesson_title,
+                cm.title AS lesson_module_title, l.position AS lesson_position,
+                l.duration_minutes AS lesson_duration_minutes
             FROM instruction_modules AS im
             LEFT JOIN courses AS c ON c.instruction_module_id = im.id
             LEFT JOIN course_modules AS cm ON cm.course_id = c.id
             LEFT JOIN lessons AS l ON l.course_module_id = cm.id
-            GROUP BY im.id, c.id
-            ORDER BY im.position ASC, c.title ASC
+            ORDER BY im.position ASC, c.title ASC, cm.position ASC, l.position ASC
         `).all<CatalogRow>();
 
         const modules = new Map<string, AdminCatalogModule>();
@@ -98,7 +117,8 @@ export class D1AdminRepository {
             };
 
             if (row.course_id && row.course_slug && row.course_title && row.course_category && row.course_access_type) {
-                module.courses.push({
+                const course = module.courses.find((item) => item.id === row.course_id);
+                const target = course ?? {
                     id: row.course_id,
                     slug: row.course_slug,
                     title: row.course_title,
@@ -107,7 +127,22 @@ export class D1AdminRepository {
                     durationMinutes: row.course_duration_minutes ?? 0,
                     published: row.course_published === 1,
                     lessonsCount: row.lessons_count ?? 0,
-                });
+                    lessons: [],
+                };
+
+                if (row.lesson_id && row.lesson_title && row.lesson_module_title && row.lesson_position !== null) {
+                    target.lessons.push({
+                        id: row.lesson_id,
+                        title: row.lesson_title,
+                        moduleTitle: row.lesson_module_title,
+                        position: row.lesson_position,
+                        durationMinutes: row.lesson_duration_minutes ?? 0,
+                    });
+                }
+
+                if (!course) {
+                    module.courses.push(target);
+                }
             }
 
             modules.set(row.module_id, module);
