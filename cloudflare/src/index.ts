@@ -20,6 +20,8 @@ import { renderComoFunciona } from './pages/comoFunciona';
 import { renderServerError } from './pages/serverError';
 import { D1CourseProgressRepository } from './data/courseProgressRepository';
 import { D1CourseEnrollmentRepository } from './data/courseEnrollmentRepository';
+import { D1UserRepository } from './auth/userRepository';
+import { D1CatalogAuthorization } from './auth/catalogAuthorization';
 
 function courseRepositoryFor(env: Env): CourseRepository {
     return env.COURSES_DB ? new D1CourseRepository(env.COURSES_DB) : new MockCourseRepository();
@@ -73,6 +75,17 @@ async function privateApiSession(request: Request, env: Env): Promise<{ userId: 
     return session ? { userId: session.userId } : null;
 }
 
+async function publicationValue(request: Request): Promise<boolean | null> {
+    try {
+        const parsed = await request.json<unknown>();
+
+        return typeof parsed === 'object' && parsed !== null && 'published' in parsed &&
+            typeof parsed.published === 'boolean' ? parsed.published : null;
+    } catch {
+        return null;
+    }
+}
+
 async function handleCourseDetail(slug: string, courseRepository: CourseRepository): Promise<Response> {
     const course = await courseRepository.findCourseBySlug(slug);
 
@@ -90,6 +103,41 @@ async function route(request: Request, env: Env): Promise<Response> {
 
     if (path === '/health') {
         return json({ status: 'ok', service: 'obrapro-worker' });
+    }
+
+    const coursePublicationMatch = path.match(/^\/api\/admin\/cursos\/([^/]+)\/publicacao$/);
+    const modulePublicationMatch = path.match(/^\/api\/admin\/modulos\/([^/]+)\/publicacao$/);
+    if ((coursePublicationMatch || modulePublicationMatch) && request.method === 'PATCH') {
+        const session = await privateApiSession(request, env);
+        if (!session) {
+            return privateJson({ error: 'authentication_required' }, 401);
+        }
+        if (!env.COURSES_DB || !env.AUTH_DB) {
+            return privateJson({ error: 'catalog_data_unavailable' }, 503);
+        }
+        if (!await new D1CatalogAuthorization(new D1UserRepository(env.AUTH_DB)).canManageCatalog(session.userId)) {
+            return privateJson({ error: 'catalog_admin_required' }, 403);
+        }
+
+        const published = await publicationValue(request);
+        const slugOrId = decodeURIComponent((coursePublicationMatch ?? modulePublicationMatch)?.[1] ?? '');
+        if (published === null || !/^[A-Za-z0-9_-]{1,128}$/.test(slugOrId)) {
+            return privateJson({ error: 'invalid_publication_payload' }, 422);
+        }
+
+        const table = coursePublicationMatch ? 'courses' : 'instruction_modules';
+        const key = coursePublicationMatch ? 'slug' : 'slug';
+        const result = await env.COURSES_DB.prepare(`
+            UPDATE ${table}
+            SET is_published = ?, updated_at = ?
+            WHERE ${key} = ?
+        `).bind(published ? 1 : 0, new Date().toISOString(), slugOrId).run();
+
+        if (result.meta.changes !== 1) {
+            return privateJson({ error: 'catalog_item_not_found' }, 404);
+        }
+
+        return privateJson({ data: { slug: slugOrId, published } });
     }
 
     const courseProgressMatch = path.match(/^\/api\/cursos\/([^/]+)\/progresso$/);
