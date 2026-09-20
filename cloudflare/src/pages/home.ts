@@ -16,6 +16,7 @@ const homeStyles = `.home-hero{padding:54px 5vw 30px}.home-hero .eyebrow{color:#
 @media(min-width:640px){.categories{grid-template-columns:repeat(3,1fr)}}
 .category-card{display:flex;flex-direction:column;gap:10px;padding:18px;border-radius:10px;color:#fff;min-height:120px;transition:.15s}
 .category-card:hover{transform:translateY(-2px)}
+.category-card:focus-visible,.section-title a:focus-visible,#home-search:focus-visible{outline:3px solid #1267e8;outline-offset:2px}
 .category-card span.count{font-size:12px;opacity:.85}
 .category-card.outline{color:#10233f;background:#fff;border:1px solid #d9e0dd}
 .section-title{display:flex;align-items:end;justify-content:space-between;gap:12px;margin:44px 0 16px;flex-wrap:wrap}
