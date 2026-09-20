@@ -14,6 +14,10 @@ O middleware aceita correlation ID externo apenas se cumprir formato e tamanho; 
 
 Application logs servem diagnostico e podem ser rotacionados rapidamente. Audit events registram quem fez o que em recurso importante. Security events apoiam deteccao/resposta. Metricas e traces descrevem saude. Cada categoria tem armazenamento, acesso e retencao proprios.
 
+Chamados de suporte recebem apenas contexto diagnostico permitido (rota, user agent,
+versao e correlation ID) com limites de tamanho. Bodies, cookies, tokens, senhas e
+credenciais sao descartados antes da persistencia.
+
 ## Operacao
 
 Alertas devem ser acionaveis e evitar dados pessoais. Falha de envio ao MGL gera log sanitizado e estado de delivery; nao falha a request original. Jobs usam tentativas limitadas e backoff. Eventos esgotados ficam disponiveis para inspecao e reprocessamento autorizado.
