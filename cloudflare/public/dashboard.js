@@ -88,13 +88,20 @@
     }
 
     function updateOrganizations(organizations) {
-        const select = document.querySelector('#support-organization');
-        if (!select) return;
+        const dashboardSelect = document.querySelector('#dashboard-organization');
+        const supportSelect = document.querySelector('#support-organization');
+        if (dashboardSelect) {
+            dashboardSelect.innerHTML = '';
+            dashboardSelect.classList.toggle('hidden', organizations.length < 2);
+        }
+        if (supportSelect) supportSelect.innerHTML = '<option value="">Sem organizacao relacionada</option>';
         organizations.forEach((organization) => {
-            const option = document.createElement('option');
-            option.value = organization.id;
-            option.textContent = organization.name;
-            select.append(option);
+            [dashboardSelect, supportSelect].filter(Boolean).forEach((select) => {
+                const option = document.createElement('option');
+                option.value = organization.id;
+                option.textContent = organization.name;
+                select.append(option);
+            });
         });
     }
 
@@ -104,6 +111,16 @@
         try { body = await response.json(); } catch (_) { }
         if (!response.ok) throw { status: response.status, body };
         return body;
+    }
+
+    async function loadOrganization(organization) {
+        const worksResult = await requestJson(`/api/painel/obras?organization_id=${encodeURIComponent(organization.id)}`);
+        state.works = worksResult.data || [];
+        updateHeader(organization, state.works);
+        renderWorks(state.works);
+        renderOverview(state.works);
+        const dashboardSelect = document.querySelector('#dashboard-organization');
+        if (dashboardSelect) dashboardSelect.value = organization.id;
     }
 
     async function loadPanel() {
@@ -118,14 +135,10 @@
                 message('Sua conta esta ativa, mas ainda nao participa de uma organizacao.', 'info');
                 return;
             }
-            const worksResult = await requestJson(`/api/painel/obras?organization_id=${encodeURIComponent(organization.id)}`);
             state.organizations = organizationsResult.data;
-            state.works = worksResult.data || [];
             state.realData = true;
             updateOrganizations(state.organizations);
-            updateHeader(organization, state.works);
-            renderWorks(state.works);
-            renderOverview(state.works);
+            await loadOrganization(organization);
             renderUnsupportedViews();
             message('Dados da sua organizacao carregados com seguranca.', 'success');
         } catch (error) {
@@ -178,6 +191,17 @@
     }
 
     navigation.forEach((button) => button.addEventListener('click', () => showView(button.dataset.dashboardGo)));
+    document.querySelector('#dashboard-organization')?.addEventListener('change', async (event) => {
+        const organization = state.organizations.find((item) => item.id === event.target.value);
+        if (!organization) return;
+        message('Carregando dados da organizacao...', 'success');
+        try {
+            await loadOrganization(organization);
+            message('Dados da sua organizacao carregados com seguranca.', 'success');
+        } catch (_) {
+            message('Nao foi possivel trocar de organizacao agora. Tente novamente.', 'error');
+        }
+    });
     configureSupport();
     showView('overview');
     loadPanel();
