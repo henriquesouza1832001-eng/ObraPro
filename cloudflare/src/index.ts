@@ -905,8 +905,10 @@ async function route(request: Request, env: Env): Promise<Response> {
     if (path === '/cursos') {
         const courses = await courseRepository.listCourses();
         const category = url.searchParams.get('categoria') ?? undefined;
+        const accessParam = url.searchParams.get('acesso');
+        const access = accessParam === 'free' || accessParam === 'premium' ? accessParam : undefined;
 
-        return withSecurityHeaders(html(renderCourseCatalog(courses, category)));
+        return withSecurityHeaders(html(renderCourseCatalog(courses, category, access)));
     }
 
     const lessonPageMatch = path.match(/^\/cursos\/([^/]+)\/aulas\/([^/]+)$/);
