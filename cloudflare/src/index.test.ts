@@ -278,6 +278,31 @@ describe('rotas publicas do Worker', () => {
         expect(body).toContain('Curso não encontrado');
     });
 
+    it('GET /cursos/:slug/aulas/:lessonId valido retorna 200 com a pagina da aula', async () => {
+        const response = await worker.fetch(get('/cursos/planejamento-da-obra/aulas/mock-lesson-1-1'), baseEnv());
+        const body = await response.text();
+
+        expect(response.status).toBe(200);
+        expect(body).toContain('O que você precisa saber');
+        expect(body).toContain('var lessonId = "mock-lesson-1-1"');
+    });
+
+    it('GET /cursos/:slug/aulas/:lessonId com aula inexistente retorna 404 real', async () => {
+        const response = await worker.fetch(get('/cursos/planejamento-da-obra/aulas/aula-que-nao-existe'), baseEnv());
+        const body = await response.text();
+
+        expect(response.status).toBe(404);
+        expect(body).toContain('Aula não encontrada');
+    });
+
+    it('GET /cursos/:slug/aulas/:lessonId com curso inexistente retorna 404 real', async () => {
+        const response = await worker.fetch(get('/cursos/slug-que-nao-existe/aulas/mock-lesson-1-1'), baseEnv());
+        const body = await response.text();
+
+        expect(response.status).toBe(404);
+        expect(body).toContain('Curso não encontrado');
+    });
+
     it('todas as respostas renderizadas trazem os headers de seguranca minimos', async () => {
         const response = await worker.fetch(get('/cursos'), baseEnv());
 
