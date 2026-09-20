@@ -22,6 +22,11 @@ Evidencias aceitam somente JPEG, PNG, WebP ou PDF ate 10 MiB, com checksum SHA-2
 hexadecimal validado. O download exige membership ativa e status `available`; o
 objeto fica privado no R2 e somente a metadata sanitizada permanece no D1.
 
+As APIs privadas do Worker exigem sessao D1 real e respondem com `Cache-Control:
+no-store`, inclusive em negacoes e falhas internas. Organizacoes e obras sao lidas
+somente apos validar a membership; chamados pertencem ao proprio solicitante;
+upload de evidencia confirma a etapa da execucao antes de gravar no R2.
+
 O sistema aplica deny-by-default, validacao e autorizacao server-side, CSRF do framework, escaping por padrao, queries parametrizadas, sessoes regeneradas, hash de senha suportado e rate limiting. Producao exige HTTPS, `APP_DEBUG=false`, cookies `Secure`, `HttpOnly` e `SameSite` apropriado.
 
 Headers iniciais: `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, protecao contra framing via CSP `frame-ancestors` ou `X-Frame-Options`, e CSP incremental depois de inventariar assets. HSTS so deve ser habilitado quando todo o dominio estiver em HTTPS.

@@ -31,6 +31,7 @@ O dispositivo e a rede sao nao confiaveis. Cada organizacao e uma fronteira logi
 | Usuario nega mudanca administrativa | Repudiation | audit event imutavel e correlation ID |
 | IDOR e vazamento cross-tenant | Information disclosure | Policy por recurso, escopo tenant, testes negativos |
 | Upload malicioso/MIME spoofing | Tampering/DoS | limites, MIME real, storage privado, quarentena |
+| Evidencia de outro tenant ou cache privado | Information disclosure | membership ativa, escopo por organizacao, chave R2 privada e `no-store` |
 | Fila/MGL indisponivel | Denial of service | outbox, retry limitado, operacao local independente |
 | Log contem token ou PII | Information disclosure | allowlist, redacao, testes e acesso restrito |
 | QR Code concede acesso indevido | Elevation | identificador opaco, expiracao/revogacao, Policy |

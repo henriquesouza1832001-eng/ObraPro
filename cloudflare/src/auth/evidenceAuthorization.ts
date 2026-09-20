@@ -20,4 +20,20 @@ export class D1EvidenceAuthorization {
 
         return row !== null;
     }
+
+    public async canUpload(userId: string, organizationId: string, executionStepId: string): Promise<boolean> {
+        if (!await this.memberships.canAccessOrganization(userId, organizationId)) {
+            return false;
+        }
+
+        const row = await this.database.prepare(`
+            SELECT execution_steps.id
+            FROM execution_steps
+            INNER JOIN executions ON executions.id = execution_steps.execution_id
+            WHERE execution_steps.id = ? AND executions.organization_id = ?
+            LIMIT 1
+        `).bind(executionStepId, organizationId).first<{ id: string }>();
+
+        return row !== null;
+    }
 }

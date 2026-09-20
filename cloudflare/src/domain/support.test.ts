@@ -30,5 +30,6 @@ describe('validateSupportTicket', () => {
     it('rejeita texto vazio ou acima do limite', () => {
         expect(() => validateSupportTicket({ ...input, title: ' ' })).toThrow('support_ticket_required_fields');
         expect(() => validateSupportTicket({ ...input, description: 'x'.repeat(5001) })).toThrow('support_ticket_text_too_long');
+        expect(() => validateSupportTicket({ ...input, category: 'arbitrary' as 'bug' })).toThrow('support_ticket_selection_invalid');
     });
 });

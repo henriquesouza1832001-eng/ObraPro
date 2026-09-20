@@ -16,6 +16,13 @@ export interface OrganizationMembership {
     status: MembershipStatus;
 }
 
+export interface ActiveOrganization {
+    id: string;
+    name: string;
+    slug: string;
+    role: MembershipRole;
+}
+
 export interface AuthSession {
     id: string;
     userId: string;
