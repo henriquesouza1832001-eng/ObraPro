@@ -15,6 +15,7 @@ import { D1EvidenceRepository } from './data/d1EvidenceRepository';
 import { detectEvidenceMimeType, sha256Checksum, validateEvidenceUpload } from './domain/evidence';
 import type { CourseRepository } from './data/course';
 import { renderCourseCatalog, renderCourseDetail, renderCourseNotFound } from './pages/courses';
+import { renderLessonDetail, renderLessonNotFound, flattenLessons } from './pages/lesson';
 import { renderLearningHome } from './pages/home';
 import { renderComoFunciona } from './pages/comoFunciona';
 import { renderServerError } from './pages/serverError';
@@ -95,6 +96,25 @@ async function handleCourseDetail(slug: string, courseRepository: CourseReposito
     }
 
     return html(renderCourseDetail(course, await courseRepository.findModulesByCourseSlug(slug)));
+}
+
+async function handleLessonDetail(slug: string, lessonId: string, courseRepository: CourseRepository): Promise<Response> {
+    const course = await courseRepository.findCourseBySlug(slug);
+
+    if (!course) {
+        return html(renderCourseNotFound(), 404);
+    }
+
+    const modules = await courseRepository.findModulesByCourseSlug(slug);
+    const flat = flattenLessons(modules);
+    const index = flat.findIndex((lesson) => lesson.id === lessonId);
+    const current = flat[index];
+
+    if (index === -1 || !current) {
+        return html(renderLessonNotFound(course), 404);
+    }
+
+    return html(renderLessonDetail(course, current, flat[index - 1] ?? null, flat[index + 1] ?? null));
 }
 
 async function route(request: Request, env: Env): Promise<Response> {
@@ -734,6 +754,11 @@ async function route(request: Request, env: Env): Promise<Response> {
         const category = url.searchParams.get('categoria') ?? undefined;
 
         return withSecurityHeaders(html(renderCourseCatalog(courses, category)));
+    }
+
+    const lessonPageMatch = path.match(/^\/cursos\/([^/]+)\/aulas\/([^/]+)$/);
+    if (lessonPageMatch && lessonPageMatch[1] && lessonPageMatch[2]) {
+        return withSecurityHeaders(await handleLessonDetail(lessonPageMatch[1], lessonPageMatch[2], courseRepository));
     }
 
     if (path.startsWith('/cursos/')) {
