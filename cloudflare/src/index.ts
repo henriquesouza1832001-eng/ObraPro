@@ -9,6 +9,25 @@ import type { CourseRepository } from './data/course';
 import { renderCourseCatalog, renderCourseDetail, renderCourseNotFound } from './pages/courses';
 import { renderComoFunciona } from './pages/comoFunciona';
 import { renderServerError } from './pages/serverError';
+import { renderSupportForm, renderSupportConfirmation, renderSupportNotFound } from './pages/support';
+import { getAuthenticatedUserId } from './auth/currentUser';
+import { D1SupportTicketRepository } from './auth/supportTicketRepository';
+import { validateSupportTicket, type SupportCategory, type SupportPriority } from './domain/support';
+
+const supportCategories: readonly SupportCategory[] = ['bug', 'content', 'account', 'other'];
+const supportPriorities: readonly SupportPriority[] = ['low', 'normal', 'high'];
+
+function parseSupportCategory(value: unknown): SupportCategory {
+    const candidate = String(value ?? '');
+
+    return (supportCategories as readonly string[]).includes(candidate) ? candidate as SupportCategory : 'other';
+}
+
+function parseSupportPriority(value: unknown): SupportPriority {
+    const candidate = String(value ?? '');
+
+    return (supportPriorities as readonly string[]).includes(candidate) ? candidate as SupportPriority : 'normal';
+}
 
 function courseRepositoryFor(env: Env): CourseRepository {
     return env.COURSES_DB ? new D1CourseRepository(env.COURSES_DB) : new MockCourseRepository();
@@ -121,6 +140,71 @@ async function route(request: Request, env: Env): Promise<Response> {
         return new Response('Not found', { status: 404 });
     }
 
+    if (path === '/chamados' && request.method === 'GET') {
+        const userId = await getAuthenticatedUserId(request, env);
+
+        if (!userId) {
+            return redirect('/entrar');
+        }
+
+        return withSecurityHeaders(html(renderSupportForm()));
+    }
+
+    if (path === '/chamados' && request.method === 'POST') {
+        const userId = await getAuthenticatedUserId(request, env);
+
+        if (!userId) {
+            return redirect('/entrar');
+        }
+
+        const form = await request.formData();
+        const friendlyErrors: Record<string, string> = {
+            support_ticket_required_fields: 'Preencha o título e a descrição antes de enviar.',
+            support_ticket_text_too_long: 'Título ou descrição muito longos. Reduza o texto e tente novamente.',
+        };
+
+        try {
+            const ticket = validateSupportTicket({
+                id: crypto.randomUUID(),
+                userId,
+                organizationId: null,
+                title: String(form.get('title') ?? ''),
+                description: String(form.get('description') ?? ''),
+                category: parseSupportCategory(form.get('category')),
+                priority: parseSupportPriority(form.get('priority')),
+                route: '/chamados',
+                correlationId: crypto.randomUUID(),
+                sessionContext: { user_agent: request.headers.get('User-Agent') ?? undefined },
+                createdAt: new Date().toISOString(),
+            });
+
+            await new D1SupportTicketRepository(env.AUTH_DB as NonNullable<Env['AUTH_DB']>).create(ticket);
+
+            return redirect(`/chamados/${ticket.id}`);
+        } catch (error) {
+            const message = error instanceof Error ? friendlyErrors[error.message] : undefined;
+
+            return withSecurityHeaders(html(renderSupportForm({ errorMessage: message ?? 'Não foi possível registrar o chamado agora. Tente novamente.' }), message ? 422 : 500));
+        }
+    }
+
+    if (path.startsWith('/chamados/')) {
+        const userId = await getAuthenticatedUserId(request, env);
+
+        if (!userId) {
+            return redirect('/entrar');
+        }
+
+        const ticketId = path.slice('/chamados/'.length).replace(/\/$/, '');
+        const ticket = await new D1SupportTicketRepository(env.AUTH_DB as NonNullable<Env['AUTH_DB']>).findForUser(userId, ticketId);
+
+        if (!ticket) {
+            return withSecurityHeaders(html(renderSupportNotFound(), 404));
+        }
+
+        return withSecurityHeaders(html(renderSupportConfirmation(ticket.id, ticket.status)));
+    }
+
     return withSecurityHeaders(await env.ASSETS.fetch(request));
 }
 
@@ -129,7 +213,7 @@ async function route(request: Request, env: Env): Promise<Response> {
  * cair na pagina de erro sanitizada em vez de vazar uma excecao nao tratada
  * quando o repositorio de dados (mock hoje, D1 depois) falhar.
  */
-const renderedRoutePrefixes = ['/como-funciona', '/cursos'];
+const renderedRoutePrefixes = ['/como-funciona', '/cursos', '/chamados'];
 
 export default {
     async fetch(request: Request, env: Env): Promise<Response> {

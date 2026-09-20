@@ -21,6 +21,7 @@ interface FakeSessionRow {
  */
 function createFakeAuthDatabase(user: { id: string; name: string; email: string; passwordHash: string }): NonNullable<Env['AUTH_DB']> {
     const sessions = new Map<string, FakeSessionRow>();
+    const tickets = new Map<string, Record<string, unknown>>();
 
     return {
         prepare(sql: string) {
@@ -50,6 +51,13 @@ function createFakeAuthDatabase(user: { id: string; name: string; email: string;
                         return row as unknown as T;
                     }
 
+                    if (sql.includes('FROM support_tickets')) {
+                        const [ticketId, userId] = bound.args as [string, string];
+                        const row = tickets.get(ticketId);
+
+                        return (row && row.user_id === userId ? row : null) as T | null;
+                    }
+
                     return null;
                 },
                 run: async () => {
@@ -72,6 +80,16 @@ function createFakeAuthDatabase(user: { id: string; name: string; email: string;
                         for (const row of sessions.values()) {
                             row.last_seen_at = String(bound.args[0]);
                         }
+                    }
+
+                    if (sql.includes('INSERT INTO support_tickets')) {
+                        const [id, userId, organizationId, title, description, category, priority, route, correlationId, sessionContextJson, createdAt] = bound.args as string[];
+
+                        tickets.set(String(id), {
+                            id, user_id: userId, organization_id: organizationId, title, description,
+                            category, priority, status: 'open', route, correlation_id: correlationId,
+                            session_context_json: sessionContextJson, created_at: createdAt, updated_at: createdAt,
+                        });
                     }
 
                     return {} as unknown;
@@ -305,5 +323,88 @@ describe('login/logout real via D1 (CF3-C1/C2)', () => {
 
         expect(depoisDoLogout.status).toBe(303);
         expect(depoisDoLogout.headers.get('Location')).toBe('/entrar');
+    });
+});
+
+describe('chamados de suporte via D1 (CF5-C1/C2)', () => {
+    async function loginAndGetCookie(env: Env): Promise<string> {
+        const form = new URLSearchParams({ email: 'ana@example.com', password: 'senha-super-secreta' });
+        const response = await worker.fetch(new Request('https://obrapro.test/entrar', { method: 'POST', body: form, headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }), env);
+
+        return cookieFromSetCookie(response);
+    }
+
+    it('GET /chamados sem sessao redireciona para /entrar', async () => {
+        const authDb = createFakeAuthDatabase({ id: 'user-1', name: 'Ana', email: 'ana@example.com', passwordHash: await hashPassword('senha-super-secreta') });
+        const response = await worker.fetch(get('/chamados'), baseEnv({ AUTH_DB: authDb }));
+
+        expect(response.status).toBe(303);
+        expect(response.headers.get('Location')).toBe('/entrar');
+    });
+
+    it('GET /chamados com sessao valida mostra o formulario', async () => {
+        const authDb = createFakeAuthDatabase({ id: 'user-1', name: 'Ana', email: 'ana@example.com', passwordHash: await hashPassword('senha-super-secreta') });
+        const env = baseEnv({ AUTH_DB: authDb });
+        const cookie = await loginAndGetCookie(env);
+
+        const response = await worker.fetch(new Request('https://obrapro.test/chamados', { headers: { Cookie: cookie } }), env);
+        const body = await response.text();
+
+        expect(response.status).toBe(200);
+        expect(body).toContain('Abrir chamado');
+    });
+
+    it('POST /chamados com dados validos cria o chamado e redireciona para a confirmacao', async () => {
+        const authDb = createFakeAuthDatabase({ id: 'user-1', name: 'Ana', email: 'ana@example.com', passwordHash: await hashPassword('senha-super-secreta') });
+        const env = baseEnv({ AUTH_DB: authDb });
+        const cookie = await loginAndGetCookie(env);
+
+        const form = new URLSearchParams({ title: 'Não consigo abrir um curso', description: 'A tela fica em branco ao clicar em "ver curso".', category: 'bug', priority: 'high' });
+        const response = await worker.fetch(new Request('https://obrapro.test/chamados', { method: 'POST', body: form, headers: { 'Content-Type': 'application/x-www-form-urlencoded', Cookie: cookie } }), env);
+
+        expect(response.status).toBe(303);
+        expect(response.headers.get('Location')).toMatch(/^\/chamados\/.+/);
+    });
+
+    it('POST /chamados sem titulo retorna 422 com mensagem clara, sem criar o chamado', async () => {
+        const authDb = createFakeAuthDatabase({ id: 'user-1', name: 'Ana', email: 'ana@example.com', passwordHash: await hashPassword('senha-super-secreta') });
+        const env = baseEnv({ AUTH_DB: authDb });
+        const cookie = await loginAndGetCookie(env);
+
+        const form = new URLSearchParams({ title: '', description: 'Descricao sem titulo', category: 'bug', priority: 'normal' });
+        const response = await worker.fetch(new Request('https://obrapro.test/chamados', { method: 'POST', body: form, headers: { 'Content-Type': 'application/x-www-form-urlencoded', Cookie: cookie } }), env);
+        const body = await response.text();
+
+        expect(response.status).toBe(422);
+        expect(body).toContain('role="alert"');
+        expect(body).toContain('Preencha o título e a descrição');
+    });
+
+    it('criar o chamado e depois consultar por GET /chamados/:id devolve o mesmo chamado ao dono', async () => {
+        const authDb = createFakeAuthDatabase({ id: 'user-1', name: 'Ana', email: 'ana@example.com', passwordHash: await hashPassword('senha-super-secreta') });
+        const env = baseEnv({ AUTH_DB: authDb });
+        const cookie = await loginAndGetCookie(env);
+
+        const form = new URLSearchParams({ title: 'Duvida sobre certificado', description: 'Quando recebo o certificado do curso gratuito?', category: 'content', priority: 'low' });
+        const creation = await worker.fetch(new Request('https://obrapro.test/chamados', { method: 'POST', body: form, headers: { 'Content-Type': 'application/x-www-form-urlencoded', Cookie: cookie } }), env);
+        const ticketPath = creation.headers.get('Location') as string;
+
+        const detail = await worker.fetch(new Request(`https://obrapro.test${ticketPath}`, { headers: { Cookie: cookie } }), env);
+        const body = await detail.text();
+
+        expect(detail.status).toBe(200);
+        expect(body).toContain('Recebemos seu chamado');
+    });
+
+    it('GET /chamados/:id inexistente retorna 404 sem vazar detalhe interno', async () => {
+        const authDb = createFakeAuthDatabase({ id: 'user-1', name: 'Ana', email: 'ana@example.com', passwordHash: await hashPassword('senha-super-secreta') });
+        const env = baseEnv({ AUTH_DB: authDb });
+        const cookie = await loginAndGetCookie(env);
+
+        const response = await worker.fetch(new Request('https://obrapro.test/chamados/nao-existe', { headers: { Cookie: cookie } }), env);
+        const body = await response.text();
+
+        expect(response.status).toBe(404);
+        expect(body).toContain('Chamado não encontrado');
     });
 });

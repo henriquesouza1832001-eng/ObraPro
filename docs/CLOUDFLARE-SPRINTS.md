@@ -94,16 +94,16 @@ Nenhum agente edita as pastas reservadas do outro. Claude nao edita `cloudflare/
 
 **Objetivo:** upload privado de evidencias e central de chamados no Worker.
 
-| Card | Dono | Descricao |
-|---|---|---|
-| CF5-D1 | Codex | Binding R2, contrato de evidencia (storage key, checksum, MIME validado), download autorizado por Policy. |
-| CF5-D2 | Codex | Migration e contrato de chamados de suporte com contexto sanitizado. |
-| CF5-C1 | Claude | Tela de upload/anexo de evidencia (captura, preview, estado de envio) e tela de abertura/acompanhamento de chamado. |
-| CF5-C2 | Claude | Estado de fila offline-friendly na interface (pendente, enviando, concluido, falha) conforme `docs/PWA.md`. |
+| Card | Dono | Descricao | Status |
+|---|---|---|---|
+| CF5-D1 | Codex | Binding R2, contrato de evidencia (storage key, checksum, MIME validado), download autorizado por Policy. | Feito em parte: `domain/evidence.ts` (`validateEvidenceUpload`, calculo deterministico de `storageKey`) e `auth/evidenceAuthorization.ts` (`canDownload`) existem; **nao ha repositorio de persistencia** (nenhum `create`/insert de metadata de evidencia em D1) nem rota de upload real. |
+| CF5-D2 | Codex | Migration e contrato de chamados de suporte com contexto sanitizado. | Feito: migration `0006_support_tickets.sql`, `domain/support.ts` (`validateSupportTicket`, `sanitizeSupportContext`) e `auth/supportTicketRepository.ts` (`D1SupportTicketRepository.create`/`findForUser`) prontos e utilizados pela camada visual. |
+| CF5-C1 | Claude | Tela de upload/anexo de evidencia (captura, preview, estado de envio) e tela de abertura/acompanhamento de chamado. | Feito **so a parte de chamados**: `cloudflare/src/pages/support.ts` + rotas `/chamados` (GET formulario, POST criar, GET `/chamados/:id` acompanhar) exigindo sessao real via novo helper `auth/currentUser.ts` (`getAuthenticatedUserId`, construido sobre o `D1SessionStore` ja publicado pelo Codex, sem duplicar logica de autenticacao nem tocar `realSession.ts`). **Upload de evidencia continua bloqueado**: alem de faltar o repositorio de persistencia (ver CF5-D1), a evidencia e ligada a um `executionStepId` que so existiria via o repositorio operacional do CF4 (tambem nao publicado) — nao ha como escolher "para qual execucao" anexar uma evidencia sem inventar esse dado. |
+| CF5-C2 | Claude | Estado de fila offline-friendly na interface (pendente, enviando, concluido, falha) conforme `docs/PWA.md`. | Feito para o formulario de chamados: submissao funciona sem JavaScript (POST tradicional); quando `navigator.onLine` e falso, o chamado fica em fila no `localStorage` e e reenviado automaticamente no evento `online`, com os quatro estados (pendente/enviando/concluido/falha) exibidos de forma acessivel (`role="status"`/`role="alert"`). Nao se aplica a evidencias ainda, pelo mesmo motivo do CF5-C1. |
 
-**Testes:** upload valido/invalido, download bloqueado entre organizacoes, chamado criado e visivel para o solicitante.
+**Testes:** `npm run worker:typecheck`, `npm run worker:test` (50/50, incluindo 14 novos testes de chamados: renderizacao do formulario/fila offline, criacao com sucesso, validacao de titulo/descricao vazios, consulta do proprio chamado, 404 para chamado inexistente/de outro usuario), `npm run worker:build`; teste manual via `wrangler dev` confirmando que `/chamados` sem sessao redireciona para `/entrar` e as demais rotas publicas continuam intactas.
 
-**Aceite:** evidencia e chamado funcionam ponta a ponta no Worker, sem expor o binario publicamente.
+**Aceite:** chamado funciona ponta a ponta no Worker (abrir, confirmar, consultar), restrito ao proprio usuario. Evidencia **nao** funciona ponta a ponta ainda — falta repositorio de persistencia (Codex) e o repositorio operacional do CF4 (Codex) para saber a qual execucao anexar o arquivo; nenhum binario e exposto publicamente porque nada e aceito ainda.
 
 ## Sprint CF-6 — Painel administrativo, auditoria e security events
 
