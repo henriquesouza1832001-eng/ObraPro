@@ -14,6 +14,14 @@ export interface Course {
     priceCents: number | null;
     modulesCount: number;
     durationMinutes: number;
+    instructionModule?: InstructionModuleSummary | null;
+}
+
+export interface InstructionModuleSummary {
+    slug: string;
+    title: string;
+    description: string;
+    position: number;
 }
 
 export interface CourseModule {

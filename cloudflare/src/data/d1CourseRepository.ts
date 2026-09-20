@@ -9,6 +9,10 @@ interface CourseRow {
     price_cents: number | null;
     duration_minutes: number;
     module_count: number;
+    instruction_module_slug: string | null;
+    instruction_module_title: string | null;
+    instruction_module_description: string | null;
+    instruction_module_position: number | null;
 }
 
 interface ModuleRow {
@@ -32,6 +36,12 @@ function mapCourse(row: CourseRow): Course {
         priceCents: row.price_cents,
         modulesCount: row.module_count,
         durationMinutes: row.duration_minutes,
+        instructionModule: row.instruction_module_slug ? {
+            slug: row.instruction_module_slug,
+            title: row.instruction_module_title ?? '',
+            description: row.instruction_module_description ?? '',
+            position: row.instruction_module_position ?? 0,
+        } : null,
     };
 }
 
@@ -41,9 +51,12 @@ export class D1CourseRepository implements CourseRepository {
     public async listCourses(): Promise<Course[]> {
         const result = await this.database.prepare(`
             SELECT c.slug, c.category, c.title, c.description, c.access_type,
-                c.price_cents, c.duration_minutes, COUNT(cm.id) AS module_count
+                c.price_cents, c.duration_minutes, COUNT(cm.id) AS module_count,
+                im.slug AS instruction_module_slug, im.title AS instruction_module_title,
+                im.description AS instruction_module_description, im.position AS instruction_module_position
             FROM courses AS c
             LEFT JOIN course_modules AS cm ON cm.course_id = c.id
+            LEFT JOIN instruction_modules AS im ON im.id = c.instruction_module_id AND im.is_published = 1
             WHERE c.is_published = 1
             GROUP BY c.id
             ORDER BY c.is_featured DESC, c.category ASC, c.title ASC
@@ -55,9 +68,12 @@ export class D1CourseRepository implements CourseRepository {
     public async findCourseBySlug(slug: string): Promise<Course | null> {
         const result = await this.database.prepare(`
             SELECT c.slug, c.category, c.title, c.description, c.access_type,
-                c.price_cents, c.duration_minutes, COUNT(cm.id) AS module_count
+                c.price_cents, c.duration_minutes, COUNT(cm.id) AS module_count,
+                im.slug AS instruction_module_slug, im.title AS instruction_module_title,
+                im.description AS instruction_module_description, im.position AS instruction_module_position
             FROM courses AS c
             LEFT JOIN course_modules AS cm ON cm.course_id = c.id
+            LEFT JOIN instruction_modules AS im ON im.id = c.instruction_module_id AND im.is_published = 1
             WHERE c.slug = ? AND c.is_published = 1
             GROUP BY c.id
             LIMIT 1
