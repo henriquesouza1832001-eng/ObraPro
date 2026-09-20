@@ -1,5 +1,6 @@
 (() => {
-    const state = { organizations: [], works: [], procedures: [], realData: false, currentProcedure: null, execution: null };
+    const state = { organizations: [], works: [], procedures: [], realData: false, currentProcedure: null, execution: null, categoryFilter: null, searchQuery: '' };
+    const knownCategories = ['fundacoes', 'alvenaria', 'hidraulica', 'eletrica', 'acabamentos'];
     const views = [...document.querySelectorAll('[data-dashboard-view]')];
     const navigation = [...document.querySelectorAll('[data-dashboard-go]')];
     const header = document.querySelector('header');
@@ -97,13 +98,51 @@
         return stageLabels[String(stage ?? '').toLowerCase()] || (stage ? escapeHtml(stage) : 'Outros');
     }
 
-    function renderProcedures(procedures) {
+    function categoryKey(stage) {
+        const normalized = String(stage ?? '').toLowerCase();
+        return knownCategories.includes(normalized) ? normalized : 'outros';
+    }
+
+    function updateCategoryCounts(procedures) {
+        const counts = { fundacoes: 0, alvenaria: 0, hidraulica: 0, eletrica: 0, acabamentos: 0, outros: 0 };
+        procedures.forEach((procedure) => { counts[categoryKey(procedure.stage)] += 1; });
+        Object.entries(counts).forEach(([key, count]) => {
+            const badge = document.querySelector(`[data-category-count="${key}"]`);
+            if (badge) badge.textContent = count === 1 ? '1 procedimento' : `${count} procedimentos`;
+        });
+    }
+
+    function filteredProcedures() {
+        return state.procedures.filter((procedure) => {
+            const matchesCategory = !state.categoryFilter || categoryKey(procedure.stage) === state.categoryFilter;
+            const query = state.searchQuery.trim().toLowerCase();
+            const matchesSearch = !query || procedure.title.toLowerCase().includes(query) || procedure.summary.toLowerCase().includes(query);
+            return matchesCategory && matchesSearch;
+        });
+    }
+
+    function applyProcedureFilters() {
+        const clearButton = document.querySelector('#procedures-clear-filter');
+        const summary = document.querySelector('#procedures-summary');
+        const hasFilter = Boolean(state.categoryFilter || state.searchQuery.trim());
+        if (clearButton) clearButton.classList.toggle('hidden', !hasFilter);
+        if (summary && hasFilter) {
+            const parts = [];
+            if (state.categoryFilter) parts.push(stageLabel(state.categoryFilter));
+            if (state.searchQuery.trim()) parts.push(`busca "${state.searchQuery.trim()}"`);
+            summary.textContent = `Filtrando por ${parts.join(' e ')}`;
+        }
+        renderProcedures(filteredProcedures(), { hasFilter });
+    }
+
+    function renderProcedures(procedures, { hasFilter = false } = {}) {
         const container = document.querySelector('#procedures-list');
         const summary = document.querySelector('#procedures-summary');
         if (!container) return;
-        if (summary) summary.textContent = procedures.length === 1 ? '1 procedimento publicado' : `${procedures.length} procedimentos publicados`;
+        updateCategoryCounts(state.procedures);
+        if (!hasFilter && summary) summary.textContent = procedures.length === 1 ? '1 procedimento publicado' : `${procedures.length} procedimentos publicados`;
         if (procedures.length === 0) {
-            renderListState(container, 'empty', 'Nenhum procedimento publicado ainda nesta organizacao.');
+            renderListState(container, 'empty', hasFilter ? 'Nenhum procedimento encontrado para este filtro.' : 'Nenhum procedimento publicado ainda nesta organizacao.');
             return;
         }
         const groups = new Map();
@@ -159,8 +198,9 @@
         try {
             const result = await requestJson(`/api/painel/procedimentos?organization_id=${encodeURIComponent(organizationId)}`);
             state.procedures = result.data || [];
-            renderProcedures(state.procedures);
+            applyProcedureFilters();
         } catch (error) {
+            updateCategoryCounts([]);
             renderListState(proceduresContainer, 'error', operationalErrorMessageFor(error));
         }
         try {
@@ -355,8 +395,10 @@
     function updateHeader(organization, works) {
         const title = document.querySelector('header h1');
         const location = document.querySelector('header p:last-of-type');
+        const currentStep = document.querySelector('#home-current-step');
         if (title) title.textContent = organization.name;
         if (location) location.textContent = works[0] ? [works[0].city, works[0].state].filter(Boolean).join(', ') || 'Obra selecionada' : 'Nenhuma obra ativa';
+        if (currentStep) currentStep.textContent = works[0] ? `Voce esta em ${organization.name} - ${works[0].name}` : `Voce esta em ${organization.name}. Escolha um servico para comecar.`;
     }
 
     function updateOrganizations(organizations) {
@@ -402,6 +444,7 @@
             const organization = organizationsResult.data?.[0];
             if (!organization) {
                 state.realData = true;
+                state.procedures = [];
                 renderWorks([]);
                 renderOverview([]);
                 renderProcedures([]);
@@ -418,6 +461,7 @@
             message('Dados da sua organizacao carregados com seguranca.', 'success');
         } catch (error) {
             if (error.status === 401) {
+                updateCategoryCounts([]);
                 renderListState(document.querySelector('#procedures-list'), 'demo', 'Voce esta vendo uma demonstracao. Procedimentos reais aparecem apos login com uma conta da organizacao.');
                 renderListState(document.querySelector('#checklists-list'), 'demo', 'Voce esta vendo uma demonstracao. Checklists reais aparecem apos login com uma conta da organizacao.');
                 message('Voce esta vendo uma demonstracao. Dados operacionais reais aparecem apos login com uma conta da organizacao.', 'demo');
@@ -519,6 +563,22 @@
             renderExecutionConclusion();
             return;
         }
+        const categoryButton = event.target.closest('[data-category-filter]');
+        if (categoryButton) {
+            state.categoryFilter = categoryButton.dataset.categoryFilter;
+            showView('procedures');
+            applyProcedureFilters();
+            return;
+        }
+        const clearFilterButton = event.target.closest('#procedures-clear-filter');
+        if (clearFilterButton) {
+            state.categoryFilter = null;
+            state.searchQuery = '';
+            const searchInput = document.querySelector('#service-search');
+            if (searchInput) searchInput.value = '';
+            applyProcedureFilters();
+            return;
+        }
         const goButton = event.target.closest('[data-dashboard-go]');
         if (goButton) {
             showView(goButton.dataset.dashboardGo);
@@ -528,6 +588,12 @@
         const noteField = event.target.closest('[data-execution-note]');
         if (noteField && state.execution) {
             state.execution.steps[Number(noteField.dataset.executionNote)].note = noteField.value;
+            return;
+        }
+        if (event.target.id === 'service-search') {
+            state.searchQuery = event.target.value;
+            if (state.searchQuery.trim()) showView('procedures');
+            applyProcedureFilters();
         }
     });
     document.querySelector('#dashboard-organization')?.addEventListener('change', async (event) => {

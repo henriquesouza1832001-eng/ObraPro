@@ -131,7 +131,7 @@ Este lote foi autorizado pelo responsavel em 2026-09-19. A CF6 esta em andamento
 | Card | Dono | Descricao |
 |---|---|---|
 | CF7-D1 | Codex | Rotas para procedimentos, etapas, checklists e execucoes com validacao transacional, versionamento e autorizacao por tenant. |
-| CF7-C1 | Claude | Telas mobile de procedimento, checklist e conclusao com uma acao principal por tela e retomada de progresso. |
+| CF7-C1 | Claude | Telas mobile de procedimento, checklist e conclusao com uma acao principal por tela e retomada de progresso. | Feito (ver tambem CF4-C1): passo a passo, checklist com persistencia real e conclusao existem. Adicionado nesta entrega: home fiel ao mockup na view "overview" do painel — saudacao, "etapa atual" com organizacao/obra reais, busca por servico e seis cards de categoria coloridos com contagem real de procedimentos, navegando para a lista filtrada. Icones trocados de Unicode para SVG inline. **Nao feito**: retomada de progresso entre sessoes (nao ha listagem de execucoes anteriores no contrato ainda) e a captura/registro de evidencia por etapa. |
 | CF7-C2 | Claude | Exibir erros de validacao e indisponibilidade com acao de tentar novamente, sem perder dados ja confirmados. |
 
 **Testes:** inicio/conclusao de execucao, etapa obrigatoria, reabertura autorizada, concorrencia basica, tenant cruzado e leitura em viewport mobile.
