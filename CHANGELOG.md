@@ -12,6 +12,7 @@ Todas as mudancas relevantes do ObraPro sao registradas aqui. O formato segue Ke
 
 - CF4-D1: migration D1 incremental do nucleo operacional (obras, procedimentos, etapas, checklists e execucoes) e contratos de dominio tenant-scoped.
 - CF4-D2: autorizacao de recursos operacionais por membership ativa e `organization_id`, com testes de isolamento entre tenants.
+- CF5-D1: contrato de evidencias privadas com metadata D1, validacao de MIME/tamanho/checksum, chave R2 por tenant e autorizacao de download.
 - CF3-D2: repositório de memberships ativas com autorização server-side por usuário e organização, sem confiar em IDs ou controles do frontend.
 - CF3-D1: repositório D1 de usuários e fluxo de login/logout real condicionado ao binding `AUTH_DB`; o preview sem binding continua usando o demo.
 - CF3-D1: hash de senha versionado com PBKDF2-SHA256 e comparacao em tempo constante; senhas curtas ou formatos invalidos sao rejeitados sem revelar detalhes ao cliente.

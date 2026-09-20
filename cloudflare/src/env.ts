@@ -7,6 +7,7 @@ export interface Env {
     ASSETS: Fetcher;
     COURSES_DB?: D1Database;
     AUTH_DB?: D1Database;
+    EVIDENCE_BUCKET?: R2Bucket;
     DEMO_EMAIL: string;
     DEMO_PASSWORD: string;
     SESSION_SECRET: string;
