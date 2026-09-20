@@ -1,6 +1,6 @@
 import type { Course } from '../data/course';
 import { publicPage } from './layout';
-import { categoryBucket, priceLabel } from './courses';
+import { categoryAccent, categoryBucket, priceLabel } from './courses';
 
 /**
  * Home publica de aprendizagem, fiel ao mockup do responsavel: saudacao, busca
@@ -10,24 +10,26 @@ import { categoryBucket, priceLabel } from './courses';
  * opcional, matricula e progresso exigem um contrato de conteudo de aula que
  * ainda nao existe e nao foram inventados aqui.
  */
-const homeStyles = `.home-hero{padding:54px 5vw 30px}.home-hero .eyebrow{color:#f47b20;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.08em}.home-hero h1{font-size:clamp(30px,5vw,44px);line-height:1.1;margin:14px 0 10px}.home-hero p{color:#5b6a72;font-size:17px;max-width:640px}
-.search{margin-top:24px;max-width:560px;position:relative}.search input{width:100%;min-height:52px;border-radius:8px;border:1px solid #d9e0dd;background:#fff;padding:0 44px;font-size:16px}.search svg{position:absolute;top:16px;left:14px;color:#8a97a3}
-.categories{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:30px;max-width:900px}
+const homeStyles = `.home-hero{padding:44px 5vw 34px;background:#10233f;color:#fff}.home-hero .eyebrow{color:#ffb04c;font-size:12px;font-weight:800;letter-spacing:.06em}.home-hero h1{font-size:clamp(26px,4.4vw,38px);line-height:1.15;margin:12px 0 8px;font-weight:800}.home-hero p{color:#c6d3e6;font-size:15.5px;max-width:640px}
+.search{margin-top:22px;max-width:560px;position:relative}.search input{width:100%;min-height:50px;border-radius:8px;border:none;background:#fff;padding:0 44px;font-size:16px;color:#10233f}.search svg{position:absolute;top:15px;left:14px;color:#8a97a3}
+.categories{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:26px;max-width:920px}
 @media(min-width:640px){.categories{grid-template-columns:repeat(3,1fr)}}
-.category-card{display:flex;flex-direction:column;gap:10px;padding:18px;border-radius:10px;color:#fff;min-height:120px;transition:.15s}
+.category-card{display:flex;flex-direction:column;gap:6px;padding:16px;border-radius:8px;color:#fff;min-height:112px;transition:.15s}
 .category-card:hover{transform:translateY(-2px)}
-.category-card:focus-visible,.section-title a:focus-visible,#home-search:focus-visible{outline:3px solid #1267e8;outline-offset:2px}
-.category-card span.count{font-size:12px;opacity:.85}
-.category-card.outline{color:#10233f;background:#fff;border:1px solid #d9e0dd}
-.section-title{display:flex;align-items:end;justify-content:space-between;gap:12px;margin:44px 0 16px;flex-wrap:wrap}
-.section-title h2{font-size:22px;margin:0}
-.section-title a{color:#1267e8;font-weight:800;font-size:14px}
-.course-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px}
-.course-row .card{display:flex;flex-direction:column;padding:18px;border:1px solid #d9e0dd;border-radius:8px;background:#fff}
-.course-row .card h3{font-size:16px;margin:10px 0 6px}
+.category-card:focus-visible,.section-title a:focus-visible,#home-search:focus-visible{outline:3px solid #ffb04c;outline-offset:2px}
+.category-card small{font-size:11px;opacity:.85;line-height:1.3}
+.category-card span.count{font-size:11px;opacity:.85;margin-top:auto}
+.category-card.outline{color:#10233f;background:#fff}
+.section-title{display:flex;align-items:end;justify-content:space-between;gap:12px;margin:38px 0 14px;flex-wrap:wrap}
+.section-title h2{font-size:19px;margin:0}
+.section-title a{color:#1267e8;font-weight:700;font-size:14px}
+.course-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}
+.course-row .card{display:flex;flex-direction:column;padding:16px;border:1px solid #e4dcc8;border-radius:8px;background:#fff;border-top:3px solid #d9e0dd}
+.course-row .card h3{font-size:15px;margin:10px 0 6px}
 .course-row .card p{color:#60706a;font-size:13px;line-height:1.5;flex:1}
-.course-row .tag{align-self:flex-start;padding:6px 9px;border-radius:5px;background:#eef5ff;color:#1267e8;font-size:11px;font-weight:800;text-transform:uppercase}
-.empty-search{display:none;margin-top:16px;padding:20px;border:1px dashed #b9c5c0;border-radius:8px;color:#60706a;text-align:center}`;
+.course-row .tag{align-self:flex-start;padding:5px 8px;border-radius:5px;background:#eef5ff;color:#1267e8;font-size:11px;font-weight:800}
+.course-row .markers{display:flex;gap:10px;color:#60706a;font-size:12px;border-top:1px solid #f4f6f5;padding-top:10px;margin-top:auto}
+.empty-search{display:none;margin-top:16px;padding:20px;border:1px dashed #d9c9a3;border-radius:8px;color:#60706a;text-align:center}`;
 
 const categoryStyle: Record<string, { bg: string; icon: string }> = {
     fundacoes: {
@@ -52,27 +54,31 @@ const categoryStyle: Record<string, { bg: string; icon: string }> = {
     },
 };
 
-const categoryLabels: Array<{ key: string; label: string }> = [
-    { key: 'fundacoes', label: 'Fundações' },
-    { key: 'alvenaria', label: 'Alvenaria' },
-    { key: 'hidraulica', label: 'Hidráulica' },
-    { key: 'eletrica', label: 'Elétrica' },
-    { key: 'acabamentos', label: 'Acabamentos' },
-    { key: 'outros', label: 'Outros' },
+const categoryLabels: Array<{ key: string; label: string; tagline: string }> = [
+    { key: 'fundacoes', label: 'Fundações', tagline: 'Base segura para toda obra' },
+    { key: 'alvenaria', label: 'Alvenaria', tagline: 'Paredes alinhadas e firmes' },
+    { key: 'hidraulica', label: 'Hidráulica', tagline: 'Água e esgoto sem retrabalho' },
+    { key: 'eletrica', label: 'Elétrica', tagline: 'Instalações com segurança' },
+    { key: 'acabamentos', label: 'Acabamentos', tagline: 'O capricho que se vê' },
+    { key: 'outros', label: 'Outros', tagline: 'Mais etapas da construção' },
 ];
 
-function categoryCard(key: string, label: string, count: number): string {
+function categoryCard(key: string, label: string, tagline: string, count: number): string {
     const style = categoryStyle[key];
     const outline = !style;
     const iconMarkup = style
-        ? `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">${style.icon}</svg>`
-        : '<svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>';
+        ? `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">${style.icon}</svg>`
+        : '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>';
 
-    return `<a class="category-card${outline ? ' outline' : ''}" style="${style ? `background:${style.bg}` : ''}" href="/cursos?categoria=${key}">${iconMarkup}<strong>${label}</strong><span class="count">${count === 1 ? '1 curso' : `${count} cursos`}</span></a>`;
+    return `<a class="category-card${outline ? ' outline' : ''}" style="${style ? `background:${style.bg}` : ''}" href="/cursos?categoria=${key}">${iconMarkup}<strong>${label}</strong><small>${tagline}</small><span class="count">${count === 1 ? '1 curso' : `${count} cursos`}</span></a>`;
 }
 
 function courseRow(courses: Course[]): string {
-    return `<div class="course-row">${courses.map((course) => `<a class="card" href="/cursos/${course.slug}" data-course-title="${course.title.toLowerCase()}"><span class="tag">${course.category}</span><h3>${course.title}</h3><p>${course.description}</p></a>`).join('')}</div>`;
+    return `<div class="course-row">${courses.map((course) => {
+        const accent = categoryAccent[categoryBucket(course.category)] ?? '#94a3b8';
+
+        return `<a class="card" style="border-top-color:${accent}" href="/cursos/${course.slug}" data-course-title="${course.title.toLowerCase()}"><span class="tag">${course.category}</span><h3>${course.title}</h3><p>${course.description}</p><div class="markers"><span>${course.modulesCount} módulos</span><span>${course.durationMinutes} min</span></div></a>`;
+    }).join('')}</div>`;
 }
 
 export function renderLearningHome(courses: Course[]): string {
@@ -95,7 +101,7 @@ export function renderLearningHome(courses: Course[]): string {
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                 <input type="search" id="home-search" placeholder="Buscar curso ou aula...">
             </label>
-            <div class="categories">${categoryLabels.map(({ key, label }) => categoryCard(key, label, counts[key] ?? 0)).join('')}</div>
+            <div class="categories">${categoryLabels.map(({ key, label, tagline }) => categoryCard(key, label, tagline, counts[key] ?? 0)).join('')}</div>
         </section>
         <main class="content" style="padding-top:0">
             ${freeCourses.length > 0 ? `<div class="section-title"><h2>Cursos gratuitos para começar</h2><a href="/cursos">Ver catálogo completo</a></div>${courseRow(freeCourses)}` : ''}

@@ -1,9 +1,17 @@
 import type { Course, CourseModule } from '../data/course';
 import { publicPage } from './layout';
 
-const catalogStyles = `.heading{display:flex;align-items:end;justify-content:space-between;gap:16px;flex-wrap:wrap}.heading h2{font-size:20px;margin:0}.count{padding:8px 12px;border-radius:999px;background:#e8f6ef;color:#176b4d;font-weight:800;font-size:13px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(245px,1fr));gap:16px;margin-top:20px}.card{display:flex;flex-direction:column;min-height:230px;padding:18px;border:1px solid #d9e0dd;border-radius:8px;background:#fff;transition:.15s}.card:hover{border-color:#1267e8}.card:focus-visible{outline:3px solid #1267e8;outline-offset:2px}.tag{align-self:flex-start;padding:6px 9px;border-radius:5px;background:#eef5ff;color:#1267e8;font-size:11px;font-weight:800;text-transform:uppercase}.access-tag{background:#e8f6ef;color:#176b4d}.access-tag.is-premium{background:#fff7ed;color:#92400e}.price{color:#176b4d;font-size:13px;font-weight:800}.card h3{font-size:18px;line-height:1.25;margin:14px 0 6px}.card p{color:#60706a;line-height:1.5;font-size:14px;flex:1}.meta{border-top:1px solid #edf0ef;padding-top:12px;color:#60706a;font-size:13px;display:flex;justify-content:space-between;gap:8px}.cta{color:#1267e8;font-weight:800}.empty{margin-top:20px;padding:28px;border:1px dashed #b9c5c0;border-radius:7px;text-align:center;color:#60706a}`;
+const catalogStyles = `.heading{display:flex;align-items:end;justify-content:space-between;gap:16px;flex-wrap:wrap}.heading h2{font-size:20px;margin:0}.count{padding:8px 12px;border-radius:999px;background:#e8f6ef;color:#176b4d;font-weight:800;font-size:13px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(245px,1fr));gap:16px;margin-top:20px}.card{display:flex;flex-direction:column;min-height:230px;padding:18px;border:1px solid #e4dcc8;border-top:4px solid #94a3b8;border-radius:8px;background:#fff;transition:.15s}.card:hover{border-color:#1267e8;border-top-color:#1267e8}.card:focus-visible{outline:3px solid #1267e8;outline-offset:2px}.tag{align-self:flex-start;padding:6px 9px;border-radius:5px;background:#eef5ff;color:#1267e8;font-size:11px;font-weight:800}.access-tag{background:#e8f6ef;color:#176b4d}.access-tag.is-premium{background:#fff7ed;color:#92400e}.price{color:#176b4d;font-size:13px;font-weight:800}.card h3{font-size:18px;line-height:1.25;margin:14px 0 6px}.card p{color:#60706a;line-height:1.5;font-size:14px;flex:1}.meta{border-top:1px solid #edf0ef;padding-top:12px;color:#60706a;font-size:13px;display:flex;justify-content:space-between;gap:8px}.cta{color:#1267e8;font-weight:800}.empty{margin-top:20px;padding:28px;border:1px dashed #d9c9a3;border-radius:7px;text-align:center;color:#60706a}`;
 
 const categoryKeys = ['fundacoes', 'alvenaria', 'hidraulica', 'eletrica', 'acabamentos'] as const;
+
+export const categoryAccent: Record<string, string> = {
+    fundacoes: '#2563eb',
+    alvenaria: '#f47b20',
+    hidraulica: '#0891b2',
+    eletrica: '#f5b301',
+    acabamentos: '#9333ea',
+};
 
 export function categoryBucket(category: string): string {
     const key = category.trim().toLowerCase();
@@ -36,8 +44,9 @@ function courseCard(course: Course): string {
     const accessTag = course.accessType === 'free'
         ? '<span class="tag access-tag">Gratuito</span>'
         : '<span class="tag access-tag is-premium">Premium</span>';
+    const accent = categoryAccent[categoryBucket(course.category)] ?? '#94a3b8';
 
-    return `<a class="card" href="/cursos/${course.slug}"><div class="heading"><span class="tag">${course.category}</span>${accessTag}</div><h3>${course.title}</h3>${moduleBadge}<p>${course.description}</p><div class="meta"><span>${course.modulesCount} módulos</span><span>${course.durationMinutes} min</span><span class="cta">Ver curso ${arrowRightIcon}</span></div></a>`;
+    return `<a class="card" style="border-top-color:${accent}" href="/cursos/${course.slug}"><div class="heading"><span class="tag">${course.category}</span>${accessTag}</div><h3>${course.title}</h3>${moduleBadge}<p>${course.description}</p><div class="meta"><span>${course.modulesCount} módulos</span><span>${course.durationMinutes} min</span><span class="cta">Ver curso ${arrowRightIcon}</span></div></a>`;
 }
 
 export function renderCourseCatalog(courses: Course[], activeCategory?: string, activeAccess?: string): string {
