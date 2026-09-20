@@ -105,37 +105,84 @@ Nenhum agente edita as pastas reservadas do outro. Claude nao edita `cloudflare/
 
 **Aceite:** parcial. Backend e rotas privadas estao prontos e testados com R2 simulado; configuracao de binding real e interface de upload/chamado ainda precisam de smoke test manual.
 
-## Sprint CF-6 — Painel administrativo, auditoria e security events
+## Proximo lote proposto: CF-6 a CF-10
 
-**Objetivo:** portar o painel de gestao e a area exclusiva de Super Admin.
+Este lote esta **planejado, nao iniciado**. Ele sucede o checkpoint CF1-CF5 e so pode comecar mediante nova autorizacao expressa do responsavel e registro no diario compartilhado. A ordem elimina primeiro os mockups estaticos e as lacunas de ambiente antes de introduzir venda ou IA.
 
-| Card | Dono | Descricao |
-|---|---|---|
-| CF6-D1 | Codex | Contratos de auditoria e security events; Gate equivalente a `viewPlatformSecurity`. |
-| CF6-C1 | Claude | Telas de painel (obras, procedimentos, cursos, pessoas, relatorios) com busca, filtros e tabelas acessiveis. |
-| CF6-C2 | Claude | Area de seguranca visivel somente quando o contrato do Codex confirmar Super Admin (sem logica de autorizacao no frontend). |
+## Sprint CF-6 — Painel operacional ligado ao ambiente real
 
-**Testes:** autorizacao por papel, ausencia de vazamento de tenant, area de seguranca oculta para nao-Super Admin.
-
-**Aceite:** gestor opera o painel no Worker com os mesmos limites de autorizacao do Laravel.
-
-## Sprint CF-7 — PWA offline, pagamentos e integracoes externas
-
-**Objetivo:** paridade de PWA/offline e inicio do fluxo comercial, sem lógica de pagamento real ainda em producao.
+**Objetivo:** substituir os dados hardcoded do painel por chamadas autenticadas ao Worker e validar D1/R2 de `develop` sem expor dados de tenant.
 
 | Card | Dono | Descricao |
 |---|---|---|
-| CF7-D1 | Codex | Contrato de pedido/pagamento (estado, idempotencia, webhook) e Queue de eventos. |
-| CF7-C1 | Claude | Cache do shell, fila local de checklist/evidencia e telas de plano/checkout (sem processar pagamento real). |
-| CF7-C2 | Claude | Testes de instalacao PWA, offline/online, atualizacao de service worker. |
+| CF6-C1 | Claude | Fazer `dashboard.html` consumir `GET /api/painel/organizacoes` e `GET /api/painel/obras`, com selecao de organizacao, estados vazio/carregando/erro e sem acesso direto a D1. |
+| CF6-C2 | Claude | Conectar abertura e consulta de chamados; criar tela de evidencia com captura, validacao client-side e feedback de envio, sem simular sucesso offline. |
+| CF6-D1 | Codex | Revisar contratos de leitura necessarios para procedimento, checklist e execucao; publicar apenas endpoints tenant-aware que tenham repositorio, policy e testes. |
+| CF6-D2 | Codex | Configurar e documentar bindings reais `AUTH_DB`, `OPERATIONS_DB` e `EVIDENCE_BUCKET` por ambiente, sem IDs ou secrets no repositorio; executar smoke test controlado. |
 
-**Testes:** conforme `docs/PWA.md` (offline/online, conflito, logout, atualizacao) e testes de webhook do Codex (assinatura, replay, duplicidade).
+**Testes:** sessao demo bloqueada das APIs privadas, organizacao inativa e tenant cruzado negados, estados visualmente acessiveis, upload e download privado em ambiente de `develop`.
 
-**Aceite:** app instalavel funciona offline para o essencial; nenhum acesso comercial e liberado sem confirmacao de pagamento auditavel.
+**Aceite:** usuario real ve somente suas obras; painel sem obra mostra estado vazio claro; chamado e evidencia tem retorno verdadeiro do servidor; preview deixa de depender de cards operacionais hardcoded.
 
-## Sprint CF-8 — MGL e IA (posterior e opcional)
+## Sprint CF-7 — Execucao de campo e checklists
 
-Mantido fora do caminho critico, conforme `docs/ARCHITECTURE.md` e `docs/CLOUDFLARE-MIGRATION.md`. Só entra em planejamento apos a Sprint CF-7 estar validada e com autorizacao explicita do responsavel do projeto.
+**Objetivo:** tornar o passo a passo utilizavel no celular, com progresso persistido e evidencias privadas por etapa.
+
+| Card | Dono | Descricao |
+|---|---|---|
+| CF7-D1 | Codex | Rotas para procedimentos, etapas, checklists e execucoes com validacao transacional, versionamento e autorizacao por tenant. |
+| CF7-C1 | Claude | Telas mobile de procedimento, checklist e conclusao com uma acao principal por tela e retomada de progresso. |
+| CF7-C2 | Claude | Exibir erros de validacao e indisponibilidade com acao de tentar novamente, sem perder dados ja confirmados. |
+
+**Testes:** inicio/conclusao de execucao, etapa obrigatoria, reabertura autorizada, concorrencia basica, tenant cruzado e leitura em viewport mobile.
+
+**Aceite:** uma pessoa inicia um procedimento, marca etapas, anexa evidencia, interrompe e retoma sem confundir o que ja foi salvo.
+
+## Sprint CF-8 — Administracao, catalogo e seguranca de plataforma
+
+**Objetivo:** entregar o painel administrativo modular para gestao de cursos, pessoas e configuracoes, isolando por completo a area de Super Admin.
+
+| Card | Dono | Descricao |
+|---|---|---|
+| CF8-D1 | Codex | Contratos de administracao de organizacao, catalogo e auditoria; policy explicita para security events e configuracoes globais de Super Admin. |
+| CF8-C1 | Claude | Telas seccionadas de cursos, modulos, aulas, equipe e configuracoes com busca, filtros e confirmacoes compreensiveis. |
+| CF8-C2 | Claude | Area de seguranca aparece somente com permissao devolvida pelo contrato; nunca inferir papel no navegador. |
+
+**Testes:** administrador de organizacao nao acessa seguranca global, Super Admin nao recebe bypass implicito de tenant, alteracoes administrativas auditadas e tabelas acessiveis.
+
+**Aceite:** administradores gerenciam conteudo e equipe sem acessar recursos de seguranca; somente Super Admin ve eventos, credenciais de provedores e configuracoes MGL.
+
+## Sprint CF-9 — Direitos comerciais e PIX por adaptador
+
+**Objetivo:** preparar venda de cursos e planos com preco configuravel, sem confiar no navegador e sem acoplar o dominio a um provedor de pagamento.
+
+| Card | Dono | Descricao |
+|---|---|---|
+| CF9-D1 | Codex | Modelo de produto, preco congelado, pedido, entitlement e adaptador PIX; webhook autenticado, idempotente e auditado. |
+| CF9-C1 | Claude | Landing e catalogo mostram gratuito, incluso e avulso vindos do contrato; checkout informa valor e estado sem prometer confirmacao antes do webhook. |
+| CF9-C2 | Claude | Area "Meus acessos" e recuperacao visual de compra pendente/falha, com suporte contextual. |
+
+**Testes:** assinatura e replay de webhook, duplicidade, valor divergente, pagamento pendente/confirmado/falho, revogacao e curso premium bloqueado.
+
+**Aceite:** nenhum curso pago e liberado por retorno do browser; cada concessao tem pedido, valor, evento de pagamento e historico auditavel.
+
+## Sprint CF-10 — PWA, operacao e readiness de lancamento
+
+**Objetivo:** transformar o fluxo validado em um produto instalavel e operavel antes de convidar usuarios reais.
+
+| Card | Dono | Descricao |
+|---|---|---|
+| CF10-D1 | Codex | Rate limit, logs sanitizados, health checks, backup/restore documentado, rollback e verificacao de dependencias. |
+| CF10-C1 | Claude | Cache do shell e de conteudo permitido, fila local para checklist/evidencia, estados de sincronizacao e limpeza no logout. |
+| CF10-C2 | Claude | Testes de instalacao, atualizacao e responsividade em Android, iPhone, desktop e navegadores suportados. |
+
+**Testes:** offline/online, repeticao de envio, conflito, logout, atualizacao de service worker, restore e indisponibilidade de observabilidade opcional.
+
+**Aceite:** usuario entende o que esta salvo, pendente ou falhou; a plataforma opera sem MGL e possui processo testado de recuperacao e rollback.
+
+## Depois do lancamento inicial: IA opcional
+
+MGL continua opcional, fora do caminho critico e exclusivo para observabilidade/seguranca. IA somente volta ao planejamento depois da CF10, com fornecedor substituivel, limite de custo, revisao humana e aviso claro de que estudos preliminares nao sao projetos tecnicos, estruturais ou legais.
 
 ## Checkpoint de sincronizacao
 
