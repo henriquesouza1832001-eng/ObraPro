@@ -1,6 +1,6 @@
 import { publicPage } from './layout';
 
-const adminStyles = `.admin-hero{padding:36px 5vw;background:#10233f;color:#fff}.admin-hero h1{font-size:clamp(24px,4vw,32px);margin:0 0 6px}.admin-hero p{color:#dce5ef;font-size:14px;margin:0}.admin-content{max-width:1100px;margin:0 auto;padding:32px 5vw;display:flex;flex-direction:column;gap:28px}.admin-status{padding:16px;border-radius:7px;background:#eef5ff;color:#10233f;font-size:14px}.admin-status.is-error{background:#fef2f2;color:#991b1b}.admin-section{background:#fff;border:1px solid #d9e0dd;border-radius:7px;padding:20px}.admin-section h2{font-size:18px;margin:0 0 14px}.admin-module{border-top:1px solid #edf0ef;padding-top:14px;margin-top:14px}.admin-module:first-of-type{border-top:none;padding-top:0;margin-top:0}.admin-module-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.admin-module-head h3{margin:0;font-size:15px}.badge{padding:4px 10px;border-radius:999px;font-size:11px;font-weight:800;text-transform:uppercase}.badge.on{background:#e8f6ef;color:#176b4d}.badge.off{background:#f1f3f5;color:#60706a}.admin-course-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:10px 0;border-top:1px solid #f4f6f5}.admin-course-row .info{color:#60706a;font-size:13px}.toggle-button{padding:8px 14px;border-radius:6px;border:1px solid #d9e0dd;background:#fff;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit}.toggle-button:disabled{opacity:.6;cursor:default}.toggle-button:focus-visible{outline:3px solid #1267e8;outline-offset:2px}table.audit{width:100%;border-collapse:collapse;font-size:13px}table.audit th,table.audit td{text-align:left;padding:8px 10px;border-bottom:1px solid #edf0ef;vertical-align:top}table.audit th{color:#60706a;font-weight:700}.field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}.field label{font-weight:700;font-size:13px;color:#10233f}.field input,.field textarea{border:1px solid #d9e0dd;border-radius:6px;padding:10px;font-family:inherit;font-size:14px}.field textarea{min-height:70px;resize:vertical}.field small{color:#60706a;font-size:12px}.inline-form{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap}.version-card{border:1px solid #d9e0dd;border-radius:7px;padding:14px;margin-top:12px}.version-card .version-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.version-card pre{white-space:pre-wrap;font-family:inherit;font-size:13px;color:#374151;margin:8px 0}.badge.draft{background:#fff7ed;color:#92400e}.badge.archived{background:#f1f3f5;color:#60706a}`;
+const adminStyles = `.admin-hero{padding:36px 5vw;background:#10233f;color:#fff}.admin-hero h1{font-size:clamp(24px,4vw,32px);margin:0 0 6px}.admin-hero p{color:#dce5ef;font-size:14px;margin:0}.admin-content{max-width:1100px;margin:0 auto;padding:32px 5vw;display:flex;flex-direction:column;gap:28px}.admin-status{padding:16px;border-radius:7px;background:#eef5ff;color:#10233f;font-size:14px}.admin-status.is-error{background:#fef2f2;color:#991b1b}.admin-section{background:#fff;border:1px solid #d9e0dd;border-radius:7px;padding:20px}.admin-section h2{font-size:18px;margin:0 0 14px}.admin-module{border-top:1px solid #edf0ef;padding-top:14px;margin-top:14px}.admin-module:first-of-type{border-top:none;padding-top:0;margin-top:0}.admin-module-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.admin-module-head h3{margin:0;font-size:15px}.badge{padding:4px 10px;border-radius:999px;font-size:11px;font-weight:800;text-transform:uppercase}.badge.on{background:#e8f6ef;color:#176b4d}.badge.off{background:#f1f3f5;color:#60706a}.admin-course-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:10px 0;border-top:1px solid #f4f6f5}.admin-course-row .info{color:#60706a;font-size:13px}.toggle-button{padding:8px 14px;border-radius:6px;border:1px solid #d9e0dd;background:#fff;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit}.toggle-button:disabled{opacity:.6;cursor:default}.toggle-button:focus-visible{outline:3px solid #1267e8;outline-offset:2px}table.audit{width:100%;border-collapse:collapse;font-size:13px}table.audit th,table.audit td{text-align:left;padding:8px 10px;border-bottom:1px solid #edf0ef;vertical-align:top}table.audit th{color:#60706a;font-weight:700}.field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}.field label{font-weight:700;font-size:13px;color:#10233f}.field input,.field textarea,.field select{border:1px solid #d9e0dd;border-radius:6px;padding:10px;font-family:inherit;font-size:14px}.field select{min-width:280px}.field select:focus-visible{outline:3px solid #1267e8;outline-offset:2px}.field textarea{min-height:70px;resize:vertical}.field small{color:#60706a;font-size:12px}.inline-form{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap}.version-card{border:1px solid #d9e0dd;border-radius:7px;padding:14px;margin-top:12px}.version-card .version-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.version-card pre{white-space:pre-wrap;font-family:inherit;font-size:13px;color:#374151;margin:8px 0}.badge.draft{background:#fff7ed;color:#92400e}.badge.archived{background:#f1f3f5;color:#60706a}`;
 
 export function renderAdminPanel(): string {
     const body = `<section class="admin-hero"><h1>Painel administrativo</h1><p>Publicação de catálogo e auditoria — restrito a super administradores.</p></section>
@@ -22,8 +22,8 @@ export function renderAdminPanel(): string {
     <section class="admin-section" id="lesson-content-section" hidden>
         <h2>Conteúdo editorial de aula</h2>
         <div class="field inline-form">
-            <div class="field" style="margin-bottom:0"><label for="lesson-content-id">ID da aula</label><input type="text" id="lesson-content-id" placeholder="id da aula"></div>
-            <button class="toggle-button" type="button" id="lesson-content-load">Carregar versões</button>
+            <div class="field" style="margin-bottom:0"><label for="lesson-content-select">Aula</label><select id="lesson-content-select"><option value="">Carregando aulas...</option></select></div>
+            <button class="toggle-button" type="button" id="lesson-content-load" disabled>Carregar versões</button>
         </div>
         <p class="admin-status" id="lesson-content-status" role="status" aria-live="polite" hidden></p>
         <div id="lesson-content-versions"></div>
@@ -83,8 +83,39 @@ export function renderAdminPanel(): string {
         return button;
     }
 
+    function populateLessonSelect(modules) {
+        var select = document.getElementById('lesson-content-select');
+        var loadButton = document.getElementById('lesson-content-load');
+        var options = [];
+        modules.forEach(function (module) {
+            module.courses.forEach(function (course) {
+                (course.lessons || []).slice().sort(function (a, b) { return a.position - b.position; }).forEach(function (lesson) {
+                    options.push({ id: lesson.id, label: course.title + ' — ' + lesson.moduleTitle + ' — ' + lesson.title + ' (' + lesson.durationMinutes + ' min)' });
+                });
+            });
+        });
+
+        select.innerHTML = '';
+        if (!options.length) {
+            var empty = document.createElement('option');
+            empty.value = '';
+            empty.textContent = 'Nenhuma aula cadastrada ainda';
+            select.appendChild(empty);
+            loadButton.disabled = true;
+            return;
+        }
+        options.forEach(function (option) {
+            var el = document.createElement('option');
+            el.value = option.id;
+            el.textContent = option.label;
+            select.appendChild(el);
+        });
+        loadButton.disabled = false;
+    }
+
     function renderCatalog(modules) {
         catalogList.innerHTML = '';
+        populateLessonSelect(modules);
         if (!modules.length) {
             catalogEmpty.hidden = false;
             return;
@@ -187,7 +218,7 @@ export function renderAdminPanel(): string {
     }
 
     var lessonContentSection = document.getElementById('lesson-content-section');
-    var lessonContentIdInput = document.getElementById('lesson-content-id');
+    var lessonContentSelect = document.getElementById('lesson-content-select');
     var lessonContentLoadButton = document.getElementById('lesson-content-load');
     var lessonContentStatus = document.getElementById('lesson-content-status');
     var lessonContentVersions = document.getElementById('lesson-content-versions');
@@ -314,15 +345,15 @@ export function renderAdminPanel(): string {
     }
 
     lessonContentLoadButton.addEventListener('click', function () {
-        var lessonId = lessonContentIdInput.value.trim();
-        if (!lessonId) { showLessonContentMessage('Informe o ID da aula.', true); return; }
+        var lessonId = lessonContentSelect.value;
+        if (!lessonId) { showLessonContentMessage('Selecione uma aula.', true); return; }
         loadLessonVersions(lessonId);
     });
 
     lessonContentForm.addEventListener('submit', function (event) {
         event.preventDefault();
-        var lessonId = lessonContentIdInput.value.trim();
-        if (!lessonId) { showLessonContentMessage('Informe o ID da aula antes de criar um rascunho.', true); return; }
+        var lessonId = lessonContentSelect.value;
+        if (!lessonId) { showLessonContentMessage('Selecione uma aula antes de criar um rascunho.', true); return; }
 
         var payload = {
             body: document.getElementById('lesson-content-body').value,

@@ -468,6 +468,8 @@ describe('login/logout real via D1 (CF3-C1/C2)', () => {
         expect(body).toContain('/api/admin/catalogo');
         expect(body).toContain('Conteúdo editorial de aula');
         expect(body).toContain("'/api/admin/aulas/' + encodeURIComponent(lessonId) + '/conteudo'");
+        expect(body).toContain('id="lesson-content-select"');
+        expect(body).not.toContain('id="lesson-content-id"');
     });
 
     it('POST /sair revoga a sessao: acessar /painel depois com o mesmo cookie volta a exigir login', async () => {
