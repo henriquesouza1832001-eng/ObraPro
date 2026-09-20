@@ -1,4 +1,4 @@
-import type { PublishedChecklistSummary, PublishedProcedureSummary, Work, WorkStatus } from '../domain/operational';
+import type { PublishedChecklistSummary, PublishedProcedureDetails, PublishedProcedureSummary, ProcedureStep, Work, WorkStatus } from '../domain/operational';
 
 interface WorkRow {
     id: string;
@@ -28,6 +28,17 @@ interface ChecklistRow {
     organization_id: string;
     procedure_id: string;
     title: string;
+}
+
+interface ProcedureStepRow {
+    id: string;
+    procedure_id: string;
+    position: number;
+    title: string;
+    instruction: string;
+    safety_note: string | null;
+    when_to_call_professional: string | null;
+    materials_json: string | null;
 }
 
 function mapWork(row: WorkRow): Work {
@@ -92,5 +103,62 @@ export class D1OperationalRepository {
             procedureId: row.procedure_id,
             title: row.title,
         }));
+    }
+
+    public async findPublishedProcedure(organizationId: string, procedureId: string): Promise<PublishedProcedureDetails | null> {
+        const procedure = await this.database.prepare(`
+            SELECT id, organization_id, work_id, slug, title, summary, stage, version
+            FROM procedures
+            WHERE id = ? AND organization_id = ? AND status = 'published'
+            ORDER BY version DESC
+            LIMIT 1
+        `).bind(procedureId, organizationId).first<ProcedureRow>();
+
+        if (!procedure) {
+            return null;
+        }
+
+        const steps = await this.database.prepare(`
+            SELECT id, procedure_id, position, title, instruction, safety_note,
+                when_to_call_professional, materials_json
+            FROM procedure_steps
+            WHERE procedure_id = ?
+            ORDER BY position ASC
+        `).bind(procedure.id).all<ProcedureStepRow>();
+
+        return {
+            id: procedure.id,
+            organizationId: procedure.organization_id,
+            workId: procedure.work_id,
+            slug: procedure.slug,
+            title: procedure.title,
+            summary: procedure.summary,
+            stage: procedure.stage,
+            version: procedure.version,
+            steps: steps.results.map((step): ProcedureStep => ({
+                id: step.id,
+                procedureId: step.procedure_id,
+                position: step.position,
+                title: step.title,
+                instruction: step.instruction,
+                safetyNote: step.safety_note,
+                whenToCallProfessional: step.when_to_call_professional,
+                materials: parseMaterials(step.materials_json),
+            })),
+        };
+    }
+}
+
+function parseMaterials(value: string | null): string[] {
+    if (!value) {
+        return [];
+    }
+
+    try {
+        const materials = JSON.parse(value) as unknown;
+
+        return Array.isArray(materials) && materials.every((item) => typeof item === 'string') ? materials : [];
+    } catch {
+        return [];
     }
 }

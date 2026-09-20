@@ -40,6 +40,10 @@ export interface PublishedProcedureSummary {
     version: number;
 }
 
+export interface PublishedProcedureDetails extends PublishedProcedureSummary {
+    steps: ProcedureStep[];
+}
+
 export interface ProcedureStep {
     id: string;
     procedureId: string;
