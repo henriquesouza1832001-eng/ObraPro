@@ -69,6 +69,10 @@ chave privada, nome original, MIME permitido, tamanho, checksum SHA-256 e status
 O binario pertence ao binding R2 `EVIDENCE_BUCKET`; o D1 nao recebe arquivo e a
 chave inclui organizacao, etapa e evidencia para evitar colisao entre tenants.
 
+A migration `0006_support_tickets.sql` guarda chamados com usuario, organizacao
+opcional, categoria, prioridade, status, rota, correlation ID e contexto diagnostico
+sanitizado. O contexto nao deve conter body, cookie, token, senha ou credencial.
+
 ### D1 em migracao
 
 O schema inicial do Worker fica em cloudflare/migrations/0001_identity_and_catalog.sql. Ele cobre identidade, organizacoes, memberships e catalogo. A migration usa SQLite portavel, constraints explicitas e IF NOT EXISTS para permitir execucao repetivel em ambiente local. A aplicacao real em D1 deve ser feita por Wrangler no ambiente correto, nunca por reset.
