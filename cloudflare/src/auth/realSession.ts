@@ -41,8 +41,9 @@ export async function loginWithD1(email: string, password: string, env: Env): Pr
     }
 
     const user = await new D1UserRepository(env.AUTH_DB).findByEmail(email);
+    const passwordValid = user ? await verifyPassword(password, user.passwordHash) : false;
 
-    if (!user || !(await verifyPassword(password, user.passwordHash))) {
+    if (!user || !passwordValid) {
         return null;
     }
 

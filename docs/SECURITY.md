@@ -7,8 +7,13 @@ SHA-256 e rejeita sessoes expiradas ou revogadas. O binding D1 permanece no
 ambiente; o token bruto nao e persistido nem registrado em logs.
 
 Senhas do fluxo real usam o formato versionado `PBKDF2-SHA256$iteracoes$salt$hash`.
-Salt e hash sao aleatorios, a politica minima atual e de doze caracteres e a
-verificacao compara os bytes sem retornar detalhes do motivo da falha.
+O Worker usa `node:crypto` com `nodejs_compat` e 100.000 iterações, limite suportado
+pelo runtime Cloudflare; salt e hash sao aleatorios, a politica minima atual e de
+doze caracteres e a verificacao compara os bytes sem retornar detalhes do motivo
+da falha.
+Hashes legados gravados com mais de 100.000 iterações precisam passar por redefinição
+de senha antes de serem aceitos pelo runtime Cloudflare; nenhuma senha legada foi
+registrada ou inferida para fazer essa conversão.
 
 O acesso tenant-aware usa `D1MembershipRepository.canAccessOrganization`: somente
 membership `active` da dupla usuario/organizacao concede acesso. IDs enviados pelo

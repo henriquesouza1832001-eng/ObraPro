@@ -1,6 +1,7 @@
-const encoder = new TextEncoder();
+import { pbkdf2Sync } from 'node:crypto';
+
 const algorithm = 'PBKDF2-SHA256';
-const iterations = 120_000;
+const iterations = 100_000;
 const saltBytes = 16;
 const hashBytes = 32;
 
@@ -22,10 +23,7 @@ function fromBase64Url(value: string): Uint8Array {
 }
 
 async function derive(password: string, salt: Uint8Array): Promise<Uint8Array> {
-    const key = await crypto.subtle.importKey('raw', encoder.encode(password), 'PBKDF2', false, ['deriveBits']);
-    const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', salt, iterations, hash: 'SHA-256' }, key, hashBytes * 8);
-
-    return new Uint8Array(bits);
+    return new Uint8Array(pbkdf2Sync(password, salt, iterations, hashBytes, 'sha256'));
 }
 
 function constantTimeEqual(left: Uint8Array, right: Uint8Array): boolean {
