@@ -63,17 +63,17 @@ Nenhum agente edita as pastas reservadas do outro. Claude nao edita `cloudflare/
 
 **Objetivo:** substituir a sessao de demonstracao (`cloudflare/src/auth/demoSession.ts`) por autenticacao real, preservando UX do mockup.
 
-| Card | Dono | Descricao |
-|---|---|---|
-| CF3-D1 | Codex | Login real (hash de senha, sessao assinada ou JWT), memberships e organizacao ativa, seguindo `organization_memberships` ja definido na migration. |
-| CF3-D2 | Codex | Testes negativos: usuario anonimo, papel insuficiente, tenant cruzado, sessao expirada. |
-| CF3-C1 | Claude | Tela de login/cadastro no visual do mockup consumindo o novo contrato de autenticacao (sem implementar a logica de verificacao). |
-| CF3-C2 | Claude | Estados de erro de login (credenciais invalidas, conta suspensa) com mensagens claras em portugues, mantendo acessibilidade (foco, leitura por teclado). |
-| CF3-C3 | Claude | Remover `demoSession.ts` somente apos o contrato real estar disponivel e revisado pelo Codex; ate la o login de demonstracao continua ativo. |
+| Card | Dono | Descricao | Status |
+|---|---|---|---|
+| CF3-D1 | Codex | Login real (hash de senha, sessao assinada ou JWT), memberships e organizacao ativa, seguindo `organization_memberships` ja definido na migration. | Feito (PRs #41, #42, #43): `D1SessionStore`, `password.ts` (PBKDF2-SHA256) e `realSession.ts` (`loginWithD1`/`logoutFromD1`/`authenticateRequest`) ligados a `cloudflare/src/index.ts`; login demo preservado como fallback quando `AUTH_DB` nao existe. |
+| CF3-D2 | Codex | Testes negativos: usuario anonimo, papel insuficiente, tenant cruzado, sessao expirada. | Feito (push direto em `develop`): `D1MembershipRepository` com autorizacao server-side por usuario/organizacao (somente `status = active` concede acesso) e testes proprios (`membershipRepository.test.ts`). |
+| CF3-C1 | Claude | Tela de login/cadastro no visual do mockup consumindo o novo contrato de autenticacao (sem implementar a logica de verificacao). | Feito: `cloudflare/src/pages/login.ts` (novo) substitui a renderizacao antiga em `demoSession.ts`; `index.ts` passa `realAuthEnabled: Boolean(env.AUTH_DB)` para alternar copy demo/real sem nenhuma logica de autorizacao no frontend. Cadastro (criacao de conta) **nao foi implementado como formulario** porque o Codex ainda nao publicou um endpoint/contrato para criar usuario — a secao de cadastro e um link informativo para `/cursos`, evitando inventar um endpoint inexistente. |
+| CF3-C2 | Claude | Estados de erro de login (credenciais invalidas, conta suspensa) com mensagens claras em portugues, mantendo acessibilidade (foco, leitura por teclado). | Feito com ressalva: a mensagem de erro e generica ("Nao foi possivel entrar com esses dados...") por design de seguranca — nem `loginWithD1` nem `D1UserRepository` distinguem "conta suspensa" de "senha incorreta" hoje, e mensagens especificas revelariam se um e-mail existe. `role="alert"` + `aria-describedby` + foco automatico no campo de e-mail implementados. Se o Codex expuser um estado de conta suspensa no futuro, a mensagem pode ser diferenciada sem mudar o restante da tela. |
+| CF3-C3 | Claude | Remover `demoSession.ts` somente apos o contrato real estar disponivel e revisado pelo Codex; ate la o login de demonstracao continua ativo. | Parcial: a renderizacao (`loginPage`) ja saiu de `demoSession.ts` para `pages/login.ts`; a logica de sessao de demonstracao (`sessionToken`/`isAuthenticated`) continua em `demoSession.ts` como fallback ativo quando `AUTH_DB` nao existe (ambiente de preview sem binding). Remocao completa so deve acontecer com aprovacao explicita do responsavel, conforme o card pede. |
 
-**Testes:** fluxo completo de login/logout, sessao expirada, tenant sem acesso, cobertura de autorizacao pelo Codex.
+**Testes:** `npm run worker:typecheck`, `npm run worker:test` (27/27, incluindo 8 novos testes de login/logout real: `/entrar` demo vs real, login com senha correta define cookie `HttpOnly`/`Secure`/`SameSite=Lax` e redireciona a `/painel`, senha incorreta retorna 422 sanitizado sem cookie, `/painel` com/sem sessao valida, `/sair` revoga a sessao), `npm run worker:build`; teste manual via `wrangler dev` confirmando que o fluxo demo (sem `AUTH_DB`) continua identico ao anterior.
 
-**Aceite:** um usuario real consegue entrar, ver apenas sua organizacao, e o login de demonstracao e desligado com aprovacao explicita registrada no diario.
+**Aceite:** um usuario real consegue entrar, ver apenas sua organizacao, e o login de demonstracao e desligado com aprovacao explicita registrada no diario. (Isolamento por organizacao depende de `AuthorizationContext`/`D1MembershipRepository` do Codex serem consumidos pelo painel — ainda nao coberto pela camada visual, ver Sprint CF-4/CF-6.)
 
 ## Sprint CF-4 — Cursos, obras, procedimentos, checklists e execucoes
 
