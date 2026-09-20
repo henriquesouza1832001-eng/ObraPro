@@ -35,7 +35,7 @@ Headers iniciais: `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-or
 
 RBAC define capacidades amplas; Policies validam tenant, recurso e estado. Identificadores opacos nao substituem autorizacao. Testes negativos devem cobrir usuario anonimo, papel insuficiente, recurso de outro tenant e alteracao de IDs.
 
-Administradores de organizacao gerenciam operacao, conteudo, cursos e configuracoes comerciais dentro do tenant. Somente super administradores da plataforma acessam security events, operacoes de auditoria, configuracao de provedores, limites globais e MGL. Ocultar menus nao substitui Gate ou Policy server-side.
+Administradores de organizacao gerenciam operacao, conteudo, cursos e configuracoes comerciais dentro do tenant. Somente super administradores da plataforma acessam security events, operacoes de auditoria, configuracao de provedores, limites globais e MGL. Ocultar menus nao substitui Gate ou Policy server-side. As APIs `/api/admin/*` do Worker tambem exigem `users.is_super_admin` no servidor.
 
 A fundacao implementada exige organizacao e membership `active` para acesso ao tenant, com Policy por organizacao. Owner e admin podem administrar a organizacao; tenants inativos e memberships convidadas ou suspensas nao concedem acesso. O Gate `viewPlatformSecurity` exige `users.is_super_admin`, e esse atributo nao e mass assignable. Super Admin nao possui bypass global de Policies e nao acessa automaticamente organizacoes de clientes.
 
