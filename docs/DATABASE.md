@@ -58,6 +58,10 @@ A migration `0003_auth_sessions.sql` cria sessoes persistentes com hash do token
 expiracao, revogacao e indice por usuario. O token bruto nunca e armazenado no D1;
 o relacionamento com `users` usa `ON DELETE RESTRICT` para preservar a rastreabilidade.
 
+A tabela `lesson_content_versions` recebe novas versões editoriais como `draft`.
+A publicação arquiva a versão publicada anterior e mantém somente a versão marcada
+como `published` elegível para a rota pública; o histórico não é apagado.
+
 A migration `0004_operational_core.sql` cria o nucleo tenant-scoped de obras,
 procedimentos versionados, etapas, checklists e execucoes. Cada entidade operacional
 carrega `organization_id` e possui indice por tenant/status; execucoes preservam a
