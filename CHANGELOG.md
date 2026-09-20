@@ -6,6 +6,8 @@ Todas as mudancas relevantes do ObraPro sao registradas aqui. O formato segue Ke
 
 ### Added
 
+- Spec 3 S3-06: migration D1 idempotente para os 45 treinamentos derivados dos documentos ISC, agrupados nos modulos editoriais 20/30/40/50. Cada curso entra como rascunho desligado, com quatro aulas-base somando 60 minutos; nenhum treinamento e publicado automaticamente.
+
 - Spec 3 S3-04: contrato server-side para administracao da publicacao do catalogo Cloudflare. Rotas `PATCH /api/admin/cursos/{slug}/publicacao` e `PATCH /api/admin/modulos/{slug}/publicacao` exigem sessao real e usuario `is_super_admin`; o corpo aceita apenas `{ "published": boolean }`, retorna erros sanitizados e altera somente o item solicitado no D1. A despublicacao nao apaga dados nem altera cursos relacionados.
 
 - Spec 3 S3-01: contrato versionado de conteudo editorial por aula, com texto, materiais, ferramentas, passos, alertas de seguranca e publicacao explicita; nenhum conteudo premium e exposto por nova rota nesta etapa.
