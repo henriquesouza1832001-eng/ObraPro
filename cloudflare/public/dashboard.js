@@ -1,5 +1,5 @@
 (() => {
-    const state = { organizations: [], works: [], procedures: [], realData: false };
+    const state = { organizations: [], works: [], procedures: [], realData: false, currentProcedure: null, execution: null };
     const views = [...document.querySelectorAll('[data-dashboard-view]')];
     const navigation = [...document.querySelectorAll('[data-dashboard-go]')];
     const header = document.querySelector('header');
@@ -189,6 +189,7 @@
         try {
             const result = await requestJson(`/api/painel/procedimentos/${encodeURIComponent(id)}?organization_id=${encodeURIComponent(organization.id)}`);
             const procedure = result.data;
+            state.currentProcedure = procedure;
             const workOptions = state.works.map((work) => `<option value="${escapeHtml(work.id)}">${escapeHtml(work.name)}</option>`).join('');
             content.innerHTML = `
                 <span class="text-xs font-bold uppercase text-brand">${stageLabel(procedure.stage)}</span>
@@ -240,7 +241,7 @@
 
     async function startExecution(procedureId, workId) {
         const organization = state.organizations.find((item) => item.id === document.querySelector('#dashboard-organization')?.value) || state.organizations[0];
-        if (!organization) return;
+        if (!organization || !state.currentProcedure) return;
         const button = document.querySelector('#start-execution');
         if (button) button.disabled = true;
         procedureDetailStatus('Iniciando execucao...');
@@ -250,12 +251,71 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ organization_id: organization.id, work_id: workId, procedure_id: procedureId }),
             });
-            procedureDetailStatus(`Execucao iniciada. Referencia: ${result.data.id}. O acompanhamento etapa a etapa depende de um proximo contrato de leitura da execucao, ainda nao publicado.`, 'success');
+            const work = state.works.find((item) => item.id === workId);
+            state.execution = {
+                id: result.data.id,
+                procedureTitle: state.currentProcedure.title,
+                workName: work ? work.name : 'Obra selecionada',
+                steps: state.currentProcedure.steps.map((step) => ({ ...step, status: 'pending', note: '' })),
+            };
+            showView('execution');
+            renderExecutionChecklist();
         } catch (error) {
             procedureDetailStatus(operationalErrorMessageFor(error), 'error');
         } finally {
             if (button) button.disabled = false;
         }
+    }
+
+    function executionProgress() {
+        if (!state.execution) return { done: 0, total: 0 };
+        const done = state.execution.steps.filter((step) => step.status !== 'pending').length;
+        return { done, total: state.execution.steps.length };
+    }
+
+    function renderExecutionChecklist() {
+        const content = document.querySelector('#execution-content');
+        if (!content || !state.execution) return;
+        const { done, total } = executionProgress();
+        const percent = total ? Math.round((done / total) * 100) : 0;
+        const allResolved = done === total;
+        content.innerHTML = `
+            <p class="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800" role="status">Execucao iniciada no servidor (referencia ${escapeHtml(state.execution.id)}). A marcacao de cada etapa abaixo fica somente neste dispositivo por enquanto: o Worker ainda nao publica uma rota para ler e salvar o progresso etapa a etapa. Nada aqui e enviado ao servidor alem do inicio da execucao.</p>
+            <div class="mt-4 flex items-center justify-between"><h2 class="text-2xl font-black">${escapeHtml(state.execution.procedureTitle)}</h2><span class="text-sm font-bold text-slate-500">${done}/${total}</span></div>
+            <p class="text-sm text-slate-500">${escapeHtml(state.execution.workName)}</p>
+            <div class="mt-2 h-3 overflow-hidden rounded-full bg-slate-100"><div class="h-full rounded-full bg-brand" style="width:${percent}%"></div></div>
+            <ol class="mt-6 grid gap-4">${state.execution.steps.map((step, index) => `
+                <li class="rounded-md border border-slate-200 bg-white p-4 shadow-sm">
+                    <div class="flex items-center justify-between gap-3"><h3 class="font-bold">${step.position}. ${escapeHtml(step.title)}</h3><span class="rounded-md px-3 py-1 text-xs font-bold ${step.status === 'completed' ? 'bg-emerald-50 text-emerald-700' : step.status === 'skipped' ? 'bg-slate-100 text-slate-600' : 'bg-amber-50 text-amber-800'}">${{ pending: 'Pendente', completed: 'Concluida', skipped: 'Pulada' }[step.status]}</span></div>
+                    <p class="mt-1 text-sm text-slate-600">${escapeHtml(step.instruction)}</p>
+                    <label class="mt-3 grid gap-1 text-xs font-bold text-slate-500" for="execution-note-${index}">Observacao (opcional)<textarea class="min-h-16 rounded-md border border-slate-300 p-2 font-normal text-ink" id="execution-note-${index}" data-execution-note="${index}">${escapeHtml(step.note)}</textarea></label>
+                    <div class="mt-3 flex gap-2">
+                        <button class="touch-button bg-brand text-white" type="button" data-execution-complete="${index}" ${step.status === 'completed' ? 'disabled' : ''}>Concluir etapa</button>
+                        <button class="touch-button border border-slate-300 bg-white text-ink" type="button" data-execution-skip="${index}" ${step.status === 'skipped' ? 'disabled' : ''}>Pular etapa</button>
+                    </div>
+                </li>`).join('')}</ol>
+            <button class="touch-button mt-6 bg-action text-white disabled:cursor-not-allowed disabled:opacity-60" type="button" id="conclude-execution" ${allResolved ? '' : 'disabled'}>Concluir execucao</button>
+            ${!allResolved ? '<p class="mt-2 text-xs text-slate-500">Resolva todas as etapas (concluida ou pulada) para liberar a conclusao.</p>' : ''}`;
+    }
+
+    function renderExecutionConclusion() {
+        const content = document.querySelector('#execution-content');
+        if (!content || !state.execution) return;
+        const { done, total } = executionProgress();
+        const completed = state.execution.steps.filter((step) => step.status === 'completed').length;
+        const skipped = state.execution.steps.filter((step) => step.status === 'skipped').length;
+        content.innerHTML = `
+            <div class="mx-auto max-w-lg text-center">
+                <span class="inline-flex size-16 items-center justify-center rounded-full bg-emerald-50 text-3xl text-emerald-600">&check;</span>
+                <h2 class="mt-4 text-2xl font-black">Etapa concluida!</h2>
+                <p class="mt-2 text-slate-600">Voce executou <strong>${escapeHtml(state.execution.procedureTitle)}</strong> em <strong>${escapeHtml(state.execution.workName)}</strong>.</p>
+                <p class="mt-4 text-sm text-slate-500">${done}/${total} etapas resolvidas &mdash; ${completed} concluidas, ${skipped} puladas.</p>
+                <p class="mt-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">Este resumo e local. A confirmacao definitiva no servidor depende do Codex publicar a leitura de execucao (ainda pendente).</p>
+                <div class="mt-6 flex flex-wrap justify-center gap-3">
+                    <button class="touch-button bg-action text-white" type="button" data-dashboard-go="procedures">Ver todos os procedimentos</button>
+                    <button class="touch-button border border-slate-300 bg-white text-ink" type="button" data-dashboard-go="overview">Voltar ao inicio</button>
+                </div>
+            </div>`;
     }
 
     function updateHeader(organization, works) {
@@ -408,6 +468,34 @@
             if (workSelect && workSelect.value) {
                 startExecution(startButton.dataset.procedureId, workSelect.value);
             }
+            return;
+        }
+        const completeStepButton = event.target.closest('[data-execution-complete]');
+        if (completeStepButton && state.execution) {
+            state.execution.steps[Number(completeStepButton.dataset.executionComplete)].status = 'completed';
+            renderExecutionChecklist();
+            return;
+        }
+        const skipStepButton = event.target.closest('[data-execution-skip]');
+        if (skipStepButton && state.execution) {
+            state.execution.steps[Number(skipStepButton.dataset.executionSkip)].status = 'skipped';
+            renderExecutionChecklist();
+            return;
+        }
+        const concludeButton = event.target.closest('#conclude-execution');
+        if (concludeButton && state.execution) {
+            renderExecutionConclusion();
+            return;
+        }
+        const goButton = event.target.closest('[data-dashboard-go]');
+        if (goButton) {
+            showView(goButton.dataset.dashboardGo);
+        }
+    });
+    document.addEventListener('input', (event) => {
+        const noteField = event.target.closest('[data-execution-note]');
+        if (noteField && state.execution) {
+            state.execution.steps[Number(noteField.dataset.executionNote)].note = noteField.value;
         }
     });
     document.querySelector('#dashboard-organization')?.addEventListener('change', async (event) => {
