@@ -1,0 +1,117 @@
+import type { Course, CourseModule, CourseRepository } from './course';
+
+interface CourseRow {
+    slug: string;
+    category: string;
+    title: string;
+    description: string;
+    access_type: 'free' | 'premium';
+    price_cents: number | null;
+    duration_minutes: number;
+    module_count: number;
+    instruction_module_slug: string | null;
+    instruction_module_title: string | null;
+    instruction_module_description: string | null;
+    instruction_module_position: number | null;
+}
+
+interface ModuleRow {
+    module_id: string;
+    module_title: string;
+    module_description: string;
+    module_position: number;
+    lesson_id: string;
+    lesson_title: string;
+    lesson_position: number;
+    duration_minutes: number;
+}
+
+function mapCourse(row: CourseRow): Course {
+    return {
+        slug: row.slug,
+        category: row.category,
+        title: row.title,
+        description: row.description,
+        accessType: row.access_type,
+        priceCents: row.price_cents,
+        modulesCount: row.module_count,
+        durationMinutes: row.duration_minutes,
+        instructionModule: row.instruction_module_slug ? {
+            slug: row.instruction_module_slug,
+            title: row.instruction_module_title ?? '',
+            description: row.instruction_module_description ?? '',
+            position: row.instruction_module_position ?? 0,
+        } : null,
+    };
+}
+
+export class D1CourseRepository implements CourseRepository {
+    public constructor(private readonly database: D1Database) { }
+
+    public async listCourses(): Promise<Course[]> {
+        const result = await this.database.prepare(`
+            SELECT c.slug, c.category, c.title, c.description, c.access_type,
+                c.price_cents, c.duration_minutes, COUNT(cm.id) AS module_count,
+                im.slug AS instruction_module_slug, im.title AS instruction_module_title,
+                im.description AS instruction_module_description, im.position AS instruction_module_position
+            FROM courses AS c
+            LEFT JOIN course_modules AS cm ON cm.course_id = c.id
+            LEFT JOIN instruction_modules AS im ON im.id = c.instruction_module_id AND im.is_published = 1
+            WHERE c.is_published = 1
+            GROUP BY c.id
+            ORDER BY c.is_featured DESC, c.category ASC, c.title ASC
+        `).all<CourseRow>();
+
+        return result.results.map(mapCourse);
+    }
+
+    public async findCourseBySlug(slug: string): Promise<Course | null> {
+        const result = await this.database.prepare(`
+            SELECT c.slug, c.category, c.title, c.description, c.access_type,
+                c.price_cents, c.duration_minutes, COUNT(cm.id) AS module_count,
+                im.slug AS instruction_module_slug, im.title AS instruction_module_title,
+                im.description AS instruction_module_description, im.position AS instruction_module_position
+            FROM courses AS c
+            LEFT JOIN course_modules AS cm ON cm.course_id = c.id
+            LEFT JOIN instruction_modules AS im ON im.id = c.instruction_module_id AND im.is_published = 1
+            WHERE c.slug = ? AND c.is_published = 1
+            GROUP BY c.id
+            LIMIT 1
+        `).bind(slug).first<CourseRow>();
+
+        return result ? mapCourse(result) : null;
+    }
+
+    public async findModulesByCourseSlug(slug: string): Promise<CourseModule[]> {
+        const result = await this.database.prepare(`
+            SELECT cm.id AS module_id, cm.title AS module_title, cm.description AS module_description,
+                cm.position AS module_position, l.id AS lesson_id, l.title AS lesson_title,
+                l.position AS lesson_position, l.duration_minutes
+            FROM course_modules AS cm
+            INNER JOIN courses AS c ON c.id = cm.course_id
+            LEFT JOIN lessons AS l ON l.course_module_id = cm.id
+            WHERE c.slug = ? AND c.is_published = 1
+            ORDER BY cm.position ASC, l.position ASC
+        `).bind(slug).all<ModuleRow>();
+
+        const modules = new Map<string, CourseModule>();
+        for (const row of result.results) {
+            const module = modules.get(row.module_id) ?? {
+                title: row.module_title,
+                lessons: [],
+            };
+
+            if (row.lesson_id) {
+                module.lessons.push({
+                    id: row.lesson_id,
+                    title: row.lesson_title,
+                    durationMinutes: row.duration_minutes,
+                });
+            }
+
+            modules.set(row.module_id, module);
+        }
+
+        return [...modules.values()];
+    }
+}

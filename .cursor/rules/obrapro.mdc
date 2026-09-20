@@ -1,0 +1,6 @@
+---
+description: Regras obrigatorias do projeto ObraPro
+alwaysApply: true
+---
+
+Leia `AGENTS.md` antes de analisar ou editar qualquer arquivo. Em seguida leia `README.md`, `docs/AI-COLLABORATION.md` e os documentos da area afetada. Nao crie convencoes exclusivas do Cursor, nao exponha secrets e siga o fluxo de branches e pull requests descrito em `docs/GIT-WORKFLOW.md`.

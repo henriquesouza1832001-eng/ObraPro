@@ -1,8 +1,43 @@
 # ObraPro
 
-Plataforma web/PWA para procedimentos e execucao de obras: complexo por dentro, simples por fora.
+Plataforma web/PWA para aprender, planejar e acompanhar obras: complexo por dentro, simples por fora.
 
-Leia [AGENTS.md](AGENTS.md) antes de contribuir. A arquitetura e um monolito modular Laravel; auditoria, eventos de seguranca e observabilidade sao responsabilidades separadas. MGL e uma integracao opcional e assincrona.
+O ObraPro combina orientacoes passo a passo, cursos gratuitos e premium, gestao de obras e estudos preliminares assistidos por IA. O produto atende desde pessoas sem experiencia tecnica ate profissionais da construcao, sem substituir responsavel tecnico ou projeto legal.
+
+## Estado atual
+
+- Mockup web responsivo e instalavel como PWA.
+- Login real quando os bindings D1 estao configurados, com fallback de demonstracao apenas no preview sem banco.
+- Fundacao de organizacoes, memberships e papeis por tenant, com seguranca global isolada para Super Admin.
+- Catalogo publico navegavel em `/cursos`, com cursos gratuitos e avulsos por etapa da construcao.
+- API privada do Worker para organizacoes ativas, obras, chamados e evidencias; todas exigem sessao real, membership ativa e `Cache-Control: no-store`.
+- Deploy de `develop` para Cloudflare Workers automatizado pelo GitHub Actions.
+- MGL permanece opcional e reservado a observabilidade e seguranca.
+- Cursos e planos configuraveis estao nas proximas entregas; IA e o ultimo modulo planejado e nao bloqueia a plataforma.
+
+Preview: `https://obrapro-preview.henriquesouza.workers.dev`.
+
+No preview sem bindings, `/cursos` mostra o catalogo editorial e `/cursos/{slug}` abre o detalhe correspondente. Com `AUTH_DB` e `OPERATIONS_DB` apontando para o D1 aprovado, o Worker autentica usuarios e expoe `/api/painel/organizacoes`, `/api/painel/obras`, chamados e evidencias privadas. O dashboard HTML consome organizacoes e obras pelas APIs privadas quando os bindings estao ativos; no preview de demonstracao ele identifica claramente os dados ilustrativos. Procedimentos, checklists e nao conformidades aguardam seus contratos de leitura antes de mostrar dados reais.
+
+## Comece por aqui
+
+Leia [AGENTS.md](AGENTS.md) antes de contribuir. Agentes de IA tambem devem seguir [docs/AI-COLLABORATION.md](docs/AI-COLLABORATION.md). A arquitetura e um monolito modular Laravel; auditoria, eventos de seguranca e observabilidade sao responsabilidades separadas.
+
+Documentos principais:
+
+- [Produto](docs/PRODUCT.md)
+- [Roadmap](docs/ROADMAP.md)
+- [Sprints e cards](docs/SPRINTS.md)
+- [Migracao para Cloudflare](docs/CLOUDFLARE-MIGRATION.md)
+- [Sprints da migracao Cloudflare](docs/CLOUDFLARE-SPRINTS.md)
+- [Inventario de codigo](docs/CODE-INVENTORY.md)
+- [Arquitetura](docs/ARCHITECTURE.md)
+- [Banco de dados](docs/DATABASE.md)
+- [Seguranca](docs/SECURITY.md)
+- [PWA e offline](docs/PWA.md)
+- [UX e acessibilidade](docs/UX.md)
+- [Fluxo Git](docs/GIT-WORKFLOW.md)
+- [Changelog](CHANGELOG.md)
 
 ## Desenvolvimento local
 
@@ -18,7 +53,11 @@ npm run build
 php artisan serve
 ```
 
+Abra `http://127.0.0.1:8000`. O preview Cloudflare e gerado a partir de `cloudflare/public` e nao substitui o runtime Laravel de producao.
+
 Neste workspace, ferramentas portateis verificadas ficam em `.tools/` e nao sao versionadas. Use `./.tools/php/php.exe artisan test` para executar a suite sem alterar o sistema.
+
+O seeder `CourseCatalogSeeder` e idempotente e popula apenas o catalogo editorial inicial; ele nao apaga tabelas nem registros existentes.
 
 ## Qualidade
 

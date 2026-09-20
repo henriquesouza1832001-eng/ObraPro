@@ -24,7 +24,7 @@ jobs:
               [[ "$HEAD" == "develop" || "$HEAD" == "hotfix" ]]
               ;;
             develop)
-              [[ "$HEAD" == "main" || "$HEAD" == feature/* || "$HEAD" == fix/* || "$HEAD" == chore/* || "$HEAD" == docs/* || "$HEAD" == refactor/* || "$HEAD" == test/* ]]
+              [[ "$HEAD" == "main" || "$HEAD" == feature/* || "$HEAD" == fix/* || "$HEAD" == chore/* || "$HEAD" == docs/* || "$HEAD" == refactor/* || "$HEAD" == test/* || "$HEAD" == claude/* || "$HEAD" == codex-* ]]
               ;;
             hotfix)
               [[ "$HEAD" == hotfix/* || "$HEAD" == "main" ]]
@@ -63,14 +63,65 @@ jobs:
       - name: Check formatting
         run: vendor/bin/pint --test
 
-      - name: Run tests
-        run: php artisan test
-
       - name: Build frontend
         run: npm run build
+
+      - name: Typecheck Cloudflare Worker
+        if: hashFiles('cloudflare/tsconfig.json') != '' && hashFiles('package.json') != ''
+        run: |
+          if npm run | grep -q 'worker:typecheck'; then
+            npm run worker:typecheck
+          else
+            echo 'worker:typecheck ainda nao esta disponivel nesta fatia da migracao'
+          fi
+
+      - name: Build Cloudflare Worker
+        if: hashFiles('wrangler.preview.jsonc') != '' && hashFiles('package.json') != ''
+        run: |
+          if npm run | grep -q 'worker:build'; then
+            npm run worker:build
+          else
+            echo 'worker:build ainda nao esta disponivel nesta fatia da migracao'
+          fi
+
+      - name: Run tests
+        run: php artisan test
 
       - name: Audit PHP dependencies
         run: composer audit --locked
 
       - name: Audit frontend dependencies
-        run: npm audit --audit-level=high
+        run: |
+          audit_output=$(npm audit --audit-level=high 2>&1) && { echo "$audit_output"; exit 0; }
+          audit_status=$?
+          echo "$audit_output"
+          if grep -Eq '503 Service Unavailable|performing maintenance' <<< "$audit_output"; then
+            echo '::warning::npm advisory service is temporarily unavailable'
+            exit 0
+          fi
+          exit "$audit_status"
+
+  deploy-preview:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+    needs: quality
+    runs-on: ubuntu-latest
+    concurrency:
+      group: cloudflare-preview
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install frontend and Worker dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Deploy preview to Cloudflare
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy --config wrangler.preview.jsonc

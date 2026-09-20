@@ -6,19 +6,122 @@
     <meta name="theme-color" content="#176b4d">
     <link rel="manifest" href="/manifest.webmanifest">
     <title>ObraPro</title>
-    <style>
-        *{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f4f6f5;color:#18201d}main{max-width:760px;margin:auto;padding:64px 24px}h1{font-size:48px;margin:0 0 8px;color:#176b4d}p{font-size:20px;line-height:1.5}.primary{display:inline-block;margin:18px 0 40px;padding:14px 22px;background:#176b4d;color:#fff;text-decoration:none;border-radius:6px;font-weight:700}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.item{padding:20px;border:1px solid #c9d2ce;background:#fff;border-radius:6px;font-weight:700}@media(max-width:520px){main{padding-top:40px}h1{font-size:40px}.grid{grid-template-columns:1fr}}
-    </style>
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body>
-<main>
-    <h1>ObraPro</h1>
-    <p>Passo a passo. Obra bem feita.</p>
-    <a class="primary" href="{{ route('login') }}">Acessar</a>
-    <section class="grid" aria-label="Areas principais">
-        <div class="item">Aprender</div><div class="item">Minha obra</div><div class="item">Atividades</div><div class="item">Ajuda</div>
-    </section>
-</main>
-<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('/service-worker.js')}</script>
+<body class="min-h-screen overflow-x-hidden bg-surface font-sans text-ink antialiased">
+<div class="mx-auto min-h-screen max-w-[1440px] lg:grid lg:grid-cols-[248px_1fr]">
+    <aside class="hidden border-r border-slate-200 bg-ink px-5 py-7 text-white lg:flex lg:flex-col">
+        <div class="flex items-center gap-3">
+            <span class="flex size-11 items-center justify-center rounded-md bg-safety text-2xl" aria-hidden="true">⛑</span>
+            <div><p class="text-xl font-black">ObraPro</p><p class="text-xs text-slate-300">Passo a passo. Obra bem feita.</p></div>
+        </div>
+
+        <nav class="mt-10 grid gap-2" aria-label="Navegacao principal">
+            <button class="flex min-h-11 items-center gap-3 rounded-md bg-white/10 px-3 text-left text-sm font-bold" data-go="home"><span aria-hidden="true">⌂</span> Início</button>
+            <button class="flex min-h-11 items-center gap-3 rounded-md px-3 text-left text-sm text-slate-200 hover:bg-white/10" data-go="category"><span aria-hidden="true">▤</span> Meus serviços</button>
+            <button class="flex min-h-11 items-center gap-3 rounded-md px-3 text-left text-sm text-slate-200 hover:bg-white/10"><span aria-hidden="true">▦</span> QR Code</button>
+            <a class="flex min-h-11 items-center gap-3 rounded-md px-3 text-sm text-slate-200 hover:bg-white/10" href="{{ route('login') }}"><span aria-hidden="true">♙</span> Entrar</a>
+        </nav>
+
+        <div class="mt-auto rounded-md border border-white/15 bg-white/5 p-4">
+            <p class="text-sm font-bold">Disponível no canteiro</p>
+            <p class="mt-1 text-xs leading-5 text-slate-300">O conteúdo público básico funciona mesmo quando a conexão oscila.</p>
+            <span class="mt-3 inline-flex items-center gap-2 text-xs font-bold text-emerald-300"><span class="size-2 rounded-full bg-emerald-400"></span> Online</span>
+        </div>
+    </aside>
+
+    <main class="min-w-0 pb-24 lg:pb-8">
+        <header class="sticky top-0 z-20 border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur lg:px-8">
+            <div class="flex items-center justify-between gap-4">
+                <div class="flex items-center gap-2 lg:hidden">
+                    <span class="flex size-9 items-center justify-center rounded-md bg-safety text-xl" aria-hidden="true">⛑</span>
+                    <span class="font-black">ObraPro</span>
+                </div>
+                <div class="hidden lg:block"><p class="text-xs font-bold uppercase text-slate-500">Obra ativa</p><p class="font-bold">Residencial das Flores</p></div>
+                <div class="flex items-center gap-2">
+                    <span class="hidden rounded-md bg-emerald-50 px-3 py-2 text-xs font-bold text-brand sm:inline-flex">Sincronizado agora</span>
+                    <button class="flex size-10 items-center justify-center rounded-md border border-slate-200 bg-white" aria-label="Notificações">♢</button>
+                </div>
+            </div>
+            <div class="mt-3 h-1 overflow-hidden rounded-full bg-slate-100"><div class="h-full w-1/5 rounded-full bg-brand transition-all" data-app-progress></div></div>
+        </header>
+
+        <div class="mx-auto w-full max-w-5xl px-4 py-6 lg:px-8 lg:py-9">
+            <section class="screen-panel is-active" data-screen="home" data-step="1">
+                <div class="flex min-w-0 flex-col gap-2"><span class="text-sm font-bold text-brand" data-progress-label>Etapa 1 de 5</span><h1 class="text-3xl font-black sm:text-4xl">Olá! O que você vai fazer hoje?</h1><p class="max-w-2xl text-slate-600">Encontre uma atividade e siga as orientações da obra.</p></div>
+
+                <label class="mt-6 flex min-h-13 items-center gap-3 rounded-md border border-slate-300 bg-white px-4 shadow-sm">
+                    <span aria-hidden="true">⌕</span><span class="sr-only">Buscar serviço</span><input class="min-w-0 flex-1 border-0 bg-transparent text-base outline-none" type="search" placeholder="Buscar serviço..."><span aria-hidden="true">◉</span>
+                </label>
+
+                <div class="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+                    <button class="min-h-36 min-w-0 rounded-md bg-blue-600 p-4 text-left text-white shadow-sm transition-transform hover:-translate-y-0.5" data-go="category"><span class="text-3xl" aria-hidden="true">◇</span><span class="mt-8 block font-black">Fundações</span></button>
+                    <button class="min-h-36 min-w-0 rounded-md bg-safety p-4 text-left text-white shadow-sm transition-transform hover:-translate-y-0.5" data-go="category"><span class="text-3xl" aria-hidden="true">▱</span><span class="mt-8 block font-black">Alvenaria</span></button>
+                    <button class="min-h-36 rounded-md bg-cyan-600 p-4 text-left text-white shadow-sm transition-transform hover:-translate-y-0.5"><span class="text-3xl" aria-hidden="true">⌁</span><span class="mt-8 block font-black">Hidráulica</span></button>
+                    <button class="min-h-36 rounded-md bg-amber-400 p-4 text-left text-ink shadow-sm transition-transform hover:-translate-y-0.5"><span class="text-3xl" aria-hidden="true">ϟ</span><span class="mt-8 block font-black">Elétrica</span></button>
+                    <button class="min-h-32 rounded-md border border-slate-200 bg-white p-4 text-left shadow-sm"><span class="text-3xl" aria-hidden="true">▰</span><span class="mt-6 block font-black">Acabamentos</span></button>
+                    <button class="min-h-32 rounded-md border border-slate-200 bg-white p-4 text-left shadow-sm"><span class="text-3xl" aria-hidden="true">▦</span><span class="mt-6 block font-black">Outros</span></button>
+                </div>
+            </section>
+
+            <section class="screen-panel" data-screen="category" data-step="2">
+                <button class="mb-5 inline-flex min-h-11 items-center gap-2 text-sm font-bold" data-go="home">← Voltar</button>
+                <div><span class="text-sm font-bold text-brand" data-progress-label>Etapa 2 de 5</span><h1 class="mt-1 text-3xl font-black">Alvenaria</h1><p class="mt-2 text-slate-600">Escolha o serviço que será executado.</p></div>
+
+                <div class="mt-6 grid gap-3 md:grid-cols-2">
+                    <button class="grid min-h-28 grid-cols-[112px_1fr_auto] items-center gap-4 overflow-hidden rounded-md border-2 border-action bg-white text-left shadow-sm" data-go="procedure"><img class="h-full w-28 object-cover" src="/images/bricklayer-training.png" alt="Pedreiro executando alvenaria"><span><strong class="block">Alvenaria de vedação</strong><small class="mt-1 block text-slate-500">Passo a passo essencial</small></span><span class="pr-4 text-xl" aria-hidden="true">›</span></button>
+                    @foreach (['Vergas e contravergas', 'Assentamento de blocos', 'Encunhamento', 'Rejuntamento'] as $service)
+                        <button class="grid min-h-24 grid-cols-[64px_1fr_auto] items-center gap-4 rounded-md border border-slate-200 bg-white p-3 text-left shadow-sm"><span class="flex size-14 items-center justify-center rounded-md bg-orange-50 text-2xl text-safety" aria-hidden="true">▱</span><strong>{{ $service }}</strong><span class="text-xl" aria-hidden="true">›</span></button>
+                    @endforeach
+                </div>
+            </section>
+
+            <section class="screen-panel" data-screen="procedure" data-step="3">
+                <button class="mb-5 inline-flex min-h-11 items-center gap-2 text-sm font-bold" data-go="category">← Alvenaria</button>
+                <div class="flex flex-wrap items-end justify-between gap-3"><div><span class="text-sm font-bold text-brand" data-progress-label>Etapa 3 de 5</span><h1 class="mt-1 text-3xl font-black">Alvenaria de vedação</h1></div><span class="rounded-md bg-emerald-50 px-3 py-2 text-xs font-bold text-brand">Procedimento aprovado</span></div>
+
+                <div class="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(280px,1fr)]">
+                    <div class="overflow-hidden rounded-md bg-black shadow-sm"><div class="relative aspect-video"><img class="size-full object-cover" src="/images/bricklayer-training.png" alt="Demonstração de execução correta de alvenaria"><button class="absolute inset-0 m-auto flex size-16 items-center justify-center rounded-full border-2 border-white bg-black/55 text-2xl text-white" aria-label="Reproduzir vídeo">▶</button><span class="absolute bottom-3 right-3 rounded bg-black/70 px-2 py-1 text-xs text-white">2:35</span></div></div>
+                    <div class="rounded-md border border-slate-200 bg-white p-5 shadow-sm"><span class="flex size-9 items-center justify-center rounded-full bg-action font-black text-white">1</span><h2 class="mt-3 text-xl font-black">Preparação</h2><p class="mt-1 text-sm text-slate-600">Antes de começar:</p><ul class="mt-4 grid gap-3 text-sm"><li class="flex gap-2"><span class="text-brand">●</span> Verifique o projeto aprovado</li><li class="flex gap-2"><span class="text-brand">●</span> Separe todos os materiais</li><li class="flex gap-2"><span class="text-brand">●</span> Use os EPIs indicados</li><li class="flex gap-2"><span class="text-brand">●</span> Confira nível e alinhamento</li></ul></div>
+                </div>
+                <div class="mt-6 flex justify-between gap-3"><button class="touch-button border border-slate-300 bg-white" data-go="category">← Anterior</button><button class="touch-button bg-action text-white" data-go="checklist">Ir para checklist →</button></div>
+            </section>
+
+            <section class="screen-panel" data-screen="checklist" data-step="4">
+                <button class="mb-5 inline-flex min-h-11 items-center gap-2 text-sm font-bold" data-go="procedure">← Passo a passo</button>
+                <div><span class="text-sm font-bold text-brand" data-progress-label>Etapa 4 de 5</span><h1 class="mt-1 text-3xl font-black">Checklist de execução</h1><p class="mt-2 text-slate-600" data-check-count>0 de 5 conferidos</p></div>
+
+                <div class="mt-6 grid gap-6 lg:grid-cols-2">
+                    <img class="aspect-[4/3] w-full rounded-md object-cover shadow-sm" src="/images/bricklayer-training.png" alt="Primeira fiada de alvenaria em execução">
+                    <fieldset class="grid gap-3"><legend class="mb-2 text-lg font-black">Execução da primeira fiada</legend>
+                        @foreach (['Argamassa no traço correto', 'Blocos alinhados', 'Nível conferido', 'Prumo conferido', 'Juntas com espessura uniforme'] as $item)
+                            <label class="flex min-h-14 cursor-pointer items-center gap-3 rounded-md border border-slate-200 bg-white px-4 shadow-sm"><input class="size-6 accent-brand" type="checkbox" data-check-item><span class="font-medium">{{ $item }}</span></label>
+                        @endforeach
+                        <button class="touch-button border-2 border-action bg-blue-50 text-action" type="button">▣ Registrar foto</button>
+                    </fieldset>
+                </div>
+                <div class="mt-6 flex justify-between gap-3"><button class="touch-button border border-slate-300 bg-white" data-go="procedure">← Anterior</button><button class="touch-button bg-brand text-white disabled:cursor-not-allowed disabled:bg-slate-300" data-finish data-go="done" disabled>Concluir etapa →</button></div>
+            </section>
+
+            <section class="screen-panel" data-screen="done" data-step="5">
+                <div class="mx-auto max-w-xl py-8 text-center sm:py-16">
+                    <span class="mx-auto flex size-24 items-center justify-center rounded-full bg-emerald-100 text-5xl text-brand" aria-hidden="true">✓</span><span class="mt-6 block text-sm font-bold text-brand" data-progress-label>Etapa 5 de 5</span><h1 class="mt-2 text-4xl font-black text-brand">Etapa concluída!</h1><p class="mt-4 text-lg">Muito bem! Você executou a primeira fiada de alvenaria.</p>
+                    <div class="mx-auto mt-8 max-w-sm overflow-hidden rounded-md border border-slate-200 bg-white text-left shadow-sm"><img class="aspect-video w-full object-cover" src="/images/bricklayer-training.png" alt="Evidência registrada da alvenaria"><div class="p-4"><p class="font-bold">Evidência pronta para envio</p><p class="mt-1 text-sm text-slate-500">Será sincronizada quando houver conexão.</p></div></div>
+                    <button class="touch-button mt-8 w-full bg-action text-white" data-go="home">Voltar ao início</button>
+                </div>
+            </section>
+        </div>
+        <a class="mx-auto mt-8 flex max-w-5xl items-center justify-between gap-4 rounded-md bg-ink p-5 text-white" href="{{ route('courses.index') }}"><span><strong class="block">Quer aprender a obra inteira?</strong><small class="text-slate-300">Veja cursos simples, do planejamento ao acabamento.</small></span><span class="touch-button shrink-0 bg-white text-ink">Ver cursos</span></a>
+    </main>
+</div>
+
+<nav class="fixed inset-x-0 bottom-0 z-30 grid grid-cols-4 border-t border-slate-200 bg-white px-2 py-2 shadow-[0_-4px_20px_rgba(15,35,63,0.08)] lg:hidden" aria-label="Navegacao mobile">
+    <button class="flex min-h-12 flex-col items-center justify-center text-xs font-bold text-action" data-go="home"><span class="text-lg" aria-hidden="true">⌂</span>Início</button>
+    <button class="flex min-h-12 flex-col items-center justify-center text-xs text-slate-600" data-go="category"><span class="text-lg" aria-hidden="true">▤</span>Serviços</button>
+    <button class="flex min-h-12 flex-col items-center justify-center text-xs text-slate-600"><span class="text-lg" aria-hidden="true">▦</span>QR Code</button>
+    <a class="flex min-h-12 flex-col items-center justify-center text-xs text-slate-600" href="{{ route('login') }}"><span class="text-lg" aria-hidden="true">♙</span>Perfil</a>
+</nav>
+
+<script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('/service-worker.js');</script>
 </body>
 </html>

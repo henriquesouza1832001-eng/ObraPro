@@ -16,7 +16,7 @@ Contracts / Events
 Infrastructure (DB, storage, adapters)
 ```
 
-Modulos planejados: Identity, Organizations, Works, Procedures, Training, Execution, Checklists, Evidence, Media, Audit e Observability. Apenas Identity, Audit e Observability recebem fundacao executavel na Sprint 0.
+Modulos planejados: Identity, Organizations, Works, Procedures, Training, Catalog, Commerce, PreliminaryDesign, AI, Execution, Checklists, Evidence, Media, Audit e Observability. Identity, Organizations, Audit e Observability possuem fundacao executavel; os demais evoluem por fatias verticais.
 
 ## Regras de dependencia
 
@@ -29,6 +29,8 @@ Modulos planejados: Identity, Organizations, Works, Procedures, Training, Execut
 ## Multi-tenancy
 
 Banco compartilhado com `organization_id` nas entidades tenant-owned. O tenant ativo deriva da associacao autenticada e toda Policy confirma acesso ao recurso. Global scopes podem reduzir erros, mas nao substituem Policies e testes. Operacoes de plataforma com acesso excepcional exigem justificativa, escopo temporal e audit event.
+
+O acesso organizacional deriva de `organization_memberships` ativas e do papel registrado no proprio vinculo. Os papeis owner e admin podem administrar a organizacao; os demais recebem capacidades operacionais especificas nas proximas fatias. Super Admin e uma capacidade global separada: ela libera recursos de seguranca da plataforma, mas nao ignora Policies nem concede acesso automatico a tenants.
 
 ## Fluxo de auditoria e seguranca
 
@@ -49,8 +51,25 @@ ObraPro application
 
 O commit da acao de negocio nao depende da disponibilidade do MGL. A entrega externa usa fila, retry com backoff e registro de falha. O adapter sera implementado somente com contrato oficial.
 
-Durante a validacao do mockup inicial, somente a observabilidade local fica ativa. Cloudflare e MGL permanecem fora do caminho das requisicoes. A futura conexao Cloudflare sera avaliada depois da estabilizacao da experiencia; a futura integracao MGL consumira eventos de forma assincrona para compor um painel de observabilidade e seguranca.
+O preview PWA e publicado em Cloudflare Workers por GitHub Actions depois dos checks de `develop`. Sem bindings D1, ele preserva o fallback de demonstracao; com bindings, o Worker usa sessao persistente, repositorios D1 e rotas privadas com `no-store`. O HTML do dashboard ainda e o mockup visual e nao consome essas rotas automaticamente. MGL permanece fora do caminho das requisicoes e consumira eventos assincronos somente quando seu contrato oficial estiver disponivel.
+
+Rotas do preview que representam recursos do Laravel devem preservar o contexto: `/cursos` lista o catalogo, `/cursos/{slug}` exibe o detalhe valido e slugs desconhecidos retornam `404`. O Worker nao pode transformar um detalhe em uma nova listagem silenciosamente.
+
+## IA e motor de estudo preliminar
+
+```text
+Questionario validado
+   -> PreliminaryDesign Action
+   -> AI Provider Contract (interpretacao estruturada)
+   -> schema e regras deterministicas
+   -> motor de distribuicao espacial
+   -> estudo versionado para revisao humana
+```
+
+Groq e candidato inicial para prototipacao por possuir camada gratuita e limites explicitos. OpenRouter ou outro provedor pode ser usado como alternativa. Nenhum SDK especifico atravessa o contrato de dominio. Chaves ficam no secret manager, chamadas usam timeout e limite de tokens, e respostas sao validadas antes da persistencia.
+
+Decisao atual: IA nao faz parte do MVP nem do caminho critico. O catalogo, os procedimentos, checklists, registros, pagamentos e operacao devem funcionar sem qualquer provedor de IA. O contrato acima permanece documentado apenas como extensao futura, para evitar acoplamento quando essa etapa for priorizada.
 
 ## Decisoes pendentes
 
-Validar o mockup inicial antes de escolher a configuracao Cloudflare. Permanecem pendentes: provedor/configuracao de object storage, estrategia final de tenancy, protocolo e painel MGL, mecanismo de antimalware, politica de retencao por categoria e provedor de identidade corporativa. Registrar decisoes relevantes como ADRs quando se tornarem concretas.
+Permanecem pendentes: runtime Laravel de producao, provedor/configuracao de object storage, estrategia final de tenancy, gateway de pagamento, provedor de IA inicial, algoritmo geometrico, protocolo e painel MGL, mecanismo de antimalware, politica de retencao por categoria e identidade corporativa. Registrar decisoes duradouras como ADRs quando se tornarem concretas.
