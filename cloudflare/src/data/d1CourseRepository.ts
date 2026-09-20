@@ -1,4 +1,4 @@
-import type { Course, CourseRepository } from './course';
+import type { Course, CourseModule, CourseRepository } from './course';
 
 interface CourseRow {
     slug: string;
@@ -9,6 +9,17 @@ interface CourseRow {
     price_cents: number | null;
     duration_minutes: number;
     module_count: number;
+}
+
+interface ModuleRow {
+    module_id: string;
+    module_title: string;
+    module_description: string;
+    module_position: number;
+    lesson_id: string;
+    lesson_title: string;
+    lesson_position: number;
+    duration_minutes: number;
 }
 
 function mapCourse(row: CourseRow): Course {
@@ -53,5 +64,37 @@ export class D1CourseRepository implements CourseRepository {
         `).bind(slug).first<CourseRow>();
 
         return result ? mapCourse(result) : null;
+    }
+
+    public async findModulesByCourseSlug(slug: string): Promise<CourseModule[]> {
+        const result = await this.database.prepare(`
+            SELECT cm.id AS module_id, cm.title AS module_title, cm.description AS module_description,
+                cm.position AS module_position, l.id AS lesson_id, l.title AS lesson_title,
+                l.position AS lesson_position, l.duration_minutes
+            FROM course_modules AS cm
+            INNER JOIN courses AS c ON c.id = cm.course_id
+            LEFT JOIN lessons AS l ON l.course_module_id = cm.id
+            WHERE c.slug = ? AND c.is_published = 1
+            ORDER BY cm.position ASC, l.position ASC
+        `).bind(slug).all<ModuleRow>();
+
+        const modules = new Map<string, CourseModule>();
+        for (const row of result.results) {
+            const module = modules.get(row.module_id) ?? {
+                title: row.module_title,
+                lessons: [],
+            };
+
+            if (row.lesson_id) {
+                module.lessons.push({
+                    title: row.lesson_title,
+                    durationMinutes: row.duration_minutes,
+                });
+            }
+
+            modules.set(row.module_id, module);
+        }
+
+        return [...modules.values()];
     }
 }

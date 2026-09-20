@@ -38,4 +38,8 @@ export class MockCourseRepository implements CourseRepository {
     async findCourseBySlug(slug: string): Promise<Course | null> {
         return courses.find((course) => course.slug === slug) ?? null;
     }
+
+    async findModulesByCourseSlug(slug: string): Promise<CourseModule[]> {
+        return courses.some((course) => course.slug === slug) ? courseModules() : [];
+    }
 }
