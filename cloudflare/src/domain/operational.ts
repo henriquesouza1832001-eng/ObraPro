@@ -102,3 +102,16 @@ export interface ExecutionStep {
     note: string | null;
     completedAt: string | null;
 }
+
+export interface ExecutionStepWithDetails extends ExecutionStep {
+    position: number;
+    title: string;
+    instruction: string;
+    safetyNote: string | null;
+    whenToCallProfessional: string | null;
+    materials: string[];
+}
+
+export interface ExecutionWithSteps extends Execution {
+    steps: ExecutionStepWithDetails[];
+}

@@ -83,8 +83,8 @@ Nenhum agente edita as pastas reservadas do outro. Claude nao edita `cloudflare/
 |---|---|---|---|
 | CF4-D1 | Codex | Migrations D1 de obras, procedimentos, etapas, checklists e execucoes; contratos de dominio correspondentes. | Feito: `0004_operational_core.sql`, contratos tipados e `D1OperationalRepository`. |
 | CF4-D2 | Codex | Regras de autorizacao por tenant e testes de isolamento entre organizacoes. | Feito: rotas `GET /api/painel/organizacoes` e `GET /api/painel/obras?organization_id=...` exigem sessao D1, membership ativa e `no-store`; tenant cruzado retorna 403. |
-| CF4-C1 | Claude | Telas de execucao (uma acao principal por tela), checklist e progresso, seguindo `docs/UX.md`. | Pendente: o dashboard visual atual e estatico; a API de obras ja esta disponivel para integracao. |
-| CF4-C2 | Claude | Estados vazio (nenhuma obra ativa), carregamento e erro de rede no painel operacional. | Pendente: depende de a interface consumir as rotas reais. |
+| CF4-C1 | Claude | Telas de execucao (uma acao principal por tela), checklist e progresso, seguindo `docs/UX.md`. | Feito com persistencia real: painel lista procedimentos (agrupados por etapa) e checklists reais, com tela de detalhe (passos, materiais, seguranca) e inicio de execucao (`POST /api/painel/execucoes`). Apos iniciar, o painel busca a execucao real (`GET /api/painel/execucoes/{id}`, implementado por Claude nesta entrega — ver CF6-D1) e cada "Concluir etapa"/"Pular etapa" chama `PATCH /api/painel/execucoes/{id}/etapas/{step_id}` de verdade, usando o `execution_step_id` real devolvido pelo `GET`. Uma etapa so aparece marcada apos confirmacao do servidor; falha de rede mostra erro e nao marca nada. Tela de conclusao mostra resumo real apos todas as etapas resolvidas. **Nao feito nesta entrega**: registro de evidencia por etapa e a home publica com categorias coloridas do mockup (proximo pacote). |
+| CF4-C2 | Claude | Estados vazio (nenhuma obra ativa), carregamento e erro de rede no painel operacional. | Feito para obras, procedimentos e checklists: cada lista trata carregando, vazio, erro e demonstracao (sem sessao real) separadamente. |
 
 **Testes:** inicio/conclusao de execucao, checklist obrigatorio, tenant cruzado bloqueado, leitura mobile.
 
@@ -98,7 +98,7 @@ Nenhum agente edita as pastas reservadas do outro. Claude nao edita `cloudflare/
 |---|---|---|---|
 | CF5-D1 | Codex | Binding R2, contrato de evidencia (storage key, checksum, MIME validado), download autorizado por Policy. | Feito em codigo: `POST /api/painel/evidencias` detecta MIME pelo conteudo, limita tamanho, calcula checksum, grava R2 privado e metadata D1; download exige tenant. Requer binding R2 real para smoke test. |
 | CF5-D2 | Codex | Migration e contrato de chamados de suporte com contexto sanitizado. | Feito: `POST /api/painel/suporte/chamados` e consulta do proprio solicitante; contexto allowlisted. |
-| CF5-C1 | Claude | Tela de upload/anexo de evidencia (captura, preview, estado de envio) e tela de abertura/acompanhamento de chamado. | Pendente: rotas estao prontas para integracao visual. |
+| CF5-C1 | Claude | Tela de upload/anexo de evidencia (captura, preview, estado de envio) e tela de abertura/acompanhamento de chamado. | Feito: chamados integrados (ver CF6-C2); evidencia por etapa agora conectada dentro do checklist de execucao real (ver CF4-C1/CF7-C1) — campo de arquivo, botao de envio e estados pendente/enviando/enviado/falha, usando `POST /api/painel/evidencias` com o `execution_step_id` real. |
 | CF5-C2 | Claude | Estado de fila offline-friendly na interface (pendente, enviando, concluido, falha) conforme `docs/PWA.md`. | Pendente: fila offline pertence ao proximo trabalho de PWA. |
 
 **Testes:** upload valido/invalido, download bloqueado entre organizacoes, chamado criado e visivel para o solicitante.
@@ -117,7 +117,7 @@ Este lote foi autorizado pelo responsavel em 2026-09-19. A CF6 esta em andamento
 |---|---|---|
 | CF6-C1 | Codex (temporario) | Fazer `dashboard.html` consumir `GET /api/painel/organizacoes` e `GET /api/painel/obras`, com estados vazio/carregando/erro e sem acesso direto a D1. Feito: navegacao, leitura real, estado vazio/erro e selecao explicita de organizacao implementados. |
 | CF6-C2 | Claude | Conectar abertura e consulta de chamados; criar tela de evidencia com captura, validacao client-side e feedback de envio, sem simular sucesso offline. Parte de suporte concluida: `dashboard.js` valida campos obrigatorios no cliente e diferencia mensagem de sucesso, erro de validacao, acesso negado a organizacao, servico indisponivel e falha de rede, usando somente os codigos de erro ja retornados por `POST /api/painel/suporte/chamados` (nenhum contrato inventado). Consulta de chamado e a tela de evidencia continuam pendentes: nao ha listagem "meus chamados" nem tela de captura/anexo no painel ainda, e evidencia depende de uma execucao valida (`executionStepId`), que a interface ainda nao expoe. |
-| CF6-D1 | Codex | Revisar contratos de leitura necessarios para procedimento, checklist e execucao; publicar apenas endpoints tenant-aware que tenham repositorio, policy e testes. Em andamento: listagem e detalhe de procedimentos/checklists, inicio de execucao e atualizacao de etapas publicados na branch do Codex; aguardando integracao apos checks. |
+| CF6-D1 | Codex (+ complemento de Claude) | Revisar contratos de leitura necessarios para procedimento, checklist e execucao; publicar apenas endpoints tenant-aware que tenham repositorio, policy e testes. | Feito: `GET /api/painel/procedimentos`, `GET /api/painel/procedimentos/{id}`, `GET /api/painel/checklists`, `GET /api/painel/checklists/{id}`, `POST /api/painel/execucoes` e `PATCH /api/painel/execucoes/{id}/etapas/{step_id}` (Codex, mesclado em `develop` no PR #57). **Complemento de Claude nesta entrega, registrado no diario antes de editar**: `GET /api/painel/execucoes/{id}?organization_id=...` (mesmo padrao de autorizacao do `PATCH` de etapa — `D1MembershipRepository`/`D1OperationalAuthorization` reaproveitados, sem migration nova), fechando o gap que impedia o `PATCH` de etapa de ser chamado pela interface sem inventar `step_id`. Recomendado ao Codex revisar esta adicao (`cloudflare/src/domain/operational.ts`, `cloudflare/src/data/d1OperationalRepository.ts`, `cloudflare/src/index.ts`). |
 | CF6-D2 | Codex | Configurar e documentar bindings reais `AUTH_DB`, `OPERATIONS_DB` e `EVIDENCE_BUCKET` por ambiente, sem IDs ou secrets no repositorio; executar smoke test controlado. |
 
 **Testes:** sessao demo bloqueada das APIs privadas, organizacao inativa e tenant cruzado negados, estados visualmente acessiveis, upload e download privado em ambiente de `develop`.
@@ -131,7 +131,7 @@ Este lote foi autorizado pelo responsavel em 2026-09-19. A CF6 esta em andamento
 | Card | Dono | Descricao |
 |---|---|---|
 | CF7-D1 | Codex | Rotas para procedimentos, etapas, checklists e execucoes com validacao transacional, versionamento e autorizacao por tenant. |
-| CF7-C1 | Claude | Telas mobile de procedimento, checklist e conclusao com uma acao principal por tela e retomada de progresso. |
+| CF7-C1 | Claude | Telas mobile de procedimento, checklist e conclusao com uma acao principal por tela e retomada de progresso. | Feito (ver tambem CF4-C1): passo a passo, checklist com persistencia real e conclusao existem. Adicionado nesta entrega: home fiel ao mockup na view "overview" do painel — saudacao, "etapa atual" com organizacao/obra reais, busca por servico e seis cards de categoria coloridos com contagem real de procedimentos, navegando para a lista filtrada. Icones trocados de Unicode para SVG inline. **Nao feito**: retomada de progresso entre sessoes (nao ha listagem de execucoes anteriores no contrato ainda) e a captura/registro de evidencia por etapa. |
 | CF7-C2 | Claude | Exibir erros de validacao e indisponibilidade com acao de tentar novamente, sem perder dados ja confirmados. |
 
 **Testes:** inicio/conclusao de execucao, etapa obrigatoria, reabertura autorizada, concorrencia basica, tenant cruzado e leitura em viewport mobile.
@@ -159,7 +159,7 @@ Este lote foi autorizado pelo responsavel em 2026-09-19. A CF6 esta em andamento
 | Card | Dono | Descricao |
 |---|---|---|
 | CF9-D1 | Codex | Modelo de produto, preco congelado, pedido, entitlement e adaptador PIX; webhook autenticado, idempotente e auditado. |
-| CF9-C1 | Claude | Landing e catalogo mostram gratuito, incluso e avulso vindos do contrato; checkout informa valor e estado sem prometer confirmacao antes do webhook. |
+| CF9-C1 | Claude | Landing e catalogo mostram gratuito, incluso e avulso vindos do contrato; checkout informa valor e estado sem prometer confirmacao antes do webhook. | Parcial, adiantado por decisao de produto do responsavel: a home (`GET /`) foi redesenhada como plataforma de ensino (saudacao, busca, categorias reais do catalogo, secoes "gratuitos"/"premium"), usando `CourseRepository` ja existente. `GET /cursos` ganhou filtro por categoria. Checkout/pagamento continuam fora de escopo (aguardando CF9-D1). |
 | CF9-C2 | Claude | Area "Meus acessos" e recuperacao visual de compra pendente/falha, com suporte contextual. |
 
 **Testes:** assinatura e replay de webhook, duplicidade, valor divergente, pagamento pendente/confirmado/falho, revogacao e curso premium bloqueado.

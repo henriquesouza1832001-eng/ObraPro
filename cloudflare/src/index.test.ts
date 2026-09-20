@@ -103,6 +103,19 @@ function createFakeOperationsDatabase(): NonNullable<Env['OPERATIONS_DB']> {
                         };
                     }
 
+                    if (sql.includes('JOIN procedure_steps')) {
+                        const [executionId] = bound.args as [string];
+
+                        return (executionId === 'execution-1' ? {
+                            results: [
+                                { id: 'execution-step-1', procedure_step_id: 'procedure-step-1', status: 'pending', note: null, completed_at: null, position: 1, title: 'Preparar area', instruction: 'Limpe e nivele a base.', safety_note: 'Use luvas.', when_to_call_professional: null, materials_json: '["Nivel","Colher de pedreiro"]' },
+                                { id: 'execution-step-2', procedure_step_id: 'procedure-step-2', status: 'pending', note: null, completed_at: null, position: 2, title: 'Assentar primeira fiada', instruction: 'Alinhe os blocos com o fio de nylon.', safety_note: null, when_to_call_professional: 'Se a parede sair fora de prumo.', materials_json: null },
+                            ] as T[],
+                            success: true,
+                            meta: {} as D1Meta & Record<string, unknown>,
+                        } : { results: [] as T[], success: true, meta: {} as D1Meta & Record<string, unknown> });
+                    }
+
                     if (sql.includes('FROM works')) {
                         return {
                             results: [{
@@ -134,6 +147,26 @@ function createFakeOperationsDatabase(): NonNullable<Env['OPERATIONS_DB']> {
                         const [executionStepId, organizationId] = bound.args as [string, string];
 
                         return (executionStepId === 'execution-step-1' && organizationId === 'org-1' ? { id: executionStepId } : null) as T | null;
+                    }
+
+                    if (sql.includes('FROM executions')) {
+                        const [executionId, organizationId] = bound.args as [string, string];
+                        const executions: Record<string, { organization_id: string; work_id: string; procedure_id: string; started_by: string }> = {
+                            'execution-1': { organization_id: 'org-1', work_id: 'work-1', procedure_id: 'procedure-1', started_by: 'user-1' },
+                            'execution-2': { organization_id: 'org-2', work_id: 'work-2', procedure_id: 'procedure-2', started_by: 'user-2' },
+                        };
+                        const execution = executions[executionId];
+
+                        return (execution && execution.organization_id === organizationId ? {
+                            id: executionId,
+                            organization_id: execution.organization_id,
+                            work_id: execution.work_id,
+                            procedure_id: execution.procedure_id,
+                            started_by: execution.started_by,
+                            status: 'in_progress',
+                            started_at: '2026-09-20T08:00:00.000Z',
+                            completed_at: null,
+                        } : null) as T | null;
                     }
 
                     return null;
@@ -289,6 +322,23 @@ describe('falha do repositorio de cursos (D1 indisponivel)', () => {
         consoleErrorSpy.mockRestore();
     });
 
+    it('GET / com D1 falhando tambem retorna 500 sanitizado (home usa o catalogo real)', async () => {
+        const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+        const brokenDatabase = {
+            prepare: () => {
+                throw new Error('falha interna de banco');
+            },
+        } as unknown as NonNullable<Env['COURSES_DB']>;
+
+        const response = await worker.fetch(get('/'), baseEnv({ COURSES_DB: brokenDatabase }));
+        const body = await response.text();
+
+        expect(response.status).toBe(500);
+        expect(body).not.toContain('falha interna de banco');
+
+        consoleErrorSpy.mockRestore();
+    });
+
     it('rotas independentes do repositorio continuam funcionando durante a falha do D1', async () => {
         const brokenDatabase = {
             prepare: () => {
@@ -297,13 +347,11 @@ describe('falha do repositorio de cursos (D1 indisponivel)', () => {
         } as unknown as NonNullable<Env['COURSES_DB']>;
         const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
 
-        const [home, health, comoFunciona] = await Promise.all([
-            worker.fetch(get('/'), baseEnv({ COURSES_DB: brokenDatabase })),
+        const [health, comoFunciona] = await Promise.all([
             worker.fetch(get('/health'), baseEnv({ COURSES_DB: brokenDatabase })),
             worker.fetch(get('/como-funciona'), baseEnv({ COURSES_DB: brokenDatabase })),
         ]);
 
-        expect(home.status).toBe(200);
         expect(health.status).toBe(200);
         expect(comoFunciona.status).toBe(200);
 
@@ -415,9 +463,10 @@ describe('API operacional por tenant', () => {
         '/api/painel/checklists?organization_id=org-1',
         '/api/painel/checklists/checklist-1?organization_id=org-1',
         '/api/painel/execucoes',
+        '/api/painel/execucoes/execution-1?organization_id=org-1',
         '/api/painel/execucoes/execution-1/etapas/step-1?organization_id=org-1',
     ])('bloqueia anonimo na rota operacional %s', async (path) => {
-        const method = path.includes('/execucoes') ? path.includes('/etapas/') ? 'PATCH' : 'POST' : 'GET';
+        const method = path === '/api/painel/execucoes' ? 'POST' : path.includes('/etapas/') ? 'PATCH' : 'GET';
         const response = await worker.fetch(new Request(`https://obrapro.test${path}`, {
             method,
             headers: { 'Content-Type': 'application/json' },
@@ -487,6 +536,41 @@ describe('API operacional por tenant', () => {
         expect(accepted.headers.get('Cache-Control')).toBe('no-store');
         await expect(accepted.json()).resolves.toMatchObject({ data: { status: 'open' } });
         expect(denied.status).toBe(403);
+    });
+
+    it('consulta execucao com etapas ordenadas para o tenant autorizado', async () => {
+        const { env, cookie } = await authenticatedEnv();
+        const response = await worker.fetch(new Request('https://obrapro.test/api/painel/execucoes/execution-1?organization_id=org-1', { headers: { Cookie: cookie } }), env);
+
+        expect(response.status).toBe(200);
+        expect(response.headers.get('Cache-Control')).toBe('no-store');
+        await expect(response.json()).resolves.toMatchObject({
+            data: {
+                id: 'execution-1',
+                organizationId: 'org-1',
+                status: 'in_progress',
+                steps: [
+                    { id: 'execution-step-1', position: 1, title: 'Preparar area', status: 'pending' },
+                    { id: 'execution-step-2', position: 2, title: 'Assentar primeira fiada', status: 'pending' },
+                ],
+            },
+        });
+    });
+
+    it('nao distingue execucao inexistente de acesso negado (evita vazar existencia do ID)', async () => {
+        const { env, cookie } = await authenticatedEnv();
+        const response = await worker.fetch(new Request('https://obrapro.test/api/painel/execucoes/execucao-inexistente?organization_id=org-1', { headers: { Cookie: cookie } }), env);
+
+        expect(response.status).toBe(403);
+        await expect(response.json()).resolves.toEqual({ error: 'execution_access_denied' });
+    });
+
+    it('bloqueia consulta de execucao de outro tenant', async () => {
+        const { env, cookie } = await authenticatedEnv();
+        const response = await worker.fetch(new Request('https://obrapro.test/api/painel/execucoes/execution-2?organization_id=org-1', { headers: { Cookie: cookie } }), env);
+
+        expect(response.status).toBe(403);
+        await expect(response.json()).resolves.toEqual({ error: 'execution_access_denied' });
     });
 
     it('aceita evidencia PNG somente para etapa do tenant ativo', async () => {

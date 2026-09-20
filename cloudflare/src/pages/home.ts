@@ -1,0 +1,124 @@
+import type { Course } from '../data/course';
+import { publicPage } from './layout';
+import { categoryBucket, priceLabel } from './courses';
+
+/**
+ * Home publica de aprendizagem, fiel ao mockup do responsavel: saudacao, busca
+ * e categorias coloridas por etapa da construcao. Usa somente dados reais do
+ * CourseRepository (o mesmo contrato ja consumido por /cursos); nenhum
+ * endpoint novo foi criado. Aula com video/manual, passo a passo, checklist
+ * opcional, matricula e progresso exigem um contrato de conteudo de aula que
+ * ainda nao existe e nao foram inventados aqui.
+ */
+const homeStyles = `.home-hero{padding:54px 5vw 30px}.home-hero .eyebrow{color:#f47b20;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.08em}.home-hero h1{font-size:clamp(30px,5vw,44px);line-height:1.1;margin:14px 0 10px}.home-hero p{color:#5b6a72;font-size:17px;max-width:640px}
+.search{margin-top:24px;max-width:560px;position:relative}.search input{width:100%;min-height:52px;border-radius:8px;border:1px solid #d9e0dd;background:#fff;padding:0 44px;font-size:16px}.search svg{position:absolute;top:16px;left:14px;color:#8a97a3}
+.categories{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:30px;max-width:900px}
+@media(min-width:640px){.categories{grid-template-columns:repeat(3,1fr)}}
+.category-card{display:flex;flex-direction:column;gap:10px;padding:18px;border-radius:10px;color:#fff;min-height:120px;transition:.15s}
+.category-card:hover{transform:translateY(-2px)}
+.category-card:focus-visible,.section-title a:focus-visible,#home-search:focus-visible{outline:3px solid #1267e8;outline-offset:2px}
+.category-card span.count{font-size:12px;opacity:.85}
+.category-card.outline{color:#10233f;background:#fff;border:1px solid #d9e0dd}
+.section-title{display:flex;align-items:end;justify-content:space-between;gap:12px;margin:44px 0 16px;flex-wrap:wrap}
+.section-title h2{font-size:22px;margin:0}
+.section-title a{color:#1267e8;font-weight:800;font-size:14px}
+.course-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px}
+.course-row .card{display:flex;flex-direction:column;padding:18px;border:1px solid #d9e0dd;border-radius:8px;background:#fff}
+.course-row .card h3{font-size:16px;margin:10px 0 6px}
+.course-row .card p{color:#60706a;font-size:13px;line-height:1.5;flex:1}
+.course-row .tag{align-self:flex-start;padding:6px 9px;border-radius:5px;background:#eef5ff;color:#1267e8;font-size:11px;font-weight:800;text-transform:uppercase}
+.empty-search{display:none;margin-top:16px;padding:20px;border:1px dashed #b9c5c0;border-radius:8px;color:#60706a;text-align:center}`;
+
+const categoryStyle: Record<string, { bg: string; icon: string }> = {
+    fundacoes: {
+        bg: '#2563eb',
+        icon: '<path d="M12 3 2 8l10 5 10-5-10-5z"/><path d="M2 13l10 5 10-5"/>',
+    },
+    alvenaria: {
+        bg: '#f47b20',
+        icon: '<rect x="3" y="4" width="7" height="4"/><rect x="14" y="4" width="7" height="4"/><rect x="3" y="10" width="7" height="4"/><rect x="14" y="10" width="7" height="4"/><rect x="3" y="16" width="7" height="4"/><rect x="14" y="16" width="7" height="4"/>',
+    },
+    hidraulica: {
+        bg: '#0891b2',
+        icon: '<path d="M12 2s7 8 7 13a7 7 0 0 1-14 0c0-5 7-13 7-13z"/>',
+    },
+    eletrica: {
+        bg: '#f5b301',
+        icon: '<path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/>',
+    },
+    acabamentos: {
+        bg: '#9333ea',
+        icon: '<rect x="3" y="3" width="8" height="8" rx="1"/><path d="M11 7h6a2 2 0 0 1 2 2v2H11z"/><path d="M14 11v6a2 2 0 0 1-4 0v-2"/>',
+    },
+};
+
+const categoryLabels: Array<{ key: string; label: string }> = [
+    { key: 'fundacoes', label: 'Fundações' },
+    { key: 'alvenaria', label: 'Alvenaria' },
+    { key: 'hidraulica', label: 'Hidráulica' },
+    { key: 'eletrica', label: 'Elétrica' },
+    { key: 'acabamentos', label: 'Acabamentos' },
+    { key: 'outros', label: 'Outros' },
+];
+
+function categoryCard(key: string, label: string, count: number): string {
+    const style = categoryStyle[key];
+    const outline = !style;
+    const iconMarkup = style
+        ? `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">${style.icon}</svg>`
+        : '<svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>';
+
+    return `<a class="category-card${outline ? ' outline' : ''}" style="${style ? `background:${style.bg}` : ''}" href="/cursos?categoria=${key}">${iconMarkup}<strong>${label}</strong><span class="count">${count === 1 ? '1 curso' : `${count} cursos`}</span></a>`;
+}
+
+function courseRow(courses: Course[]): string {
+    return `<div class="course-row">${courses.map((course) => `<a class="card" href="/cursos/${course.slug}" data-course-title="${course.title.toLowerCase()}"><span class="tag">${course.category}</span><h3>${course.title}</h3><p>${course.description}</p></a>`).join('')}</div>`;
+}
+
+export function renderLearningHome(courses: Course[]): string {
+    const counts: Record<string, number> = { fundacoes: 0, alvenaria: 0, hidraulica: 0, eletrica: 0, acabamentos: 0, outros: 0 };
+    courses.forEach((course) => {
+        const key = categoryBucket(course.category);
+        counts[key] = (counts[key] ?? 0) + 1;
+    });
+
+    const freeCourses = courses.filter((course) => course.accessType === 'free');
+    const premiumCourses = courses.filter((course) => course.accessType === 'premium');
+
+    const body = `
+        <section class="home-hero">
+            <span class="eyebrow">Passo a passo. Obra bem feita.</span>
+            <h1>Olá! O que você quer aprender hoje?</h1>
+            <p>Escolha uma etapa da construção e aprenda com aulas simples, visuais e práticas.</p>
+            <label class="search">
+                <span class="sr-only">Buscar curso ou aula</span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input type="search" id="home-search" placeholder="Buscar curso ou aula...">
+            </label>
+            <div class="categories">${categoryLabels.map(({ key, label }) => categoryCard(key, label, counts[key] ?? 0)).join('')}</div>
+        </section>
+        <main class="content" style="padding-top:0">
+            ${freeCourses.length > 0 ? `<div class="section-title"><h2>Cursos gratuitos para começar</h2><a href="/cursos">Ver catálogo completo</a></div>${courseRow(freeCourses)}` : ''}
+            ${premiumCourses.length > 0 ? `<div class="section-title"><h2>Cursos completos e premium</h2><a href="/cursos">Ver catálogo completo</a></div>${courseRow(premiumCourses)}` : ''}
+            ${courses.length === 0 ? '<p class="empty" style="margin-top:24px;padding:32px;border:1px dashed #b9c5c0;border-radius:7px;text-align:center;color:#60706a">Nenhum curso publicado no momento. Volte em breve — novo conteúdo está a caminho.</p>' : ''}
+            <p class="empty-search" id="home-empty-search">Nenhum curso encontrado para essa busca.</p>
+        </main>
+        <script>(function(){
+            var input = document.getElementById('home-search');
+            var empty = document.getElementById('home-empty-search');
+            if (!input) return;
+            input.addEventListener('input', function () {
+                var query = input.value.trim().toLowerCase();
+                var cards = document.querySelectorAll('[data-course-title]');
+                var visible = 0;
+                cards.forEach(function (card) {
+                    var match = !query || card.getAttribute('data-course-title').indexOf(query) !== -1;
+                    card.style.display = match ? '' : 'none';
+                    if (match) visible++;
+                });
+                empty.style.display = query && visible === 0 ? 'block' : 'none';
+            });
+        })();</script>`;
+
+    return publicPage({ title: 'ObraPro | Aprenda a construir com clareza', activePath: '/', body, extraStyles: homeStyles });
+}

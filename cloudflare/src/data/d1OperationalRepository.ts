@@ -1,4 +1,4 @@
-import type { ChecklistItem, PublishedChecklistDetails, PublishedChecklistSummary, PublishedProcedureDetails, PublishedProcedureSummary, ProcedureStep, Work, WorkStatus } from '../domain/operational';
+import type { ChecklistItem, Execution, ExecutionStatus, ExecutionStepStatus, ExecutionStepWithDetails, ExecutionWithSteps, PublishedChecklistDetails, PublishedChecklistSummary, PublishedProcedureDetails, PublishedProcedureSummary, ProcedureStep, Work, WorkStatus } from '../domain/operational';
 
 interface WorkRow {
     id: string;
@@ -48,6 +48,31 @@ interface ChecklistItemRow {
     label: string;
     what_good_looks_like: string | null;
     common_error: string | null;
+}
+
+interface ExecutionRow {
+    id: string;
+    organization_id: string;
+    work_id: string;
+    procedure_id: string;
+    started_by: string;
+    status: ExecutionStatus;
+    started_at: string;
+    completed_at: string | null;
+}
+
+interface ExecutionStepDetailRow {
+    id: string;
+    procedure_step_id: string;
+    status: ExecutionStepStatus;
+    note: string | null;
+    completed_at: string | null;
+    position: number;
+    title: string;
+    instruction: string;
+    safety_note: string | null;
+    when_to_call_professional: string | null;
+    materials_json: string | null;
 }
 
 function mapWork(row: WorkRow): Work {
@@ -229,6 +254,57 @@ export class D1OperationalRepository {
         }
 
         await this.database.batch(statements);
+    }
+
+    public async findExecution(organizationId: string, executionId: string): Promise<ExecutionWithSteps | null> {
+        const execution = await this.database.prepare(`
+            SELECT id, organization_id, work_id, procedure_id, started_by, status, started_at, completed_at
+            FROM executions
+            WHERE id = ? AND organization_id = ?
+            LIMIT 1
+        `).bind(executionId, organizationId).first<ExecutionRow>();
+
+        if (!execution) {
+            return null;
+        }
+
+        const steps = await this.database.prepare(`
+            SELECT es.id, es.procedure_step_id, es.status, es.note, es.completed_at,
+                ps.position, ps.title, ps.instruction, ps.safety_note, ps.when_to_call_professional, ps.materials_json
+            FROM execution_steps es
+            JOIN procedure_steps ps ON ps.id = es.procedure_step_id
+            WHERE es.execution_id = ?
+            ORDER BY ps.position ASC
+        `).bind(execution.id).all<ExecutionStepDetailRow>();
+
+        const mappedExecution: Execution = {
+            id: execution.id,
+            organizationId: execution.organization_id,
+            workId: execution.work_id,
+            procedureId: execution.procedure_id,
+            startedBy: execution.started_by,
+            status: execution.status,
+            startedAt: execution.started_at,
+            completedAt: execution.completed_at,
+        };
+
+        return {
+            ...mappedExecution,
+            steps: steps.results.map((step): ExecutionStepWithDetails => ({
+                id: step.id,
+                executionId: execution.id,
+                procedureStepId: step.procedure_step_id,
+                status: step.status,
+                note: step.note,
+                completedAt: step.completed_at,
+                position: step.position,
+                title: step.title,
+                instruction: step.instruction,
+                safetyNote: step.safety_note,
+                whenToCallProfessional: step.when_to_call_professional,
+                materials: parseMaterials(step.materials_json),
+            })),
+        };
     }
 
     public async updateExecutionStep(input: {

@@ -15,6 +15,7 @@ import { D1EvidenceRepository } from './data/d1EvidenceRepository';
 import { detectEvidenceMimeType, sha256Checksum, validateEvidenceUpload } from './domain/evidence';
 import type { CourseRepository } from './data/course';
 import { renderCourseCatalog, renderCourseDetail, renderCourseNotFound } from './pages/courses';
+import { renderLearningHome } from './pages/home';
 import { renderComoFunciona } from './pages/comoFunciona';
 import { renderServerError } from './pages/serverError';
 
@@ -294,6 +295,42 @@ async function route(request: Request, env: Env): Promise<Response> {
         return updated ? privateJson({ data: { id: executionStepId, status } }) : privateJson({ error: 'execution_step_not_found' }, 404);
     }
 
+    const executionDetailMatch = path.match(/^\/api\/painel\/execucoes\/([A-Za-z0-9_-]{1,128})$/);
+    if (executionDetailMatch && request.method === 'GET') {
+        const session = await privateApiSession(request, env);
+        if (!session) {
+            return privateJson({ error: 'authentication_required' }, 401);
+        }
+
+        const organizationId = organizationIdFrom(url);
+        if (!organizationId) {
+            return privateJson({ error: 'organization_id_required' }, 400);
+        }
+
+        if (!env.OPERATIONS_DB) {
+            return privateJson({ error: 'operational_data_unavailable' }, 503);
+        }
+
+        const executionId = executionDetailMatch[1];
+        if (!executionId) {
+            return privateJson({ error: 'execution_not_found' }, 404);
+        }
+
+        const memberships = new D1MembershipRepository(env.OPERATIONS_DB);
+        if (!await memberships.canAccessOrganization(session.userId, organizationId)) {
+            return privateJson({ error: 'organization_access_denied' }, 403);
+        }
+
+        const authorization = new D1OperationalAuthorization(env.OPERATIONS_DB, memberships);
+        if (!await authorization.canAccessExecution(session.userId, organizationId, executionId)) {
+            return privateJson({ error: 'execution_access_denied' }, 403);
+        }
+
+        const execution = await new D1OperationalRepository(env.OPERATIONS_DB).findExecution(organizationId, executionId);
+
+        return execution ? privateJson({ data: execution }) : privateJson({ error: 'execution_not_found' }, 404);
+    }
+
     const procedureDetailMatch = path.match(/^\/api\/painel\/procedimentos\/([A-Za-z0-9_-]{1,128})$/);
     if (procedureDetailMatch && request.method === 'GET') {
         const session = await privateApiSession(request, env);
@@ -548,9 +585,9 @@ async function route(request: Request, env: Env): Promise<Response> {
     }
 
     if (path === '/') {
-        const homeUrl = new URL('/index.html', request.url);
+        const courses = await courseRepository.listCourses();
 
-        return withSecurityHeaders(await env.ASSETS.fetch(new Request(homeUrl, request)));
+        return withSecurityHeaders(html(renderLearningHome(courses)));
     }
 
     if (path === '/como-funciona') {
@@ -559,8 +596,9 @@ async function route(request: Request, env: Env): Promise<Response> {
 
     if (path === '/cursos') {
         const courses = await courseRepository.listCourses();
+        const category = url.searchParams.get('categoria') ?? undefined;
 
-        return withSecurityHeaders(html(renderCourseCatalog(courses)));
+        return withSecurityHeaders(html(renderCourseCatalog(courses, category)));
     }
 
     if (path.startsWith('/cursos/')) {
@@ -635,7 +673,7 @@ async function route(request: Request, env: Env): Promise<Response> {
  * cair na pagina de erro sanitizada em vez de vazar uma excecao nao tratada
  * quando o repositorio de dados (mock hoje, D1 depois) falhar.
  */
-const renderedRoutePrefixes = ['/como-funciona', '/cursos'];
+const renderedRoutePrefixes = ['/', '/como-funciona', '/cursos'];
 
 export default {
     async fetch(request: Request, env: Env): Promise<Response> {
