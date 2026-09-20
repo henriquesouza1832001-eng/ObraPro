@@ -117,7 +117,7 @@ Este lote foi autorizado pelo responsavel em 2026-09-19. A CF6 esta em andamento
 |---|---|---|
 | CF6-C1 | Codex (temporario) | Fazer `dashboard.html` consumir `GET /api/painel/organizacoes` e `GET /api/painel/obras`, com estados vazio/carregando/erro e sem acesso direto a D1. Feito: navegacao, leitura real, estado vazio/erro e selecao explicita de organizacao implementados. |
 | CF6-C2 | Codex (temporario) | Conectar abertura e consulta de chamados; criar tela de evidencia com captura, validacao client-side e feedback de envio, sem simular sucesso offline. Em andamento: abertura de chamado pelo contrato privado implementada; consulta e evidencia aguardam a tela de execucao. |
-| CF6-D1 | Codex | Revisar contratos de leitura necessarios para procedimento, checklist e execucao; publicar apenas endpoints tenant-aware que tenham repositorio, policy e testes. |
+| CF6-D1 | Codex | Revisar contratos de leitura necessarios para procedimento, checklist e execucao; publicar apenas endpoints tenant-aware que tenham repositorio, policy e testes. Em andamento: `GET /api/painel/procedimentos?organization_id=...` lista somente procedimentos publicados apos validar membership ativa. |
 | CF6-D2 | Codex | Configurar e documentar bindings reais `AUTH_DB`, `OPERATIONS_DB` e `EVIDENCE_BUCKET` por ambiente, sem IDs ou secrets no repositorio; executar smoke test controlado. |
 
 **Testes:** sessao demo bloqueada das APIs privadas, organizacao inativa e tenant cruzado negados, estados visualmente acessiveis, upload e download privado em ambiente de `develop`.

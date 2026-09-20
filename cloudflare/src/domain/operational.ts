@@ -29,6 +29,17 @@ export interface Procedure {
     approvedAt: string | null;
 }
 
+export interface PublishedProcedureSummary {
+    id: string;
+    organizationId: string;
+    workId: string | null;
+    slug: string;
+    title: string;
+    summary: string;
+    stage: string;
+    version: number;
+}
+
 export interface ProcedureStep {
     id: string;
     procedureId: string;

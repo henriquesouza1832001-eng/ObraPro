@@ -1,4 +1,4 @@
-import type { Work, WorkStatus } from '../domain/operational';
+import type { PublishedProcedureSummary, Work, WorkStatus } from '../domain/operational';
 
 interface WorkRow {
     id: string;
@@ -10,6 +10,17 @@ interface WorkRow {
     state: string | null;
     planned_start_at: string | null;
     planned_end_at: string | null;
+}
+
+interface ProcedureRow {
+    id: string;
+    organization_id: string;
+    work_id: string | null;
+    slug: string;
+    title: string;
+    summary: string;
+    stage: string;
+    version: number;
 }
 
 function mapWork(row: WorkRow): Work {
@@ -38,5 +49,25 @@ export class D1OperationalRepository {
         `).bind(organizationId).all<WorkRow>();
 
         return result.results.map(mapWork);
+    }
+
+    public async listPublishedProcedures(organizationId: string): Promise<PublishedProcedureSummary[]> {
+        const result = await this.database.prepare(`
+            SELECT id, organization_id, work_id, slug, title, summary, stage, version
+            FROM procedures
+            WHERE organization_id = ? AND status = 'published'
+            ORDER BY stage ASC, title ASC, version DESC
+        `).bind(organizationId).all<ProcedureRow>();
+
+        return result.results.map((row) => ({
+            id: row.id,
+            organizationId: row.organization_id,
+            workId: row.work_id,
+            slug: row.slug,
+            title: row.title,
+            summary: row.summary,
+            stage: row.stage,
+            version: row.version,
+        }));
     }
 }

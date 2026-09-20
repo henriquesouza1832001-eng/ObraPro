@@ -128,6 +128,31 @@ async function route(request: Request, env: Env): Promise<Response> {
         return privateJson({ data: works });
     }
 
+    if (path === '/api/painel/procedimentos' && request.method === 'GET') {
+        const session = await privateApiSession(request, env);
+        if (!session) {
+            return privateJson({ error: 'authentication_required' }, 401);
+        }
+
+        const organizationId = organizationIdFrom(url);
+        if (!organizationId) {
+            return privateJson({ error: 'organization_id_required' }, 400);
+        }
+
+        if (!env.OPERATIONS_DB) {
+            return privateJson({ error: 'operational_data_unavailable' }, 503);
+        }
+
+        const memberships = new D1MembershipRepository(env.OPERATIONS_DB);
+        if (!await memberships.canAccessOrganization(session.userId, organizationId)) {
+            return privateJson({ error: 'organization_access_denied' }, 403);
+        }
+
+        const procedures = await new D1OperationalRepository(env.OPERATIONS_DB).listPublishedProcedures(organizationId);
+
+        return privateJson({ data: procedures });
+    }
+
     if (path === '/api/painel/suporte/chamados' && request.method === 'POST') {
         const session = await privateApiSession(request, env);
         if (!session) {
