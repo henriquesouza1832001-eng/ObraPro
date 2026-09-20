@@ -19,6 +19,7 @@ import { renderLearningHome } from './pages/home';
 import { renderComoFunciona } from './pages/comoFunciona';
 import { renderServerError } from './pages/serverError';
 import { D1CourseProgressRepository } from './data/courseProgressRepository';
+import { D1CourseEnrollmentRepository } from './data/courseEnrollmentRepository';
 
 function courseRepositoryFor(env: Env): CourseRepository {
     return env.COURSES_DB ? new D1CourseRepository(env.COURSES_DB) : new MockCourseRepository();
@@ -116,6 +117,35 @@ async function route(request: Request, env: Env): Promise<Response> {
         }
 
         return privateJson({ data: progress });
+    }
+
+    const courseAccessMatch = path.match(/^\/api\/cursos\/([^/]+)\/acesso$/);
+    const courseEnrollmentMatch = path.match(/^\/api\/cursos\/([^/]+)\/matricula$/);
+    const isCourseAccessRead = Boolean(courseAccessMatch) && request.method === 'GET';
+    const isFreeEnrollment = Boolean(courseEnrollmentMatch) && request.method === 'POST';
+    if (isCourseAccessRead || isFreeEnrollment) {
+        const session = await privateApiSession(request, env);
+        if (!session) {
+            return privateJson({ error: 'authentication_required' }, 401);
+        }
+        if (!env.COURSES_DB) {
+            return privateJson({ error: 'course_data_unavailable' }, 503);
+        }
+
+        const repository = new D1CourseEnrollmentRepository(env.COURSES_DB);
+        const courseSlug = decodeURIComponent((courseAccessMatch ?? courseEnrollmentMatch)?.[1] ?? '');
+        const access = isFreeEnrollment
+            ? await repository.enrollFree(session.userId, courseSlug, new Date().toISOString())
+            : await repository.accessFor(session.userId, courseSlug);
+
+        if (!access) {
+            return privateJson({ error: isFreeEnrollment ? 'free_enrollment_unavailable' : 'course_not_found' }, 404);
+        }
+        if (isFreeEnrollment && !access.enrolled) {
+            return privateJson({ error: 'course_access_required' }, 403);
+        }
+
+        return privateJson({ data: access });
     }
 
     if (path === '/api/painel/organizacoes' && request.method === 'GET') {
