@@ -7,16 +7,17 @@ O ObraPro combina orientacoes passo a passo, cursos gratuitos e premium, gestao 
 ## Estado atual
 
 - Mockup web responsivo e instalavel como PWA.
-- Login de demonstracao e painel com obras, procedimentos, checklists e nao conformidades.
+- Login real quando os bindings D1 estao configurados, com fallback de demonstracao apenas no preview sem banco.
 - Fundacao de organizacoes, memberships e papeis por tenant, com seguranca global isolada para Super Admin.
 - Catalogo publico navegavel em `/cursos`, com cursos gratuitos e avulsos por etapa da construcao.
+- API privada do Worker para organizacoes ativas, obras, chamados e evidencias; todas exigem sessao real, membership ativa e `Cache-Control: no-store`.
 - Deploy de `develop` para Cloudflare Workers automatizado pelo GitHub Actions.
 - MGL permanece opcional e reservado a observabilidade e seguranca.
 - Cursos e planos configuraveis estao nas proximas entregas; IA e o ultimo modulo planejado e nao bloqueia a plataforma.
 
 Preview: `https://obrapro-preview.henriquesouza.workers.dev`.
 
-No preview estático, `/cursos` mostra o catálogo e `/cursos/{slug}` abre o detalhe correspondente. O Laravel continua sendo o backend com banco, migrations e regras de publicação; o Worker serve apenas a demonstração pública até o runtime Laravel ser hospedado.
+No preview sem bindings, `/cursos` mostra o catalogo editorial e `/cursos/{slug}` abre o detalhe correspondente. Com `AUTH_DB` e `OPERATIONS_DB` apontando para o D1 aprovado, o Worker autentica usuarios e expoe `/api/painel/organizacoes`, `/api/painel/obras`, chamados e evidencias privadas. O dashboard HTML ainda e um mockup visual e sera ligado a essas rotas na proxima entrega de interface.
 
 ## Comece por aqui
 

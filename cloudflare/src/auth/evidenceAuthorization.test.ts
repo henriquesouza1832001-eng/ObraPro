@@ -34,4 +34,16 @@ describe('D1EvidenceAuthorization', () => {
 
         await expect(unavailableEvidence.canDownload('user-1', 'org-1', 'evidence-1')).resolves.toBe(false);
     });
+
+    it('autoriza upload somente para etapa da execucao do tenant ativo', async () => {
+        const memberships = { canAccessOrganization: vi.fn().mockResolvedValue(true) };
+        const database = {
+            prepare: () => ({
+                bind: () => ({ first: async <T>(): Promise<T | null> => ({ id: 'execution-step-1' } as T) }),
+            }),
+        } as unknown as D1Database;
+        const authorization = new D1EvidenceAuthorization(database, memberships);
+
+        await expect(authorization.canUpload('user-1', 'org-1', 'execution-step-1')).resolves.toBe(true);
+    });
 });

@@ -1,3 +1,4 @@
+import type { AuthSession } from '../domain/identity';
 import type { Env } from '../env';
 import { D1UserRepository } from './userRepository';
 import { D1SessionStore } from './sessionStore';
@@ -21,13 +22,17 @@ function expiresAt(): string {
 }
 
 export async function authenticateRequest(request: Request, env: Env): Promise<boolean> {
+    return (await authenticatedSession(request, env)) !== null;
+}
+
+export async function authenticatedSession(request: Request, env: Env): Promise<AuthSession | null> {
     if (!env.AUTH_DB) {
-        return false;
+        return null;
     }
 
     const token = cookieValue(request);
 
-    return token ? (await new D1SessionStore(env.AUTH_DB).find(token, now())) !== null : false;
+    return token ? new D1SessionStore(env.AUTH_DB).find(token, now()) : null;
 }
 
 export async function loginWithD1(email: string, password: string, env: Env): Promise<string | null> {

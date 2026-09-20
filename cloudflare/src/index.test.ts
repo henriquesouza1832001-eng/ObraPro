@@ -83,6 +83,89 @@ function createFakeAuthDatabase(user: { id: string; name: string; email: string;
     } as unknown as NonNullable<Env['AUTH_DB']>;
 }
 
+function createFakeOperationsDatabase(): NonNullable<Env['OPERATIONS_DB']> {
+    return {
+        prepare(sql: string) {
+            const bound = { args: [] as unknown[] };
+
+            const api = {
+                bind: (...args: unknown[]) => {
+                    bound.args = args;
+
+                    return api;
+                },
+                all: async <T>(): Promise<D1Result<T>> => {
+                    if (sql.includes('INNER JOIN organizations')) {
+                        return {
+                            results: [{ id: 'org-1', name: 'Residencial das Flores', slug: 'residencial-das-flores', role: 'owner' }] as T[],
+                            success: true,
+                            meta: {} as D1Meta & Record<string, unknown>,
+                        };
+                    }
+
+                    if (sql.includes('FROM works')) {
+                        return {
+                            results: [{
+                                id: 'work-1',
+                                organization_id: String(bound.args[0]),
+                                name: 'Residencial das Flores',
+                                slug: 'residencial-das-flores',
+                                status: 'active',
+                                city: 'Belo Horizonte',
+                                state: 'MG',
+                                planned_start_at: null,
+                                planned_end_at: null,
+                            }] as T[],
+                            success: true,
+                            meta: {} as D1Meta & Record<string, unknown>,
+                        };
+                    }
+
+                    return { results: [], success: true, meta: {} as D1Meta & Record<string, unknown> };
+                },
+                first: async <T>(): Promise<T | null> => {
+                    if (sql.includes('FROM organization_memberships')) {
+                        const [userId, organizationId] = bound.args as [string, string];
+
+                        return (userId === 'user-1' && organizationId === 'org-1' ? { id: 'membership-1' } : null) as T | null;
+                    }
+
+                    if (sql.includes('FROM execution_steps')) {
+                        const [executionStepId, organizationId] = bound.args as [string, string];
+
+                        return (executionStepId === 'execution-step-1' && organizationId === 'org-1' ? { id: executionStepId } : null) as T | null;
+                    }
+
+                    return null;
+                },
+                run: async () => ({}),
+            };
+
+            return api;
+        },
+    } as unknown as NonNullable<Env['OPERATIONS_DB']>;
+}
+
+function createFakeEvidenceBucket(): NonNullable<Env['EVIDENCE_BUCKET']> {
+    const objects = new Map<string, Uint8Array>();
+
+    return {
+        put: async (key: string, value: ReadableStream | ArrayBuffer | ArrayBufferView | string | null) => {
+            if (value instanceof Uint8Array) {
+                objects.set(key, value);
+            }
+
+            return null;
+        },
+        get: async (key: string) => {
+            const object = objects.get(key);
+
+            return object ? { body: new Blob([object]).stream() } : null;
+        },
+        delete: async (key: string) => { objects.delete(key); },
+    } as unknown as NonNullable<Env['EVIDENCE_BUCKET']>;
+}
+
 function cookieFromSetCookie(response: Response): string {
     const setCookie = response.headers.get('Set-Cookie') ?? '';
 
@@ -305,5 +388,103 @@ describe('login/logout real via D1 (CF3-C1/C2)', () => {
 
         expect(depoisDoLogout.status).toBe(303);
         expect(depoisDoLogout.headers.get('Location')).toBe('/entrar');
+    });
+});
+
+describe('API operacional por tenant', () => {
+    async function authenticatedEnv(): Promise<{ env: Env; cookie: string }> {
+        const authDb = createFakeAuthDatabase({ id: 'user-1', name: 'Ana', email: 'ana@example.com', passwordHash: await hashPassword('senha-super-secreta') });
+        const env = baseEnv({ AUTH_DB: authDb, OPERATIONS_DB: createFakeOperationsDatabase() });
+        const form = new URLSearchParams({ email: 'ana@example.com', password: 'senha-super-secreta' });
+        const loginResponse = await worker.fetch(new Request('https://obrapro.test/entrar', { method: 'POST', body: form, headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }), env);
+
+        return { env, cookie: cookieFromSetCookie(loginResponse) };
+    }
+
+    it('bloqueia anônimo e nunca permite cache de resposta privada', async () => {
+        const response = await worker.fetch(get('/api/painel/organizacoes'), baseEnv());
+
+        expect(response.status).toBe(401);
+        expect(response.headers.get('Cache-Control')).toBe('no-store');
+        await expect(response.json()).resolves.toEqual({ error: 'authentication_required' });
+    });
+
+    it('lista somente organizacoes ativas e obras do tenant autorizado', async () => {
+        const { env, cookie } = await authenticatedEnv();
+        const organizationsResponse = await worker.fetch(new Request('https://obrapro.test/api/painel/organizacoes', { headers: { Cookie: cookie } }), env);
+        const worksResponse = await worker.fetch(new Request('https://obrapro.test/api/painel/obras?organization_id=org-1', { headers: { Cookie: cookie } }), env);
+
+        await expect(organizationsResponse.json()).resolves.toEqual({ data: [{ id: 'org-1', name: 'Residencial das Flores', slug: 'residencial-das-flores', role: 'owner' }] });
+        await expect(worksResponse.json()).resolves.toMatchObject({ data: [{ id: 'work-1', organizationId: 'org-1', status: 'active' }] });
+    });
+
+    it('nega leitura de obras quando o usuario troca o organization_id', async () => {
+        const { env, cookie } = await authenticatedEnv();
+        const response = await worker.fetch(new Request('https://obrapro.test/api/painel/obras?organization_id=org-2', { headers: { Cookie: cookie } }), env);
+
+        expect(response.status).toBe(403);
+        await expect(response.json()).resolves.toEqual({ error: 'organization_access_denied' });
+    });
+
+    it('sanitiza falha inesperada da API privada e preserva no-store', async () => {
+        const { env, cookie } = await authenticatedEnv();
+        const brokenOperationsDatabase = {
+            prepare: () => { throw new Error('falha interna do banco'); },
+        } as unknown as NonNullable<Env['OPERATIONS_DB']>;
+        const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+        const response = await worker.fetch(new Request('https://obrapro.test/api/painel/organizacoes', { headers: { Cookie: cookie } }), {
+            ...env,
+            OPERATIONS_DB: brokenOperationsDatabase,
+        });
+
+        expect(response.status).toBe(500);
+        expect(response.headers.get('Cache-Control')).toBe('no-store');
+        await expect(response.json()).resolves.toEqual({ error: 'internal_error' });
+
+        consoleErrorSpy.mockRestore();
+    });
+
+    it('abre chamado com contexto sanitizado e bloqueia organizacao de outro tenant', async () => {
+        const { env, cookie } = await authenticatedEnv();
+        const accepted = await worker.fetch(new Request('https://obrapro.test/api/painel/suporte/chamados', {
+            method: 'POST',
+            headers: { Cookie: cookie, 'Content-Type': 'application/json', 'User-Agent': 'ObraPro test' },
+            body: JSON.stringify({
+                organization_id: 'org-1',
+                title: 'Botao nao responde',
+                description: 'O checklist nao abriu.',
+                category: 'bug',
+                priority: 'normal',
+                password: 'nao pode persistir',
+            }),
+        }), env);
+        const denied = await worker.fetch(new Request('https://obrapro.test/api/painel/suporte/chamados', {
+            method: 'POST',
+            headers: { Cookie: cookie, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ organization_id: 'org-2', title: 'Erro', description: 'Erro', category: 'bug', priority: 'normal' }),
+        }), env);
+
+        expect(accepted.status).toBe(201);
+        expect(accepted.headers.get('Cache-Control')).toBe('no-store');
+        await expect(accepted.json()).resolves.toMatchObject({ data: { status: 'open' } });
+        expect(denied.status).toBe(403);
+    });
+
+    it('aceita evidencia PNG somente para etapa do tenant ativo', async () => {
+        const { env, cookie } = await authenticatedEnv();
+        const form = new FormData();
+        form.set('organization_id', 'org-1');
+        form.set('execution_step_id', 'execution-step-1');
+        form.set('file', new File([new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0, 0, 0, 0])], 'parede.png', { type: 'image/png' }));
+
+        const response = await worker.fetch(new Request('https://obrapro.test/api/painel/evidencias', {
+            method: 'POST',
+            headers: { Cookie: cookie },
+            body: form,
+        }), { ...env, EVIDENCE_BUCKET: createFakeEvidenceBucket() });
+
+        expect(response.status).toBe(201);
+        await expect(response.json()).resolves.toMatchObject({ data: { status: 'available' } });
     });
 });

@@ -71,7 +71,7 @@ Nenhum agente edita as pastas reservadas do outro. Claude nao edita `cloudflare/
 | CF3-C2 | Claude | Estados de erro de login (credenciais invalidas, conta suspensa) com mensagens claras em portugues, mantendo acessibilidade (foco, leitura por teclado). | Feito com ressalva: a mensagem de erro e generica ("Nao foi possivel entrar com esses dados...") por design de seguranca — nem `loginWithD1` nem `D1UserRepository` distinguem "conta suspensa" de "senha incorreta" hoje, e mensagens especificas revelariam se um e-mail existe. `role="alert"` + `aria-describedby` + foco automatico no campo de e-mail implementados. Se o Codex expuser um estado de conta suspensa no futuro, a mensagem pode ser diferenciada sem mudar o restante da tela. |
 | CF3-C3 | Claude | Remover `demoSession.ts` somente apos o contrato real estar disponivel e revisado pelo Codex; ate la o login de demonstracao continua ativo. | Parcial: a renderizacao (`loginPage`) ja saiu de `demoSession.ts` para `pages/login.ts`; a logica de sessao de demonstracao (`sessionToken`/`isAuthenticated`) continua em `demoSession.ts` como fallback ativo quando `AUTH_DB` nao existe (ambiente de preview sem binding). Remocao completa so deve acontecer com aprovacao explicita do responsavel, conforme o card pede. |
 
-**Testes:** `npm run worker:typecheck`, `npm run worker:test` (27/27, incluindo 8 novos testes de login/logout real: `/entrar` demo vs real, login com senha correta define cookie `HttpOnly`/`Secure`/`SameSite=Lax` e redireciona a `/painel`, senha incorreta retorna 422 sanitizado sem cookie, `/painel` com/sem sessao valida, `/sair` revoga a sessao), `npm run worker:build`; teste manual via `wrangler dev` confirmando que o fluxo demo (sem `AUTH_DB`) continua identico ao anterior.
+**Testes:** `npm run worker:typecheck`, `npm run worker:test` (44 testes, incluindo login/logout real, tenant cruzado, suporte e evidencia privada) e `npm run worker:build`. O fallback demo continua propositalmente ativo apenas sem `AUTH_DB`.
 
 **Aceite:** um usuario real consegue entrar, ver apenas sua organizacao, e o login de demonstracao e desligado com aprovacao explicita registrada no diario. (Isolamento por organizacao depende de `AuthorizationContext`/`D1MembershipRepository` do Codex serem consumidos pelo painel — ainda nao coberto pela camada visual, ver Sprint CF-4/CF-6.)
 
@@ -79,31 +79,31 @@ Nenhum agente edita as pastas reservadas do outro. Claude nao edita `cloudflare/
 
 **Objetivo:** portar o nucleo operacional do Laravel para o Worker.
 
-| Card | Dono | Descricao |
-|---|---|---|
-| CF4-D1 | Codex | Migrations D1 de obras, procedimentos, etapas, checklists e execucoes; contratos de dominio correspondentes. |
-| CF4-D2 | Codex | Regras de autorizacao por tenant e testes de isolamento entre organizacoes. |
-| CF4-C1 | Claude | Telas de execucao (uma acao principal por tela), checklist e progresso, seguindo `docs/UX.md`. |
-| CF4-C2 | Claude | Estados vazio (nenhuma obra ativa), carregamento e erro de rede no painel operacional. |
+| Card | Dono | Descricao | Status |
+|---|---|---|---|
+| CF4-D1 | Codex | Migrations D1 de obras, procedimentos, etapas, checklists e execucoes; contratos de dominio correspondentes. | Feito: `0004_operational_core.sql`, contratos tipados e `D1OperationalRepository`. |
+| CF4-D2 | Codex | Regras de autorizacao por tenant e testes de isolamento entre organizacoes. | Feito: rotas `GET /api/painel/organizacoes` e `GET /api/painel/obras?organization_id=...` exigem sessao D1, membership ativa e `no-store`; tenant cruzado retorna 403. |
+| CF4-C1 | Claude | Telas de execucao (uma acao principal por tela), checklist e progresso, seguindo `docs/UX.md`. | Pendente: o dashboard visual atual e estatico; a API de obras ja esta disponivel para integracao. |
+| CF4-C2 | Claude | Estados vazio (nenhuma obra ativa), carregamento e erro de rede no painel operacional. | Pendente: depende de a interface consumir as rotas reais. |
 
 **Testes:** inicio/conclusao de execucao, checklist obrigatorio, tenant cruzado bloqueado, leitura mobile.
 
-**Aceite:** o fluxo de campo (abrir procedimento, marcar checklist, registrar evidencia pendente) funciona no Worker com paridade funcional ao Laravel.
+**Aceite:** parcial. A base e leitura de obras estao no Worker; fluxo visual de campo, procedimentos e checklists ainda precisa consumir a API antes de declarar paridade com Laravel.
 
 ## Sprint CF-5 — Evidencias privadas (R2) e chamados de suporte
 
 **Objetivo:** upload privado de evidencias e central de chamados no Worker.
 
-| Card | Dono | Descricao |
-|---|---|---|
-| CF5-D1 | Codex | Binding R2, contrato de evidencia (storage key, checksum, MIME validado), download autorizado por Policy. |
-| CF5-D2 | Codex | Migration e contrato de chamados de suporte com contexto sanitizado. |
-| CF5-C1 | Claude | Tela de upload/anexo de evidencia (captura, preview, estado de envio) e tela de abertura/acompanhamento de chamado. |
-| CF5-C2 | Claude | Estado de fila offline-friendly na interface (pendente, enviando, concluido, falha) conforme `docs/PWA.md`. |
+| Card | Dono | Descricao | Status |
+|---|---|---|---|
+| CF5-D1 | Codex | Binding R2, contrato de evidencia (storage key, checksum, MIME validado), download autorizado por Policy. | Feito em codigo: `POST /api/painel/evidencias` detecta MIME pelo conteudo, limita tamanho, calcula checksum, grava R2 privado e metadata D1; download exige tenant. Requer binding R2 real para smoke test. |
+| CF5-D2 | Codex | Migration e contrato de chamados de suporte com contexto sanitizado. | Feito: `POST /api/painel/suporte/chamados` e consulta do proprio solicitante; contexto allowlisted. |
+| CF5-C1 | Claude | Tela de upload/anexo de evidencia (captura, preview, estado de envio) e tela de abertura/acompanhamento de chamado. | Pendente: rotas estao prontas para integracao visual. |
+| CF5-C2 | Claude | Estado de fila offline-friendly na interface (pendente, enviando, concluido, falha) conforme `docs/PWA.md`. | Pendente: fila offline pertence ao proximo trabalho de PWA. |
 
 **Testes:** upload valido/invalido, download bloqueado entre organizacoes, chamado criado e visivel para o solicitante.
 
-**Aceite:** evidencia e chamado funcionam ponta a ponta no Worker, sem expor o binario publicamente.
+**Aceite:** parcial. Backend e rotas privadas estao prontos e testados com R2 simulado; configuracao de binding real e interface de upload/chamado ainda precisam de smoke test manual.
 
 ## Sprint CF-6 — Painel administrativo, auditoria e security events
 

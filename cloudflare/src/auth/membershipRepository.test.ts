@@ -9,7 +9,7 @@ type Row = {
     status: 'invited' | 'active' | 'suspended';
 };
 
-function databaseFor(rows: Row[]): D1Database {
+function databaseFor(rows: Row[], activeOrganizationIds = rows.map((row) => row.organization_id)): D1Database {
     return {
         prepare: (query: string) => ({
             bind: (...values: unknown[]) => ({
@@ -32,10 +32,12 @@ function databaseFor(rows: Row[]): D1Database {
                     const match = rows.find((row) =>
                         row.user_id === userId
                         && row.organization_id === organizationId
-                        && row.status === 'active',
+                        && row.status === 'active'
+                        && activeOrganizationIds.includes(organizationId),
                     );
 
                     expect(query).toContain('status = \'active\'');
+                    expect(query).toContain('o.is_active = 1');
 
                     return (match ? { id: match.id } : null) as T | null;
                 },
@@ -78,5 +80,11 @@ describe('D1MembershipRepository', () => {
         await expect(repository.canAccessOrganization('user-1', 'org-2')).resolves.toBe(false);
         await expect(repository.canAccessOrganization('user-1', 'org-3')).resolves.toBe(false);
         await expect(repository.canAccessOrganization('user-1', 'org-4')).resolves.toBe(false);
+    });
+
+    it('nega uma organizacao desativada mesmo que a membership esteja ativa', async () => {
+        const repository = new D1MembershipRepository(databaseFor(rows, []));
+
+        await expect(repository.canAccessOrganization('user-1', 'org-1')).resolves.toBe(false);
     });
 });

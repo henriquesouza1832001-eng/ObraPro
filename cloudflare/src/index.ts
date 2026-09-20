@@ -2,9 +2,16 @@ import type { Env } from './env';
 import { withSecurityHeaders, redirect } from './http/security';
 import { isAuthenticated, sessionToken } from './auth/demoSession';
 import { renderLoginPage } from './pages/login';
+import { D1MembershipRepository } from './auth/membershipRepository';
 import { MockCourseRepository, courseModules } from './data/mockCourseRepository';
 import { D1CourseRepository } from './data/d1CourseRepository';
-import { authenticateRequest, loginWithD1, logoutFromD1, sessionCookie } from './auth/realSession';
+import { authenticateRequest, authenticatedSession, loginWithD1, logoutFromD1, sessionCookie } from './auth/realSession';
+import { D1OperationalRepository } from './data/d1OperationalRepository';
+import { D1SupportTicketRepository } from './auth/supportTicketRepository';
+import { validateSupportTicket } from './domain/support';
+import { D1EvidenceAuthorization } from './auth/evidenceAuthorization';
+import { D1EvidenceRepository } from './data/d1EvidenceRepository';
+import { detectEvidenceMimeType, sha256Checksum, validateEvidenceUpload } from './domain/evidence';
 import type { CourseRepository } from './data/course';
 import { renderCourseCatalog, renderCourseDetail, renderCourseNotFound } from './pages/courses';
 import { renderComoFunciona } from './pages/comoFunciona';
@@ -20,6 +27,46 @@ function html(body: string, status = 200): Response {
 
 function json(body: unknown, status = 200): Response {
     return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json; charset=UTF-8' } });
+}
+
+function privateJson(body: unknown, status = 200): Response {
+    const response = json(body, status);
+    response.headers.set('Cache-Control', 'no-store');
+
+    return withSecurityHeaders(response);
+}
+
+function organizationIdFrom(url: URL): string | null {
+    const organizationId = url.searchParams.get('organization_id');
+
+    return organizationId && /^[A-Za-z0-9_-]{1,128}$/.test(organizationId) ? organizationId : null;
+}
+
+function optionalOrganizationId(value: unknown): string | null | undefined {
+    if (value === null || value === undefined || value === '') {
+        return null;
+    }
+
+    return typeof value === 'string' && /^[A-Za-z0-9_-]{1,128}$/.test(value) ? value : undefined;
+}
+
+function ticketIdFrom(path: string): string | null {
+    const prefix = '/api/painel/suporte/chamados/';
+    const ticketId = path.startsWith(prefix) ? path.slice(prefix.length) : '';
+
+    return /^[A-Za-z0-9_-]{1,128}$/.test(ticketId) ? ticketId : null;
+}
+
+function evidenceIdFrom(path: string): string | null {
+    const match = path.match(/^\/api\/painel\/evidencias\/([A-Za-z0-9_-]{1,128})\/download$/);
+
+    return match?.[1] ?? null;
+}
+
+async function privateApiSession(request: Request, env: Env): Promise<{ userId: string } | null> {
+    const session = await authenticatedSession(request, env);
+
+    return session ? { userId: session.userId } : null;
 }
 
 async function handleCourseDetail(slug: string, courseRepository: CourseRepository): Promise<Response> {
@@ -39,6 +86,237 @@ async function route(request: Request, env: Env): Promise<Response> {
 
     if (path === '/health') {
         return json({ status: 'ok', service: 'obrapro-worker' });
+    }
+
+    if (path === '/api/painel/organizacoes' && request.method === 'GET') {
+        const session = await privateApiSession(request, env);
+        if (!session) {
+            return privateJson({ error: 'authentication_required' }, 401);
+        }
+
+        if (!env.OPERATIONS_DB) {
+            return privateJson({ error: 'operational_data_unavailable' }, 503);
+        }
+
+        const organizations = await new D1MembershipRepository(env.OPERATIONS_DB).listActiveOrganizationsForUser(session.userId);
+
+        return privateJson({ data: organizations });
+    }
+
+    if (path === '/api/painel/obras' && request.method === 'GET') {
+        const session = await privateApiSession(request, env);
+        if (!session) {
+            return privateJson({ error: 'authentication_required' }, 401);
+        }
+
+        const organizationId = organizationIdFrom(url);
+        if (!organizationId) {
+            return privateJson({ error: 'organization_id_required' }, 400);
+        }
+
+        if (!env.OPERATIONS_DB) {
+            return privateJson({ error: 'operational_data_unavailable' }, 503);
+        }
+
+        const memberships = new D1MembershipRepository(env.OPERATIONS_DB);
+        if (!await memberships.canAccessOrganization(session.userId, organizationId)) {
+            return privateJson({ error: 'organization_access_denied' }, 403);
+        }
+
+        const works = await new D1OperationalRepository(env.OPERATIONS_DB).listWorks(organizationId);
+
+        return privateJson({ data: works });
+    }
+
+    if (path === '/api/painel/suporte/chamados' && request.method === 'POST') {
+        const session = await privateApiSession(request, env);
+        if (!session) {
+            return privateJson({ error: 'authentication_required' }, 401);
+        }
+
+        if (!env.OPERATIONS_DB) {
+            return privateJson({ error: 'operational_data_unavailable' }, 503);
+        }
+
+        let body: Record<string, unknown>;
+        try {
+            const parsed = await request.json<unknown>();
+            body = parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed as Record<string, unknown> : {};
+        } catch {
+            return privateJson({ error: 'support_ticket_invalid' }, 400);
+        }
+
+        const organizationId = optionalOrganizationId(body.organization_id);
+        if (organizationId === undefined) {
+            return privateJson({ error: 'support_ticket_invalid' }, 400);
+        }
+
+        if (organizationId && !await new D1MembershipRepository(env.OPERATIONS_DB).canAccessOrganization(session.userId, organizationId)) {
+            return privateJson({ error: 'organization_access_denied' }, 403);
+        }
+
+        try {
+            const ticket = validateSupportTicket({
+                id: crypto.randomUUID(),
+                userId: session.userId,
+                organizationId,
+                title: typeof body.title === 'string' ? body.title : '',
+                description: typeof body.description === 'string' ? body.description : '',
+                category: body.category as 'bug' | 'content' | 'account' | 'other',
+                priority: body.priority as 'low' | 'normal' | 'high',
+                route: path,
+                correlationId: null,
+                sessionContext: {
+                    user_agent: request.headers.get('User-Agent') ?? '',
+                    route: path,
+                    app_version: typeof body.app_version === 'string' ? body.app_version : '',
+                },
+                createdAt: new Date().toISOString(),
+            });
+
+            await new D1SupportTicketRepository(env.OPERATIONS_DB).create(ticket);
+
+            return privateJson({ data: { id: ticket.id, status: 'open' } }, 201);
+        } catch {
+            return privateJson({ error: 'support_ticket_invalid' }, 400);
+        }
+    }
+
+    if (path === '/api/painel/evidencias' && request.method === 'POST') {
+        const session = await privateApiSession(request, env);
+        if (!session) {
+            return privateJson({ error: 'authentication_required' }, 401);
+        }
+
+        if (!env.OPERATIONS_DB || !env.EVIDENCE_BUCKET) {
+            return privateJson({ error: 'evidence_storage_unavailable' }, 503);
+        }
+
+        const form = await request.formData();
+        const organizationId = optionalOrganizationId(form.get('organization_id'));
+        const executionStepId = typeof form.get('execution_step_id') === 'string' ? String(form.get('execution_step_id')) : '';
+        const upload = form.get('file');
+        const note = typeof form.get('note') === 'string' ? String(form.get('note')).trim().slice(0, 2000) : null;
+
+        if (!organizationId || !/^[A-Za-z0-9_-]{1,128}$/.test(executionStepId) || !upload || typeof (upload as File).arrayBuffer !== 'function') {
+            return privateJson({ error: 'evidence_invalid' }, 400);
+        }
+
+        const file = upload as File;
+        if (file.size < 1 || file.size > 10 * 1024 * 1024) {
+            return privateJson({ error: 'evidence_invalid' }, 400);
+        }
+
+        const bytes = new Uint8Array(await file.arrayBuffer());
+        const mimeType = detectEvidenceMimeType(bytes);
+        if (!mimeType) {
+            return privateJson({ error: 'evidence_invalid' }, 400);
+        }
+
+        const evidenceAuthorization = new D1EvidenceAuthorization(
+            env.OPERATIONS_DB,
+            new D1MembershipRepository(env.OPERATIONS_DB),
+        );
+        if (!await evidenceAuthorization.canUpload(session.userId, organizationId, executionStepId)) {
+            return privateJson({ error: 'organization_access_denied' }, 403);
+        }
+
+        const evidenceId = crypto.randomUUID();
+        const validated = validateEvidenceUpload({
+            organizationId,
+            executionStepId,
+            evidenceId,
+            originalName: file.name,
+            mimeType,
+            sizeBytes: bytes.byteLength,
+            checksum: await sha256Checksum(bytes),
+        });
+        const evidence = {
+            id: validated.evidenceId,
+            organizationId: validated.organizationId,
+            executionStepId: validated.executionStepId,
+            uploadedBy: session.userId,
+            storageKey: validated.storageKey,
+            originalName: validated.originalName,
+            mimeType: validated.mimeType,
+            sizeBytes: validated.sizeBytes,
+            checksum: validated.checksum,
+            note,
+            status: 'available' as const,
+        };
+        const createdAt = new Date().toISOString();
+
+        await env.EVIDENCE_BUCKET.put(validated.storageKey, bytes, {
+            httpMetadata: { contentType: validated.mimeType },
+            customMetadata: { checksum: validated.checksum },
+        });
+
+        try {
+            await new D1EvidenceRepository(env.OPERATIONS_DB).create(evidence, createdAt);
+        } catch (error) {
+            await env.EVIDENCE_BUCKET.delete(validated.storageKey);
+            throw error;
+        }
+
+        return privateJson({ data: { id: evidence.id, status: evidence.status } }, 201);
+    }
+
+    if (request.method === 'GET' && evidenceIdFrom(path)) {
+        const session = await privateApiSession(request, env);
+        if (!session) {
+            return privateJson({ error: 'authentication_required' }, 401);
+        }
+
+        const organizationId = organizationIdFrom(url);
+        if (!organizationId) {
+            return privateJson({ error: 'organization_id_required' }, 400);
+        }
+
+        if (!env.OPERATIONS_DB || !env.EVIDENCE_BUCKET) {
+            return privateJson({ error: 'evidence_storage_unavailable' }, 503);
+        }
+
+        const evidenceId = evidenceIdFrom(path) as string;
+        const authorization = new D1EvidenceAuthorization(env.OPERATIONS_DB, new D1MembershipRepository(env.OPERATIONS_DB));
+        if (!await authorization.canDownload(session.userId, organizationId, evidenceId)) {
+            return privateJson({ error: 'evidence_not_found' }, 404);
+        }
+
+        const evidence = await new D1EvidenceRepository(env.OPERATIONS_DB).findAvailable(organizationId, evidenceId);
+        if (!evidence) {
+            return privateJson({ error: 'evidence_not_found' }, 404);
+        }
+
+        const object = await env.EVIDENCE_BUCKET.get(evidence.storageKey);
+        if (!object) {
+            return privateJson({ error: 'evidence_not_found' }, 404);
+        }
+
+        const response = new Response(object.body, {
+            headers: {
+                'Content-Type': evidence.mimeType,
+                'Content-Length': String(evidence.sizeBytes),
+                'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(evidence.originalName)}`,
+                'Cache-Control': 'private, no-store',
+            },
+        });
+
+        return withSecurityHeaders(response);
+    }
+
+    if (request.method === 'GET' && ticketIdFrom(path)) {
+        const session = await privateApiSession(request, env);
+        if (!session) {
+            return privateJson({ error: 'authentication_required' }, 401);
+        }
+
+        if (!env.OPERATIONS_DB) {
+            return privateJson({ error: 'operational_data_unavailable' }, 503);
+        }
+
+        const ticket = await new D1SupportTicketRepository(env.OPERATIONS_DB).findForUser(session.userId, ticketIdFrom(path) as string);
+
+        return ticket ? privateJson({ data: ticket }) : privateJson({ error: 'support_ticket_not_found' }, 404);
     }
 
     if (path === '/') {
@@ -138,6 +416,10 @@ export default {
         } catch (error) {
             const url = new URL(request.url);
             console.error(`Falha ao processar ${url.pathname}:`, error);
+
+            if (url.pathname.startsWith('/api/painel/')) {
+                return privateJson({ error: 'internal_error' }, 500);
+            }
 
             if (renderedRoutePrefixes.some((prefix) => url.pathname === prefix || url.pathname.startsWith(`${prefix}/`))) {
                 return withSecurityHeaders(html(renderServerError(url.pathname), 500));

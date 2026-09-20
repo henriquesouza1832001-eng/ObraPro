@@ -2,6 +2,9 @@ export type SupportCategory = 'bug' | 'content' | 'account' | 'other';
 export type SupportPriority = 'low' | 'normal' | 'high';
 export type SupportStatus = 'open' | 'in_progress' | 'resolved' | 'closed';
 
+const supportCategories: SupportCategory[] = ['bug', 'content', 'account', 'other'];
+const supportPriorities: SupportPriority[] = ['low', 'normal', 'high'];
+
 export interface SupportSessionContext {
     [key: string]: string | undefined;
     userAgent?: string;
@@ -67,6 +70,10 @@ export function validateSupportTicket(input: CreateSupportTicketInput): CreateSu
 
     if (input.title.length > 160 || input.description.length > 5000) {
         throw new Error('support_ticket_text_too_long');
+    }
+
+    if (!supportCategories.includes(input.category) || !supportPriorities.includes(input.priority)) {
+        throw new Error('support_ticket_selection_invalid');
     }
 
     return {

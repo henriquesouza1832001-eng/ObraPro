@@ -73,6 +73,12 @@ A migration `0006_support_tickets.sql` guarda chamados com usuario, organizacao
 opcional, categoria, prioridade, status, rota, correlation ID e contexto diagnostico
 sanitizado. O contexto nao deve conter body, cookie, token, senha ou credencial.
 
+No Worker, `AUTH_DB` guarda identidade e sessoes, enquanto `OPERATIONS_DB` consulta
+memberships, obras, chamados e metadata de evidencias. Em um ambiente integrado,
+ambos devem apontar para o D1 aprovado que contem as respectivas tabelas e FKs; os
+nomes separados existem para manter responsabilidades explicitas no codigo, nao para
+autorizar cruzamento entre bancos distintos.
+
 ### D1 em migracao
 
 O schema inicial do Worker fica em cloudflare/migrations/0001_identity_and_catalog.sql. Ele cobre identidade, organizacoes, memberships e catalogo. A migration usa SQLite portavel, constraints explicitas e IF NOT EXISTS para permitir execucao repetivel em ambiente local. A aplicacao real em D1 deve ser feita por Wrangler no ambiente correto, nunca por reset.
