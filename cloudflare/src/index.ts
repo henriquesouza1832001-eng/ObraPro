@@ -166,7 +166,7 @@ async function route(request: Request, env: Env): Promise<Response> {
     const path = url.pathname;
 
     if (path === '/health') {
-        return json({ status: 'ok', service: 'obrapro-worker' });
+        return withSecurityHeaders(json({ status: 'ok', service: 'obrapro-worker' }));
     }
 
     const adminCatalogRead = path === '/api/admin/catalogo' && request.method === 'GET';

@@ -242,6 +242,7 @@ describe('rotas publicas do Worker', () => {
 
         expect(response.status).toBe(200);
         expect(response.headers.get('Content-Type')).toContain('application/json');
+        expect(response.headers.get('Content-Security-Policy')).toContain("default-src 'self'");
         expect(body).toEqual({ status: 'ok', service: 'obrapro-worker' });
     });
 
