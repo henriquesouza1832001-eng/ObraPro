@@ -15,6 +15,7 @@ import { D1EvidenceRepository } from './data/d1EvidenceRepository';
 import { detectEvidenceMimeType, sha256Checksum, validateEvidenceUpload } from './domain/evidence';
 import type { CourseRepository } from './data/course';
 import { renderCourseCatalog, renderCourseDetail, renderCourseNotFound } from './pages/courses';
+import { renderLearningHome } from './pages/home';
 import { renderComoFunciona } from './pages/comoFunciona';
 import { renderServerError } from './pages/serverError';
 
@@ -584,9 +585,9 @@ async function route(request: Request, env: Env): Promise<Response> {
     }
 
     if (path === '/') {
-        const homeUrl = new URL('/index.html', request.url);
+        const courses = await courseRepository.listCourses();
 
-        return withSecurityHeaders(await env.ASSETS.fetch(new Request(homeUrl, request)));
+        return withSecurityHeaders(html(renderLearningHome(courses)));
     }
 
     if (path === '/como-funciona') {
@@ -595,8 +596,9 @@ async function route(request: Request, env: Env): Promise<Response> {
 
     if (path === '/cursos') {
         const courses = await courseRepository.listCourses();
+        const category = url.searchParams.get('categoria') ?? undefined;
 
-        return withSecurityHeaders(html(renderCourseCatalog(courses)));
+        return withSecurityHeaders(html(renderCourseCatalog(courses, category)));
     }
 
     if (path.startsWith('/cursos/')) {
@@ -671,7 +673,7 @@ async function route(request: Request, env: Env): Promise<Response> {
  * cair na pagina de erro sanitizada em vez de vazar uma excecao nao tratada
  * quando o repositorio de dados (mock hoje, D1 depois) falhar.
  */
-const renderedRoutePrefixes = ['/como-funciona', '/cursos'];
+const renderedRoutePrefixes = ['/', '/como-funciona', '/cursos'];
 
 export default {
     async fetch(request: Request, env: Env): Promise<Response> {

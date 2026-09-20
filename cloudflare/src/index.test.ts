@@ -322,6 +322,23 @@ describe('falha do repositorio de cursos (D1 indisponivel)', () => {
         consoleErrorSpy.mockRestore();
     });
 
+    it('GET / com D1 falhando tambem retorna 500 sanitizado (home usa o catalogo real)', async () => {
+        const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+        const brokenDatabase = {
+            prepare: () => {
+                throw new Error('falha interna de banco');
+            },
+        } as unknown as NonNullable<Env['COURSES_DB']>;
+
+        const response = await worker.fetch(get('/'), baseEnv({ COURSES_DB: brokenDatabase }));
+        const body = await response.text();
+
+        expect(response.status).toBe(500);
+        expect(body).not.toContain('falha interna de banco');
+
+        consoleErrorSpy.mockRestore();
+    });
+
     it('rotas independentes do repositorio continuam funcionando durante a falha do D1', async () => {
         const brokenDatabase = {
             prepare: () => {
@@ -330,13 +347,11 @@ describe('falha do repositorio de cursos (D1 indisponivel)', () => {
         } as unknown as NonNullable<Env['COURSES_DB']>;
         const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
 
-        const [home, health, comoFunciona] = await Promise.all([
-            worker.fetch(get('/'), baseEnv({ COURSES_DB: brokenDatabase })),
+        const [health, comoFunciona] = await Promise.all([
             worker.fetch(get('/health'), baseEnv({ COURSES_DB: brokenDatabase })),
             worker.fetch(get('/como-funciona'), baseEnv({ COURSES_DB: brokenDatabase })),
         ]);
 
-        expect(home.status).toBe(200);
         expect(health.status).toBe(200);
         expect(comoFunciona.status).toBe(200);
 

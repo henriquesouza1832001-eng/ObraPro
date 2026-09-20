@@ -159,7 +159,7 @@ Este lote foi autorizado pelo responsavel em 2026-09-19. A CF6 esta em andamento
 | Card | Dono | Descricao |
 |---|---|---|
 | CF9-D1 | Codex | Modelo de produto, preco congelado, pedido, entitlement e adaptador PIX; webhook autenticado, idempotente e auditado. |
-| CF9-C1 | Claude | Landing e catalogo mostram gratuito, incluso e avulso vindos do contrato; checkout informa valor e estado sem prometer confirmacao antes do webhook. |
+| CF9-C1 | Claude | Landing e catalogo mostram gratuito, incluso e avulso vindos do contrato; checkout informa valor e estado sem prometer confirmacao antes do webhook. | Parcial, adiantado por decisao de produto do responsavel: a home (`GET /`) foi redesenhada como plataforma de ensino (saudacao, busca, categorias reais do catalogo, secoes "gratuitos"/"premium"), usando `CourseRepository` ja existente. `GET /cursos` ganhou filtro por categoria. Checkout/pagamento continuam fora de escopo (aguardando CF9-D1). |
 | CF9-C2 | Claude | Area "Meus acessos" e recuperacao visual de compra pendente/falha, com suporte contextual. |
 
 **Testes:** assinatura e replay de webhook, duplicidade, valor divergente, pagamento pendente/confirmado/falho, revogacao e curso premium bloqueado.

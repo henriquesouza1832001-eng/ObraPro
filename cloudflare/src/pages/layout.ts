@@ -11,7 +11,7 @@ export function publicHeader(activePath: string): string {
         return `<a href="${href}"${isActive ? ' aria-current="page"' : ''}>${label}</a>`;
     };
 
-    return `<header><a class="brand" href="/"><span class="mark" aria-hidden="true">⌂</span><span>ObraPro</span></a><nav class="top" aria-label="Navegação principal">${link('/como-funciona', 'Como funciona')}${link('/cursos', 'Cursos')}<a class="login" href="/entrar">Entrar</a></nav></header>`;
+    return `<header><a class="brand" href="/"><span class="mark" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 3a7 7 0 0 0-7 7v3H4v3h16v-3h-1v-3a7 7 0 0 0-7-7z"/><rect x="9" y="18" width="6" height="2" rx="1"/></svg></span><span>ObraPro</span></a><nav class="top" aria-label="Navegação principal">${link('/', 'Início')}${link('/como-funciona', 'Como funciona')}${link('/cursos', 'Cursos')}<a class="login" href="/entrar">Entrar</a></nav></header>`;
 }
 
 export function publicPage(options: { title: string; activePath: string; body: string; extraStyles?: string }): string {
