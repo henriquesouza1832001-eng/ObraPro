@@ -447,6 +447,27 @@ describe('login/logout real via D1 (CF3-C1/C2)', () => {
         expect(comSessao.status).toBe(200);
     });
 
+    it('GET /admin com sessao valida retorna o painel administrativo; sem sessao redireciona para /entrar', async () => {
+        const authDb = createFakeAuthDatabase({ id: 'user-1', name: 'Ana', email: 'ana@example.com', passwordHash: await hashPassword('senha-super-secreta') });
+        const env = baseEnv({ AUTH_DB: authDb });
+        const form = new URLSearchParams({ email: 'ana@example.com', password: 'senha-super-secreta' });
+
+        const loginResponse = await worker.fetch(new Request('https://obrapro.test/entrar', { method: 'POST', body: form, headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }), env);
+        const cookie = cookieFromSetCookie(loginResponse);
+
+        const semSessao = await worker.fetch(get('/admin'), env);
+
+        expect(semSessao.status).toBe(303);
+        expect(semSessao.headers.get('Location')).toBe('/entrar');
+
+        const comSessao = await worker.fetch(new Request('https://obrapro.test/admin', { headers: { Cookie: cookie } }), env);
+        const body = await comSessao.text();
+
+        expect(comSessao.status).toBe(200);
+        expect(body).toContain('Painel administrativo');
+        expect(body).toContain('/api/admin/catalogo');
+    });
+
     it('POST /sair revoga a sessao: acessar /painel depois com o mesmo cookie volta a exigir login', async () => {
         const authDb = createFakeAuthDatabase({ id: 'user-1', name: 'Ana', email: 'ana@example.com', passwordHash: await hashPassword('senha-super-secreta') });
         const env = baseEnv({ AUTH_DB: authDb });
