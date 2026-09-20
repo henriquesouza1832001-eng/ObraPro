@@ -18,6 +18,7 @@ import { renderCourseCatalog, renderCourseDetail, renderCourseNotFound } from '.
 import { renderLearningHome } from './pages/home';
 import { renderComoFunciona } from './pages/comoFunciona';
 import { renderServerError } from './pages/serverError';
+import { D1CourseProgressRepository } from './data/courseProgressRepository';
 
 function courseRepositoryFor(env: Env): CourseRepository {
     return env.COURSES_DB ? new D1CourseRepository(env.COURSES_DB) : new MockCourseRepository();
@@ -88,6 +89,33 @@ async function route(request: Request, env: Env): Promise<Response> {
 
     if (path === '/health') {
         return json({ status: 'ok', service: 'obrapro-worker' });
+    }
+
+    const courseProgressMatch = path.match(/^\/api\/cursos\/([^/]+)\/progresso$/);
+    const courseLessonProgressMatch = path.match(/^\/api\/cursos\/([^/]+)\/aulas\/([^/]+)\/progresso$/);
+    const isCourseProgressRead = Boolean(courseProgressMatch) && request.method === 'GET';
+    const isCourseLessonProgressWrite = Boolean(courseLessonProgressMatch) && request.method === 'POST';
+    if (isCourseProgressRead || isCourseLessonProgressWrite) {
+        const session = await privateApiSession(request, env);
+        if (!session) {
+            return privateJson({ error: 'authentication_required' }, 401);
+        }
+        if (!env.COURSES_DB) {
+            return privateJson({ error: 'course_data_unavailable' }, 503);
+        }
+
+        const repository = new D1CourseProgressRepository(env.COURSES_DB);
+        const courseSlug = decodeURIComponent((courseProgressMatch ?? courseLessonProgressMatch)?.[1] ?? '');
+        const lessonId = courseLessonProgressMatch?.[2];
+        const progress = courseLessonProgressMatch && request.method === 'POST'
+            ? await repository.completeLesson(session.userId, courseSlug, decodeURIComponent(lessonId ?? ''), new Date().toISOString())
+            : await repository.getProgress(session.userId, courseSlug);
+
+        if (!progress) {
+            return privateJson({ error: 'course_or_lesson_not_found' }, 404);
+        }
+
+        return privateJson({ data: progress });
     }
 
     if (path === '/api/painel/organizacoes' && request.method === 'GET') {
