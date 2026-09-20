@@ -6,6 +6,12 @@ Todas as mudancas relevantes do ObraPro sao registradas aqui. O formato segue Ke
 
 ### Added
 
+- Spec 3 S3-06: migration D1 idempotente para os 45 treinamentos derivados dos documentos ISC, agrupados nos modulos editoriais 20/30/40/50. Cada curso entra como rascunho desligado, com quatro aulas-base somando 60 minutos; nenhum treinamento e publicado automaticamente.
+
+- Spec 3 S3-04: contrato server-side para administracao da publicacao do catalogo Cloudflare. Rotas `PATCH /api/admin/cursos/{slug}/publicacao` e `PATCH /api/admin/modulos/{slug}/publicacao` exigem sessao real e usuario `is_super_admin`; o corpo aceita apenas `{ "published": boolean }`, retorna erros sanitizados e altera somente o item solicitado no D1. A despublicacao nao apaga dados nem altera cursos relacionados.
+
+- Spec 3 S3-01: contrato versionado de conteudo editorial por aula, com texto, materiais, ferramentas, passos, alertas de seguranca e publicacao explicita; nenhum conteudo premium e exposto por nova rota nesta etapa.
+
 - Progresso real de curso na pagina de detalhe (`cloudflare/src/pages/courses.ts`): script client-side consulta `GET /api/cursos/{slug}/progresso` (contrato do PR #62, ja integrado em `develop`) e exibe "X de Y aulas concluidas" com barra de progresso quando o visitante tem sessao autenticada; para visitante anonimo (401) mostra um link "Entre para acompanhar seu progresso" em vez de erro; qualquer outra falha (503, rede) mantem o bloco oculto, sem mensagem quebrada. Nao foi implementado o botao de marcar aula como concluida (`POST /api/cursos/{slug}/aulas/{lessonId}/progresso`): o contrato `CourseModule.lessons` (`cloudflare/src/data/course.ts`) nao expoe um identificador de aula, apenas `title`/`durationMinutes`, entao nao ha como chamar essa rota do frontend sem inventar um ID — pendencia registrada no diario para o Codex avaliar expor `lessonId` no contrato de leitura de modulos. Nenhum endpoint novo, nenhuma migration alterada.
 
 - Auditoria Spec 2 do detalhe de curso (`cloudflare/src/pages/courses.ts`): links `.back` ("Todos os cursos") e `.button` ("Começar agora"/"Voltar ao catálogo") ganham `:focus-visible` explicito; texto residual "checklists para acompanhar sua obra" na barra lateral do detalhe do curso trocado por "aulas curtas e passo a passo para você aprender fazendo", removendo a ultima mencao a checklist/obra como proposta de valor principal da pagina de curso (checklist continua recurso opcional, nao produto). Somente texto e CSS; nenhum dado, contrato ou comportamento alterado.

@@ -26,7 +26,7 @@ export interface InstructionModuleSummary {
 
 export interface CourseModule {
     title: string;
-    lessons: Array<{ title: string; durationMinutes: number }>;
+    lessons: Array<{ id: string; title: string; durationMinutes: number }>;
 }
 
 export interface CourseRepository {

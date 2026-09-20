@@ -103,6 +103,7 @@ export class D1CourseRepository implements CourseRepository {
 
             if (row.lesson_id) {
                 module.lessons.push({
+                    id: row.lesson_id,
                     title: row.lesson_title,
                     durationMinutes: row.duration_minutes,
                 });

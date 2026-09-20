@@ -35,4 +35,15 @@ export class D1UserRepository {
             isSuperAdmin: row.is_super_admin === 1,
         };
     }
+
+    public async isSuperAdmin(userId: string): Promise<boolean> {
+        const row = await this.database.prepare(`
+            SELECT is_super_admin
+            FROM users
+            WHERE id = ?
+            LIMIT 1
+        `).bind(userId).first<{ is_super_admin: number }>();
+
+        return row?.is_super_admin === 1;
+    }
 }
