@@ -183,6 +183,9 @@
         execution_not_found: 'Esta execucao nao foi encontrada.',
         execution_step_not_found: 'Esta etapa nao foi encontrada na execucao.',
         execution_step_invalid: 'Nao foi possivel atualizar esta etapa. Tente novamente.',
+        evidence_storage_unavailable: 'O envio de evidencias esta indisponivel no momento. Tente novamente em instantes.',
+        evidence_invalid: 'Arquivo invalido. Envie uma foto (JPEG, PNG, WebP) ou PDF de ate 10MB.',
+        evidence_not_found: 'Esta evidencia nao foi encontrada.',
     };
 
     function operationalErrorMessageFor(error) {
@@ -299,7 +302,7 @@
                 organizationId: organization.id,
                 procedureTitle: state.currentProcedure.title,
                 workName: work ? work.name : 'Obra selecionada',
-                steps: detail.data.steps.map((step) => ({ ...step, note: step.note || '' })),
+                steps: detail.data.steps.map((step) => ({ ...step, note: step.note || '', evidence: { status: 'idle', file: null, message: '' } })),
             };
             showView('execution');
             renderExecutionChecklist();
@@ -347,6 +350,12 @@
                         <button class="touch-button bg-brand text-white disabled:cursor-not-allowed disabled:opacity-60" type="button" data-execution-complete="${index}" ${step.status === 'completed' ? 'disabled' : ''}>Concluir etapa</button>
                         <button class="touch-button border border-slate-300 bg-white text-ink disabled:cursor-not-allowed disabled:opacity-60" type="button" data-execution-skip="${index}" ${step.status === 'skipped' ? 'disabled' : ''}>Pular etapa</button>
                     </div>
+                    <div class="mt-4 border-t border-slate-100 pt-3">
+                        <label class="text-xs font-bold text-slate-500" for="evidence-file-${index}">Evidencia (foto ou PDF, ate 10MB)</label>
+                        <input class="mt-1 block w-full text-sm" type="file" accept="image/png,image/jpeg,image/webp,application/pdf" id="evidence-file-${index}" data-evidence-file="${index}" ${step.evidence.status === 'sent' ? 'disabled' : ''}>
+                        <button class="touch-button mt-2 border border-slate-300 bg-white text-sm text-ink disabled:cursor-not-allowed disabled:opacity-60" type="button" data-evidence-upload="${index}" ${!step.evidence.file || step.evidence.status === 'uploading' || step.evidence.status === 'sent' ? 'disabled' : ''}>${step.evidence.status === 'sent' ? 'Evidencia enviada' : 'Enviar evidencia'}</button>
+                        ${step.evidence.message ? `<p class="mt-2 text-xs ${step.evidence.status === 'error' ? 'font-bold text-red-700' : step.evidence.status === 'sent' ? 'font-bold text-emerald-700' : 'text-slate-500'}" role="${step.evidence.status === 'error' ? 'alert' : 'status'}">${escapeHtml(step.evidence.message)}</p>` : ''}
+                    </div>
                 </li>`).join('')}</ol>
             <button class="touch-button mt-6 bg-action text-white disabled:cursor-not-allowed disabled:opacity-60" type="button" id="conclude-execution" ${allResolved ? '' : 'disabled'}>Ver conclusao</button>
             ${!allResolved ? '<p class="mt-2 text-xs text-slate-500">Resolva todas as etapas (concluida ou pulada) para ver a conclusao.</p>' : ''}`;
@@ -370,6 +379,42 @@
         } catch (error) {
             executionStatus(operationalErrorMessageFor(error), 'error');
         }
+    }
+
+    function selectEvidenceFile(index, file) {
+        const step = state.execution?.steps[index];
+        if (!step) return;
+        if (!file) {
+            step.evidence = { status: 'idle', file: null, message: '' };
+            renderExecutionChecklist();
+            return;
+        }
+        if (file.size > 10 * 1024 * 1024) {
+            step.evidence = { status: 'error', file: null, message: 'Arquivo maior que 10MB. Escolha um arquivo menor.' };
+            renderExecutionChecklist();
+            return;
+        }
+        step.evidence = { status: 'idle', file, message: `Pronto para enviar: ${file.name}` };
+        renderExecutionChecklist();
+    }
+
+    async function uploadEvidence(index) {
+        const step = state.execution?.steps[index];
+        if (!step || !step.evidence.file) return;
+        step.evidence.status = 'uploading';
+        step.evidence.message = 'Enviando evidencia...';
+        renderExecutionChecklist();
+        try {
+            const form = new FormData();
+            form.set('organization_id', state.execution.organizationId);
+            form.set('execution_step_id', step.id);
+            form.set('file', step.evidence.file);
+            await requestJson('/api/painel/evidencias', { method: 'POST', body: form });
+            step.evidence = { status: 'sent', file: null, message: 'Evidencia enviada com sucesso.' };
+        } catch (error) {
+            step.evidence = { status: 'error', file: step.evidence.file, message: operationalErrorMessageFor(error) };
+        }
+        renderExecutionChecklist();
     }
 
     function renderExecutionConclusion() {
@@ -563,6 +608,11 @@
             renderExecutionConclusion();
             return;
         }
+        const evidenceUploadButton = event.target.closest('[data-evidence-upload]');
+        if (evidenceUploadButton && state.execution) {
+            uploadEvidence(Number(evidenceUploadButton.dataset.evidenceUpload));
+            return;
+        }
         const categoryButton = event.target.closest('[data-category-filter]');
         if (categoryButton) {
             state.categoryFilter = categoryButton.dataset.categoryFilter;
@@ -594,6 +644,12 @@
             state.searchQuery = event.target.value;
             if (state.searchQuery.trim()) showView('procedures');
             applyProcedureFilters();
+        }
+    });
+    document.addEventListener('change', (event) => {
+        const fileField = event.target.closest('[data-evidence-file]');
+        if (fileField && state.execution) {
+            selectEvidenceFile(Number(fileField.dataset.evidenceFile), fileField.files?.[0] ?? null);
         }
     });
     document.querySelector('#dashboard-organization')?.addEventListener('change', async (event) => {

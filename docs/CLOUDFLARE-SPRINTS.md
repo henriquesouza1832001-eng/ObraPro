@@ -98,7 +98,7 @@ Nenhum agente edita as pastas reservadas do outro. Claude nao edita `cloudflare/
 |---|---|---|---|
 | CF5-D1 | Codex | Binding R2, contrato de evidencia (storage key, checksum, MIME validado), download autorizado por Policy. | Feito em codigo: `POST /api/painel/evidencias` detecta MIME pelo conteudo, limita tamanho, calcula checksum, grava R2 privado e metadata D1; download exige tenant. Requer binding R2 real para smoke test. |
 | CF5-D2 | Codex | Migration e contrato de chamados de suporte com contexto sanitizado. | Feito: `POST /api/painel/suporte/chamados` e consulta do proprio solicitante; contexto allowlisted. |
-| CF5-C1 | Claude | Tela de upload/anexo de evidencia (captura, preview, estado de envio) e tela de abertura/acompanhamento de chamado. | Pendente: rotas estao prontas para integracao visual. |
+| CF5-C1 | Claude | Tela de upload/anexo de evidencia (captura, preview, estado de envio) e tela de abertura/acompanhamento de chamado. | Feito: chamados integrados (ver CF6-C2); evidencia por etapa agora conectada dentro do checklist de execucao real (ver CF4-C1/CF7-C1) — campo de arquivo, botao de envio e estados pendente/enviando/enviado/falha, usando `POST /api/painel/evidencias` com o `execution_step_id` real. |
 | CF5-C2 | Claude | Estado de fila offline-friendly na interface (pendente, enviando, concluido, falha) conforme `docs/PWA.md`. | Pendente: fila offline pertence ao proximo trabalho de PWA. |
 
 **Testes:** upload valido/invalido, download bloqueado entre organizacoes, chamado criado e visivel para o solicitante.
