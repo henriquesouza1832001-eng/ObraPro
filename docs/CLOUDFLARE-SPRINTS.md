@@ -107,7 +107,7 @@ Nenhum agente edita as pastas reservadas do outro. Claude nao edita `cloudflare/
 
 ## Proximo lote proposto: CF-6 a CF-10
 
-Este lote esta **planejado, nao iniciado**. Ele sucede o checkpoint CF1-CF5 e so pode comecar mediante nova autorizacao expressa do responsavel e registro no diario compartilhado. A ordem elimina primeiro os mockups estaticos e as lacunas de ambiente antes de introduzir venda ou IA.
+Este lote foi autorizado pelo responsavel em 2026-09-19. A CF6 esta em andamento sob responsabilidade temporaria do Codex enquanto Claude Code estiver indisponivel. A ordem elimina primeiro os mockups estaticos e as lacunas de ambiente antes de introduzir venda ou IA.
 
 ## Sprint CF-6 — Painel operacional ligado ao ambiente real
 
@@ -115,8 +115,8 @@ Este lote esta **planejado, nao iniciado**. Ele sucede o checkpoint CF1-CF5 e so
 
 | Card | Dono | Descricao |
 |---|---|---|
-| CF6-C1 | Claude | Fazer `dashboard.html` consumir `GET /api/painel/organizacoes` e `GET /api/painel/obras`, com selecao de organizacao, estados vazio/carregando/erro e sem acesso direto a D1. |
-| CF6-C2 | Claude | Conectar abertura e consulta de chamados; criar tela de evidencia com captura, validacao client-side e feedback de envio, sem simular sucesso offline. |
+| CF6-C1 | Codex (temporario) | Fazer `dashboard.html` consumir `GET /api/painel/organizacoes` e `GET /api/painel/obras`, com estados vazio/carregando/erro e sem acesso direto a D1. Em andamento: navegacao e leitura real de organizacoes/obras implementadas; selecao explicita de organizacao permanece pendente. |
+| CF6-C2 | Codex (temporario) | Conectar abertura e consulta de chamados; criar tela de evidencia com captura, validacao client-side e feedback de envio, sem simular sucesso offline. Em andamento: abertura de chamado pelo contrato privado implementada; consulta e evidencia aguardam a tela de execucao. |
 | CF6-D1 | Codex | Revisar contratos de leitura necessarios para procedimento, checklist e execucao; publicar apenas endpoints tenant-aware que tenham repositorio, policy e testes. |
 | CF6-D2 | Codex | Configurar e documentar bindings reais `AUTH_DB`, `OPERATIONS_DB` e `EVIDENCE_BUCKET` por ambiente, sem IDs ou secrets no repositorio; executar smoke test controlado. |
 

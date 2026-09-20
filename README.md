@@ -17,7 +17,7 @@ O ObraPro combina orientacoes passo a passo, cursos gratuitos e premium, gestao 
 
 Preview: `https://obrapro-preview.henriquesouza.workers.dev`.
 
-No preview sem bindings, `/cursos` mostra o catalogo editorial e `/cursos/{slug}` abre o detalhe correspondente. Com `AUTH_DB` e `OPERATIONS_DB` apontando para o D1 aprovado, o Worker autentica usuarios e expoe `/api/painel/organizacoes`, `/api/painel/obras`, chamados e evidencias privadas. O dashboard HTML ainda e um mockup visual e sera ligado a essas rotas na proxima entrega de interface.
+No preview sem bindings, `/cursos` mostra o catalogo editorial e `/cursos/{slug}` abre o detalhe correspondente. Com `AUTH_DB` e `OPERATIONS_DB` apontando para o D1 aprovado, o Worker autentica usuarios e expoe `/api/painel/organizacoes`, `/api/painel/obras`, chamados e evidencias privadas. O dashboard HTML consome organizacoes e obras pelas APIs privadas quando os bindings estao ativos; no preview de demonstracao ele identifica claramente os dados ilustrativos. Procedimentos, checklists e nao conformidades aguardam seus contratos de leitura antes de mostrar dados reais.
 
 ## Comece por aqui
 
