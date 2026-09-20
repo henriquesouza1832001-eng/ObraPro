@@ -24,4 +24,5 @@ export interface CourseModule {
 export interface CourseRepository {
     listCourses(): Promise<Course[]>;
     findCourseBySlug(slug: string): Promise<Course | null>;
+    findModulesByCourseSlug(slug: string): Promise<CourseModule[]>;
 }

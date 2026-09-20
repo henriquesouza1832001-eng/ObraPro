@@ -3,7 +3,7 @@ import { withSecurityHeaders, redirect } from './http/security';
 import { isAuthenticated, sessionToken } from './auth/demoSession';
 import { renderLoginPage } from './pages/login';
 import { D1MembershipRepository } from './auth/membershipRepository';
-import { MockCourseRepository, courseModules } from './data/mockCourseRepository';
+import { MockCourseRepository } from './data/mockCourseRepository';
 import { D1CourseRepository } from './data/d1CourseRepository';
 import { authenticateRequest, authenticatedSession, loginWithD1, logoutFromD1, sessionCookie } from './auth/realSession';
 import { D1OperationalRepository } from './data/d1OperationalRepository';
@@ -77,7 +77,7 @@ async function handleCourseDetail(slug: string, courseRepository: CourseReposito
         return html(renderCourseNotFound(), 404);
     }
 
-    return html(renderCourseDetail(course, courseModules()));
+    return html(renderCourseDetail(course, await courseRepository.findModulesByCourseSlug(slug)));
 }
 
 async function route(request: Request, env: Env): Promise<Response> {
