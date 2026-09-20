@@ -409,6 +409,24 @@ describe('API operacional por tenant', () => {
         await expect(response.json()).resolves.toEqual({ error: 'authentication_required' });
     });
 
+    it.each([
+        '/api/painel/procedimentos?organization_id=org-1',
+        '/api/painel/procedimentos/procedure-1?organization_id=org-1',
+        '/api/painel/checklists?organization_id=org-1',
+        '/api/painel/checklists/checklist-1?organization_id=org-1',
+        '/api/painel/execucoes',
+        '/api/painel/execucoes/execution-1/etapas/step-1?organization_id=org-1',
+    ])('bloqueia anonimo na rota operacional %s', async (path) => {
+        const method = path.includes('/execucoes') ? path.includes('/etapas/') ? 'PATCH' : 'POST' : 'GET';
+        const response = await worker.fetch(new Request(`https://obrapro.test${path}`, {
+            method,
+            headers: { 'Content-Type': 'application/json' },
+            body: method === 'GET' ? undefined : JSON.stringify({ status: 'completed' }),
+        }), baseEnv());
+
+        expect(response.status).toBe(401);
+    });
+
     it('lista somente organizacoes ativas e obras do tenant autorizado', async () => {
         const { env, cookie } = await authenticatedEnv();
         const organizationsResponse = await worker.fetch(new Request('https://obrapro.test/api/painel/organizacoes', { headers: { Cookie: cookie } }), env);
