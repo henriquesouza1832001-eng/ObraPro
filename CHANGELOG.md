@@ -6,6 +6,7 @@ Todas as mudancas relevantes do ObraPro sao registradas aqui. O formato segue Ke
 
 ### Added
 
+- CF6-C1/C2: painel Cloudflare passa a navegar entre secoes e consumir organizacoes, obras e chamados pelas APIs privadas do Worker. Dados operacionais so aparecem com sessao D1 real; o preview de demonstracao fica identificado e nao guarda chamados ou descricoes em armazenamento local.
 - Fechamento CF1-CF5: API privada do Worker para organizacoes ativas, obras, chamados e evidencias. As rotas exigem sessao D1, membership ativa quando ha tenant e `Cache-Control: no-store`; upload detecta JPEG, PNG, WebP ou PDF pelo conteudo, calcula SHA-256 e compensa o objeto R2 se a persistencia D1 falhar.
 - CI passa a validar typecheck e build do Worker Cloudflare quando a fundacao TypeScript estiver presente, sem interromper a transicao gradual do runtime Laravel.
 - CF3-C1/C2: tela de login em `cloudflare/src/pages/login.ts` reescrita para consumir o login/logout real (`loginWithD1`/`logoutFromD1`) quando `AUTH_DB` existe, preservando o fallback de demonstração; mensagens de erro genéricas e acessíveis (`role="alert"`, `aria-describedby`), foco automático no campo de e-mail e link informativo para o catálogo público em vez de um formulário de cadastro inexistente (não há endpoint de criação de conta ainda — sinalizado como pendência). Cobertura automatizada: 27 testes no Worker, incluindo login com senha correta/incorreta, sessão válida/expirada em `/painel` e revogação de sessão em `/sair`.
