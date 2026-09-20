@@ -16,6 +16,7 @@ import { detectEvidenceMimeType, sha256Checksum, validateEvidenceUpload } from '
 import type { CourseRepository } from './data/course';
 import { renderCourseCatalog, renderCourseDetail, renderCourseNotFound } from './pages/courses';
 import { renderLessonDetail, renderLessonNotFound, flattenLessons } from './pages/lesson';
+import { renderAdminPanel } from './pages/admin';
 import { renderLearningHome } from './pages/home';
 import { renderComoFunciona } from './pages/comoFunciona';
 import { renderServerError } from './pages/serverError';
@@ -973,6 +974,18 @@ async function route(request: Request, env: Env): Promise<Response> {
         return withSecurityHeaders(await env.ASSETS.fetch(new Request(dashboardUrl, request)));
     }
 
+    if (path === '/admin') {
+        const authenticated = env.AUTH_DB
+            ? await authenticateRequest(request, env)
+            : await isAuthenticated(request, env);
+
+        if (!authenticated) {
+            return redirect('/entrar');
+        }
+
+        return withSecurityHeaders(html(renderAdminPanel()));
+    }
+
     if (path === '/dashboard.html') {
         return new Response('Not found', { status: 404 });
     }
@@ -985,7 +998,7 @@ async function route(request: Request, env: Env): Promise<Response> {
  * cair na pagina de erro sanitizada em vez de vazar uma excecao nao tratada
  * quando o repositorio de dados (mock hoje, D1 depois) falhar.
  */
-const renderedRoutePrefixes = ['/', '/como-funciona', '/cursos'];
+const renderedRoutePrefixes = ['/', '/como-funciona', '/cursos', '/admin'];
 
 export default {
     async fetch(request: Request, env: Env): Promise<Response> {
