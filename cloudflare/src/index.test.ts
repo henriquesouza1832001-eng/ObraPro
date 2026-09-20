@@ -466,6 +466,8 @@ describe('login/logout real via D1 (CF3-C1/C2)', () => {
         expect(comSessao.status).toBe(200);
         expect(body).toContain('Painel administrativo');
         expect(body).toContain('/api/admin/catalogo');
+        expect(body).toContain('Conteúdo editorial de aula');
+        expect(body).toContain("'/api/admin/aulas/' + encodeURIComponent(lessonId) + '/conteudo'");
     });
 
     it('POST /sair revoga a sessao: acessar /painel depois com o mesmo cookie volta a exigir login', async () => {
