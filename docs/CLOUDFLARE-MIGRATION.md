@@ -74,6 +74,21 @@ Todo PR informa objetivo, arquivos, contratos, migrations, bindings, testes, ris
 - Nao apagar dados para corrigir migration.
 - Nao declarar paridade sem testes automatizados e smoke tests publicados.
 
+## Regras de frontend rapido e simples de manter
+
+Estas regras se aplicam a tudo que o Worker renderiza ou serve (`cloudflare/src/pages`, `cloudflare/public`) e existem para manter o painel e o site publico leves e faceis de continuar sem retrabalho.
+
+1. Nenhum framework de UI no Worker. As paginas continuam HTML gerado por template strings TypeScript (`pages/*.ts`), sem React, Vue ou hidratacao. Scripts de cliente (como `dashboard.js`) sao JavaScript vanilla, um arquivo por tela, carregado somente onde a tela precisa dele.
+2. Toda tela nova reaproveita `pages/layout.ts` (`publicPage`) em vez de recriar o HTML de base, cabecalho ou navegacao.
+3. Orcamento de payload: acompanhar o "Total Upload" impresso por `npm run worker:build`. Um aumento sensivel de tamanho no PR exige justificativa (nova tela, nova imagem) e nao pode vir de dependencia ou biblioteca desnecessaria.
+4. Nenhuma chamada de rede bloqueia a renderizacao inicial de uma pagina. HTML/CSS de uma rota sai completo na primeira resposta; dados privados (organizacoes, obras, chamados, evidencias) carregam depois, por `fetch` assincrono, como o `dashboard.js` ja faz.
+5. Toda chamada a uma API privada passa por um helper unico (`requestJson` em `dashboard.js`) e trata os tres estados possiveis — carregando, sucesso, erro — antes do PR ser aberto. Nenhuma tela fica muda quando uma chamada falha.
+6. Mensagens de erro no cliente usam os codigos que o contrato do Worker ja retorna (ver `supportErrorMessages` em `dashboard.js` como exemplo); nunca inventar um codigo de erro que o backend nao envia.
+7. `cloudflare/public/build/` (assets Vite usados pelas paginas estaticas do preview) e uma copia manual do output de `npm run build`, sem sincronizacao automatica. Sempre que `resources/css/app.css` ou `resources/js/app.js` mudar de um jeito que afete `index.html`/`dashboard.html`, rodar `npm run build`, copiar os arquivos novos para `cloudflare/public/build/` e atualizar os nomes de arquivo com hash referenciados no HTML no mesmo PR. Nunca deixar o HTML apontar para um hash que nao existe mais em `cloudflare/public/build/`.
+8. Nenhuma dependencia nova no Worker ou no build do preview sem justificar no PR (regra ja existente do projeto); no frontend isso tambem e uma regra de performance, ja que cada dependencia nova pode aumentar o tempo de build e o tamanho do payload.
+9. Toda rota nova do Worker ganha teste automatizado (Vitest) no mesmo PR antes de ser considerada pronta; isso e o que permite refatorar HTML/CSS depois sem medo de quebrar uma rota silenciosamente.
+10. Codigo morto (arquivo criado e nunca importado) e removido assim que identificado, no mesmo PR da alteracao que o tornou obsoleto sempre que o arquivo pertencer ao agente que esta editando; quando pertence a outro agente, fica registrado no diario para revisao dele em vez de ser apagado sem combinar.
+
 ## Criterio de pronto da migracao
 
 A fatia so pode substituir a equivalente do Laravel quando possuir contrato documentado, migration aplicada em develop, testes de rota e autorizacao, logs sanitizados, rollback descrito e validacao manual do fluxo principal.
