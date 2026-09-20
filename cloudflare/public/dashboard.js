@@ -1,5 +1,5 @@
 (() => {
-    const state = { organizations: [], works: [], realData: false };
+    const state = { organizations: [], works: [], procedures: [], realData: false };
     const views = [...document.querySelectorAll('[data-dashboard-view]')];
     const navigation = [...document.querySelectorAll('[data-dashboard-go]')];
     const header = document.querySelector('header');
@@ -72,12 +72,190 @@
     }
 
     function renderUnsupportedViews() {
-        ['procedures', 'checklists', 'issues'].forEach((name) => {
+        ['issues'].forEach((name) => {
             const section = document.querySelector(`[data-dashboard-view="${name}"]`);
             if (!section) return;
             const heading = section.querySelector('h2')?.textContent || 'Este recurso';
             section.innerHTML = `<div class="max-w-2xl rounded-md border border-slate-200 bg-white p-6 shadow-sm"><h2 class="text-2xl font-black">${escapeHtml(heading)}</h2><p class="mt-3 text-slate-600">Esta area sera ligada aos dados publicados da sua obra na proxima etapa. Nenhum numero ilustrativo e exibido como dado real.</p></div>`;
         });
+    }
+
+    function renderListState(container, kind, text) {
+        if (!container) return;
+        const styles = {
+            loading: 'border-slate-200 bg-white text-slate-500',
+            empty: 'border-dashed border-slate-300 bg-white text-slate-600',
+            error: 'border-red-200 bg-red-50 text-red-700',
+            demo: 'border-amber-200 bg-amber-50 text-amber-800',
+        };
+        container.innerHTML = `<p class="rounded-md border p-6 text-sm ${styles[kind] || styles.empty}" role="${kind === 'error' ? 'alert' : 'status'}">${escapeHtml(text)}</p>`;
+    }
+
+    const stageLabels = { fundacoes: 'Fundacoes', alvenaria: 'Alvenaria', hidraulica: 'Hidraulica', eletrica: 'Eletrica', acabamentos: 'Acabamentos' };
+
+    function stageLabel(stage) {
+        return stageLabels[String(stage ?? '').toLowerCase()] || (stage ? escapeHtml(stage) : 'Outros');
+    }
+
+    function renderProcedures(procedures) {
+        const container = document.querySelector('#procedures-list');
+        const summary = document.querySelector('#procedures-summary');
+        if (!container) return;
+        if (summary) summary.textContent = procedures.length === 1 ? '1 procedimento publicado' : `${procedures.length} procedimentos publicados`;
+        if (procedures.length === 0) {
+            renderListState(container, 'empty', 'Nenhum procedimento publicado ainda nesta organizacao.');
+            return;
+        }
+        const groups = new Map();
+        procedures.forEach((procedure) => {
+            const key = procedure.stage || 'outros';
+            if (!groups.has(key)) groups.set(key, []);
+            groups.get(key).push(procedure);
+        });
+        container.innerHTML = [...groups.entries()].map(([stage, items]) => `
+            <div class="mb-6"><h3 class="mb-3 text-sm font-bold uppercase text-slate-500">${stageLabel(stage)}</h3><div class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                ${items.map((procedure) => `<article class="rounded-md border border-slate-200 bg-white p-5 shadow-sm"><h4 class="text-lg font-black">${escapeHtml(procedure.title)}</h4><p class="mt-2 text-sm text-slate-500">${escapeHtml(procedure.summary)}</p><button class="touch-button mt-4 bg-action text-white" type="button" data-open-procedure="${escapeHtml(procedure.id)}">Ver passo a passo</button></article>`).join('')}
+            </div></div>
+        `).join('');
+    }
+
+    function renderChecklists(checklists) {
+        const container = document.querySelector('#checklists-list');
+        const summary = document.querySelector('#checklists-summary');
+        if (!container) return;
+        if (summary) summary.textContent = checklists.length === 1 ? '1 checklist publicado' : `${checklists.length} checklists publicados`;
+        if (checklists.length === 0) {
+            renderListState(container, 'empty', 'Nenhum checklist publicado ainda nesta organizacao.');
+            return;
+        }
+        container.innerHTML = checklists.map((checklist) => `<article class="grid gap-3 rounded-md border border-slate-200 bg-white p-4 shadow-sm sm:grid-cols-[1fr_auto] sm:items-center"><h3 class="font-bold">${escapeHtml(checklist.title)}</h3><button class="touch-button bg-action text-white" type="button" data-open-checklist="${escapeHtml(checklist.id)}">Ver itens</button></article>`).join('');
+    }
+
+    const operationalErrorMessages = {
+        authentication_required: 'Sua sessao expirou. Atualize a pagina e entre novamente.',
+        operational_data_unavailable: 'O servico operacional esta indisponivel no momento. Tente novamente em instantes.',
+        organization_access_denied: 'Voce nao tem acesso a esta organizacao.',
+        organization_id_required: 'Selecione uma organizacao antes de continuar.',
+        procedure_not_found: 'Este procedimento nao existe ou nao esta mais publicado.',
+        checklist_not_found: 'Este checklist nao existe ou nao esta mais publicado.',
+        work_access_denied: 'Voce nao tem acesso a obra selecionada.',
+        execution_invalid: 'Selecione uma obra valida antes de iniciar a execucao.',
+        execution_access_denied: 'Voce nao tem acesso a esta execucao.',
+        execution_step_not_found: 'Esta etapa nao foi encontrada na execucao.',
+        execution_step_invalid: 'Nao foi possivel atualizar esta etapa. Tente novamente.',
+    };
+
+    function operationalErrorMessageFor(error) {
+        const code = error && typeof error === 'object' ? error.body?.error : undefined;
+        return (code && operationalErrorMessages[code]) || 'Nao foi possivel completar a acao agora. Confira sua conexao e tente novamente.';
+    }
+
+    async function loadOperationalCatalog(organizationId) {
+        const proceduresContainer = document.querySelector('#procedures-list');
+        const checklistsContainer = document.querySelector('#checklists-list');
+        renderListState(proceduresContainer, 'loading', 'Carregando procedimentos...');
+        renderListState(checklistsContainer, 'loading', 'Carregando checklists...');
+        try {
+            const result = await requestJson(`/api/painel/procedimentos?organization_id=${encodeURIComponent(organizationId)}`);
+            state.procedures = result.data || [];
+            renderProcedures(state.procedures);
+        } catch (error) {
+            renderListState(proceduresContainer, 'error', operationalErrorMessageFor(error));
+        }
+        try {
+            const result = await requestJson(`/api/painel/checklists?organization_id=${encodeURIComponent(organizationId)}`);
+            renderChecklists(result.data || []);
+        } catch (error) {
+            renderListState(checklistsContainer, 'error', operationalErrorMessageFor(error));
+        }
+    }
+
+    function procedureDetailStatus(text, kind = 'info') {
+        const box = document.querySelector('#procedure-detail-status');
+        if (!box) return;
+        const styles = { error: 'border-red-200 bg-red-50 text-red-700', success: 'border-emerald-200 bg-emerald-50 text-emerald-800', info: 'border-slate-200 bg-white text-slate-600' };
+        box.className = `mt-4 rounded-md border p-3 text-sm ${styles[kind] || styles.info}`;
+        box.textContent = text;
+        box.classList.remove('hidden');
+        box.setAttribute('role', kind === 'error' ? 'alert' : 'status');
+    }
+
+    async function openProcedure(id) {
+        const organization = state.organizations.find((item) => item.id === document.querySelector('#dashboard-organization')?.value) || state.organizations[0];
+        const content = document.querySelector('#procedure-detail-content');
+        if (!content || !organization) return;
+        showView('procedure-detail');
+        content.innerHTML = '<p class="text-sm text-slate-500">Carregando procedimento...</p>';
+        try {
+            const result = await requestJson(`/api/painel/procedimentos/${encodeURIComponent(id)}?organization_id=${encodeURIComponent(organization.id)}`);
+            const procedure = result.data;
+            const workOptions = state.works.map((work) => `<option value="${escapeHtml(work.id)}">${escapeHtml(work.name)}</option>`).join('');
+            content.innerHTML = `
+                <span class="text-xs font-bold uppercase text-brand">${stageLabel(procedure.stage)}</span>
+                <h2 class="mt-2 text-2xl font-black">${escapeHtml(procedure.title)}</h2>
+                <p class="mt-2 text-sm text-slate-500">${escapeHtml(procedure.summary)}</p>
+                <ol class="mt-6 grid gap-4">${procedure.steps.map((step) => `
+                    <li class="rounded-md border border-slate-200 bg-white p-4 shadow-sm">
+                        <h3 class="font-bold">${step.position}. ${escapeHtml(step.title)}</h3>
+                        <p class="mt-1 text-sm text-slate-600">${escapeHtml(step.instruction)}</p>
+                        ${step.materials.length ? `<p class="mt-2 text-xs font-bold uppercase text-slate-500">Materiais: ${step.materials.map(escapeHtml).join(', ')}</p>` : ''}
+                        ${step.safetyNote ? `<p class="mt-2 rounded-md bg-amber-50 p-2 text-xs font-bold text-amber-800">Seguranca: ${escapeHtml(step.safetyNote)}</p>` : ''}
+                        ${step.whenToCallProfessional ? `<p class="mt-2 text-xs text-slate-500">Chame um profissional se: ${escapeHtml(step.whenToCallProfessional)}</p>` : ''}
+                    </li>`).join('')}</ol>
+                <div class="mt-6 rounded-md border border-slate-200 bg-white p-5 shadow-sm">
+                    <h3 class="font-bold">Iniciar execucao</h3>
+                    ${state.works.length === 0
+                        ? '<p class="mt-2 text-sm text-slate-500">Nenhuma obra disponivel nesta organizacao para iniciar uma execucao.</p>'
+                        : `<label class="mt-2 grid gap-2 text-sm font-bold" for="execution-work">Obra<select class="min-h-12 rounded-md border border-slate-300 bg-white px-3 font-normal text-ink" id="execution-work">${workOptions}</select></label>
+                           <button class="touch-button mt-4 bg-action text-white" type="button" id="start-execution" data-procedure-id="${escapeHtml(procedure.id)}">Iniciar execucao</button>`}
+                    <p class="mt-4 hidden rounded-md border p-3 text-sm" id="procedure-detail-status"></p>
+                </div>`;
+        } catch (error) {
+            content.innerHTML = `<p class="rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-700" role="alert">${escapeHtml(operationalErrorMessageFor(error))}</p>`;
+        }
+    }
+
+    async function openChecklist(id) {
+        const organization = state.organizations.find((item) => item.id === document.querySelector('#dashboard-organization')?.value) || state.organizations[0];
+        const content = document.querySelector('#checklist-detail-content');
+        if (!content || !organization) return;
+        showView('checklist-detail');
+        content.innerHTML = '<p class="text-sm text-slate-500">Carregando checklist...</p>';
+        try {
+            const result = await requestJson(`/api/painel/checklists/${encodeURIComponent(id)}?organization_id=${encodeURIComponent(organization.id)}`);
+            const checklist = result.data;
+            content.innerHTML = `
+                <h2 class="text-2xl font-black">${escapeHtml(checklist.title)}</h2>
+                <p class="mt-2 text-sm text-slate-500">Referencia de qualidade. A confirmacao de cada etapa da obra e feita no passo a passo do procedimento.</p>
+                <div class="mt-6 grid gap-3">${checklist.items.map((item) => `
+                    <article class="rounded-md border border-slate-200 bg-white p-4 shadow-sm">
+                        <h3 class="font-bold">${item.position}. ${escapeHtml(item.label)}</h3>
+                        ${item.whatGoodLooksLike ? `<p class="mt-1 text-sm text-emerald-700">Resultado esperado: ${escapeHtml(item.whatGoodLooksLike)}</p>` : ''}
+                        ${item.commonError ? `<p class="mt-1 text-sm text-amber-700">Erro comum: ${escapeHtml(item.commonError)}</p>` : ''}
+                    </article>`).join('')}</div>`;
+        } catch (error) {
+            content.innerHTML = `<p class="rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-700" role="alert">${escapeHtml(operationalErrorMessageFor(error))}</p>`;
+        }
+    }
+
+    async function startExecution(procedureId, workId) {
+        const organization = state.organizations.find((item) => item.id === document.querySelector('#dashboard-organization')?.value) || state.organizations[0];
+        if (!organization) return;
+        const button = document.querySelector('#start-execution');
+        if (button) button.disabled = true;
+        procedureDetailStatus('Iniciando execucao...');
+        try {
+            const result = await requestJson('/api/painel/execucoes', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ organization_id: organization.id, work_id: workId, procedure_id: procedureId }),
+            });
+            procedureDetailStatus(`Execucao iniciada. Referencia: ${result.data.id}. O acompanhamento etapa a etapa depende de um proximo contrato de leitura da execucao, ainda nao publicado.`, 'success');
+        } catch (error) {
+            procedureDetailStatus(operationalErrorMessageFor(error), 'error');
+        } finally {
+            if (button) button.disabled = false;
+        }
     }
 
     function updateHeader(organization, works) {
@@ -121,6 +299,7 @@
         renderOverview(state.works);
         const dashboardSelect = document.querySelector('#dashboard-organization');
         if (dashboardSelect) dashboardSelect.value = organization.id;
+        await loadOperationalCatalog(organization.id);
     }
 
     async function loadPanel() {
@@ -131,6 +310,8 @@
                 state.realData = true;
                 renderWorks([]);
                 renderOverview([]);
+                renderProcedures([]);
+                renderChecklists([]);
                 renderUnsupportedViews();
                 message('Sua conta esta ativa, mas ainda nao participa de uma organizacao.', 'info');
                 return;
@@ -143,6 +324,8 @@
             message('Dados da sua organizacao carregados com seguranca.', 'success');
         } catch (error) {
             if (error.status === 401) {
+                renderListState(document.querySelector('#procedures-list'), 'demo', 'Voce esta vendo uma demonstracao. Procedimentos reais aparecem apos login com uma conta da organizacao.');
+                renderListState(document.querySelector('#checklists-list'), 'demo', 'Voce esta vendo uma demonstracao. Checklists reais aparecem apos login com uma conta da organizacao.');
                 message('Voce esta vendo uma demonstracao. Dados operacionais reais aparecem apos login com uma conta da organizacao.', 'demo');
                 return;
             }
@@ -208,6 +391,25 @@
     }
 
     navigation.forEach((button) => button.addEventListener('click', () => showView(button.dataset.dashboardGo)));
+    document.addEventListener('click', (event) => {
+        const openProcedureButton = event.target.closest('[data-open-procedure]');
+        if (openProcedureButton) {
+            openProcedure(openProcedureButton.dataset.openProcedure);
+            return;
+        }
+        const openChecklistButton = event.target.closest('[data-open-checklist]');
+        if (openChecklistButton) {
+            openChecklist(openChecklistButton.dataset.openChecklist);
+            return;
+        }
+        const startButton = event.target.closest('#start-execution');
+        if (startButton) {
+            const workSelect = document.querySelector('#execution-work');
+            if (workSelect && workSelect.value) {
+                startExecution(startButton.dataset.procedureId, workSelect.value);
+            }
+        }
+    });
     document.querySelector('#dashboard-organization')?.addEventListener('change', async (event) => {
         const organization = state.organizations.find((item) => item.id === event.target.value);
         if (!organization) return;
