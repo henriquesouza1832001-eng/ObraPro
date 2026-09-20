@@ -199,7 +199,12 @@ async function route(request: Request, env: Env): Promise<Response> {
             return privateJson({ error: 'organization_access_denied' }, 403);
         }
 
-        const procedure = await new D1OperationalRepository(env.OPERATIONS_DB).findPublishedProcedure(organizationId, procedureDetailMatch[1]);
+        const procedureId = procedureDetailMatch[1];
+        if (!procedureId) {
+            return privateJson({ error: 'procedure_not_found' }, 404);
+        }
+
+        const procedure = await new D1OperationalRepository(env.OPERATIONS_DB).findPublishedProcedure(organizationId, procedureId);
 
         return procedure ? privateJson({ data: procedure }) : privateJson({ error: 'procedure_not_found' }, 404);
     }
