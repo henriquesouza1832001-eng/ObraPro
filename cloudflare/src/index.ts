@@ -90,6 +90,47 @@ async function publicationValue(request: Request): Promise<boolean | null> {
     }
 }
 
+interface LessonContentPayload {
+    body: string;
+    materials: string[];
+    tools: string[];
+    steps: string[];
+    safetyNotes: string;
+}
+
+function stringListPayload(value: unknown): string[] | null {
+    if (!Array.isArray(value) || value.length > 100 || !value.every((item) => typeof item === 'string' && item.length <= 500)) {
+        return null;
+    }
+
+    return value as string[];
+}
+
+async function lessonContentPayload(request: Request): Promise<LessonContentPayload | null> {
+    try {
+        const parsed = await request.json<unknown>();
+
+        if (!parsed || typeof parsed !== 'object') {
+            return null;
+        }
+
+        const value = parsed as Record<string, unknown>;
+        const materials = stringListPayload(value.materials);
+        const tools = stringListPayload(value.tools);
+        const steps = stringListPayload(value.steps);
+
+        if (typeof value.body !== 'string' || value.body.length > 50_000 ||
+            materials === null || tools === null || steps === null ||
+            typeof value.safetyNotes !== 'string' || value.safetyNotes.length > 10_000) {
+            return null;
+        }
+
+        return { body: value.body, materials, tools, steps, safetyNotes: value.safetyNotes };
+    } catch {
+        return null;
+    }
+}
+
 async function handleCourseDetail(slug: string, courseRepository: CourseRepository): Promise<Response> {
     const course = await courseRepository.findCourseBySlug(slug);
 
@@ -195,6 +236,82 @@ async function route(request: Request, env: Env): Promise<Response> {
         });
 
         return privateJson({ data: { slug: slugOrId, published } });
+    }
+
+    const lessonContentReadMatch = path.match(/^\/api\/admin\/aulas\/([A-Za-z0-9_-]{1,128})\/conteudo$/);
+    const lessonContentPublicationMatch = path.match(/^\/api\/admin\/aulas\/([A-Za-z0-9_-]{1,128})\/conteudo\/(\d+)\/publicacao$/);
+    if ((lessonContentReadMatch && (request.method === 'GET' || request.method === 'POST')) ||
+        (lessonContentPublicationMatch && request.method === 'PATCH')) {
+        const session = await privateApiSession(request, env);
+        if (!session) {
+            return privateJson({ error: 'authentication_required' }, 401);
+        }
+        if (!env.COURSES_DB || !env.AUTH_DB) {
+            return privateJson({ error: 'catalog_data_unavailable' }, 503);
+        }
+        if (!await new D1CatalogAuthorization(new D1UserRepository(env.AUTH_DB)).canManageCatalog(session.userId)) {
+            return privateJson({ error: 'catalog_admin_required' }, 403);
+        }
+
+        const repository = new D1LessonContentRepository(env.COURSES_DB);
+        const lessonId = decodeURIComponent((lessonContentReadMatch ?? lessonContentPublicationMatch)?.[1] ?? '');
+        const now = new Date().toISOString();
+
+        if (request.method === 'GET') {
+            return privateJson({ data: await repository.listVersions(lessonId) });
+        }
+
+        if (request.method === 'POST') {
+            const payload = await lessonContentPayload(request);
+            if (!payload) {
+                return privateJson({ error: 'invalid_lesson_content_payload' }, 422);
+            }
+
+            const draft = await repository.createDraft({
+                id: crypto.randomUUID(),
+                lessonId,
+                ...payload,
+                createdAt: now,
+            });
+            if (!draft) {
+                return privateJson({ error: 'lesson_not_found' }, 404);
+            }
+
+            await new D1AdminRepository(env.COURSES_DB).recordAuditEvent({
+                id: crypto.randomUUID(),
+                actorUserId: session.userId,
+                action: 'lesson.content.draft_created',
+                resourceType: 'lesson_content_version',
+                resourceId: draft.id,
+                metadata: { lessonId, version: draft.version },
+                createdAt: now,
+            });
+
+            return privateJson({ data: draft }, 201);
+        }
+
+        const version = Number(lessonContentPublicationMatch?.[2]);
+        const published = await publicationValue(request);
+        if (!Number.isInteger(version) || version < 1 || published === null) {
+            return privateJson({ error: 'invalid_publication_payload' }, 422);
+        }
+
+        const updated = await repository.setPublication(lessonId, version, published, now);
+        if (!updated) {
+            return privateJson({ error: 'lesson_content_not_found' }, 404);
+        }
+
+        await new D1AdminRepository(env.COURSES_DB).recordAuditEvent({
+            id: crypto.randomUUID(),
+            actorUserId: session.userId,
+            action: 'lesson.content.publication.set',
+            resourceType: 'lesson_content_version',
+            resourceId: updated.id,
+            metadata: { lessonId, version, published },
+            createdAt: now,
+        });
+
+        return privateJson({ data: updated });
     }
 
     const courseProgressMatch = path.match(/^\/api\/cursos\/([^/]+)\/progresso$/);
