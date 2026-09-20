@@ -1,6 +1,7 @@
 import type { Env } from './env';
 import { withSecurityHeaders, redirect } from './http/security';
-import { isAuthenticated, loginPage, sessionToken } from './auth/demoSession';
+import { isAuthenticated, sessionToken } from './auth/demoSession';
+import { renderLoginPage } from './pages/login';
 import { MockCourseRepository, courseModules } from './data/mockCourseRepository';
 import { D1CourseRepository } from './data/d1CourseRepository';
 import { authenticateRequest, loginWithD1, logoutFromD1, sessionCookie } from './auth/realSession';
@@ -71,22 +72,23 @@ async function route(request: Request, env: Env): Promise<Response> {
             return redirect('/painel');
         }
 
-        return withSecurityHeaders(html(loginPage()));
+        return withSecurityHeaders(html(renderLoginPage({ realAuthEnabled: Boolean(env.AUTH_DB) })));
     }
 
     if (path === '/entrar' && request.method === 'POST') {
         const form = await request.formData();
         const email = String(form.get('email') ?? '').trim().toLowerCase();
         const password = String(form.get('password') ?? '');
+        const realAuthEnabled = Boolean(env.AUTH_DB);
 
         const realToken = await loginWithD1(email, password, env);
 
         if (env.AUTH_DB && !realToken) {
-            return withSecurityHeaders(html(loginPage(true), 422));
+            return withSecurityHeaders(html(renderLoginPage({ hasError: true, realAuthEnabled }), 422));
         }
 
         if (!env.AUTH_DB && (email !== env.DEMO_EMAIL.toLowerCase() || password !== env.DEMO_PASSWORD)) {
-            return withSecurityHeaders(html(loginPage(true), 422));
+            return withSecurityHeaders(html(renderLoginPage({ hasError: true, realAuthEnabled }), 422));
         }
 
         const token = realToken ?? await sessionToken(env.DEMO_EMAIL, env.SESSION_SECRET);
