@@ -7,6 +7,7 @@ Todas as mudancas relevantes do ObraPro sao registradas aqui. O formato segue Ke
 ### Added
 
 - Catalogo ISC Direcional: 45 treinamentos passam a ser publicados por migration incremental, classificados por etapa e apresentados com busca, filtros dinamicos e carregamento progressivo. Os materiais continuam identificados como estudo sujeito a revisao tecnica.
+- Correcao da classificacao dos 44 IDs importados com prefixo `isc-isc-`, mantendo o catalogo separado por etapa em vez de agrupa-los em uma categoria generica.
 
 ### Changed
 
