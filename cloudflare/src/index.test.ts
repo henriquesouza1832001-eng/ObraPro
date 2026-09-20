@@ -258,7 +258,7 @@ describe('rotas publicas do Worker', () => {
         const body = await response.text();
 
         expect(response.status).toBe(200);
-        expect(body).toContain('cursos publicados');
+        expect(body).toContain('cursos encontrados');
     });
 
     it('GET /cursos/:slug valido retorna 200 com o detalhe do curso', async () => {
