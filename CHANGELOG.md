@@ -6,6 +6,8 @@ Todas as mudancas relevantes do ObraPro sao registradas aqui. O formato segue Ke
 
 ### Added
 
+- Fundacao incremental para quiz final e certificado verificavel: migration `0015_quizzes_and_certificates.sql` cria quiz versionado, perguntas, tentativas limitadas a quatro e certificados idempotentes por usuario/curso com codigo opaco e status de revogacao. Nao coleta CPF, nao publica respostas corretas e ainda nao libera emissao ate os endpoints e testes de autorizacao serem implementados.
+
 - Contratos educacionais privados para fechar o fluxo da plataforma: `GET /api/cursos/progresso` agrega, em uma unica consulta, cursos publicados com matricula ativa e progresso do usuario autenticado; `GET /api/painel/suporte/chamados` lista somente os chamados do solicitante, com limite controlado e sem devolver `userId` ou contexto tecnico da sessao. Nenhum conteudo premium, token ou dado de outro usuario e exposto.
 
 - Catalogo ISC Direcional: 45 treinamentos passam a ser publicados por migration incremental, classificados por etapa e apresentados com busca, filtros dinamicos e carregamento progressivo. Os materiais continuam identificados como estudo sujeito a revisao tecnica.
