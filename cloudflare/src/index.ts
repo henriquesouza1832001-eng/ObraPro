@@ -322,6 +322,49 @@ async function route(request: Request, env: Env): Promise<Response> {
         return privateJson({ data: updated });
     }
 
+    const certificateRevocationMatch = path.match(/^\/api\/admin\/certificados\/([A-Za-z0-9_-]{1,128})\/revogacao$/);
+    if (certificateRevocationMatch && request.method === 'PATCH') {
+        const session = await privateApiSession(request, env);
+        if (!session) {
+            return privateJson({ error: 'authentication_required' }, 401);
+        }
+        if (!env.COURSES_DB || !env.AUTH_DB) {
+            return privateJson({ error: 'certificate_data_unavailable' }, 503);
+        }
+        if (!await new D1CatalogAuthorization(new D1UserRepository(env.AUTH_DB)).canManageCatalog(session.userId)) {
+            return privateJson({ error: 'catalog_admin_required' }, 403);
+        }
+
+        let body: unknown;
+        try {
+            body = await request.json<unknown>();
+        } catch {
+            return privateJson({ error: 'invalid_revocation_payload' }, 422);
+        }
+        if (!body || typeof body !== 'object' || typeof (body as { revoked?: unknown }).revoked !== 'boolean') {
+            return privateJson({ error: 'invalid_revocation_payload' }, 422);
+        }
+
+        const certificateId = certificateRevocationMatch[1] ?? '';
+        const revoked = (body as { revoked: boolean }).revoked;
+        const changed = await new D1CourseQuizRepository(env.COURSES_DB).setCertificateRevocation(certificateId, revoked, new Date().toISOString());
+        if (!changed) {
+            return privateJson({ error: 'certificate_not_found' }, 404);
+        }
+
+        await new D1AdminRepository(env.COURSES_DB).recordAuditEvent({
+            id: crypto.randomUUID(),
+            actorUserId: session.userId,
+            action: 'certificate.revocation.set',
+            resourceType: 'certificate',
+            resourceId: certificateId,
+            metadata: { revoked },
+            createdAt: new Date().toISOString(),
+        });
+
+        return privateJson({ data: { id: certificateId, status: revoked ? 'revoked' : 'active' } });
+    }
+
     const courseProgressMatch = path.match(/^\/api\/cursos\/([^/]+)\/progresso$/);
     const courseLessonProgressMatch = path.match(/^\/api\/cursos\/([^/]+)\/aulas\/([^/]+)\/progresso$/);
     if (path === '/api/cursos/progresso' && request.method === 'GET') {

@@ -150,6 +150,16 @@ export class D1CourseQuizRepository {
         return row ? this.mapCertificate(row) : null;
     }
 
+    public async setCertificateRevocation(id: string, revoked: boolean, revokedAt: string): Promise<boolean> {
+        const result = await this.database.prepare(`
+            UPDATE certificates
+            SET status = ?, revoked_at = ?
+            WHERE id = ?
+        `).bind(revoked ? 'revoked' : 'active', revoked ? revokedAt : null, id).run();
+
+        return result.meta.changes === 1;
+    }
+
     private mapCertificate(row: Record<string, unknown>): CertificateSummary {
         return { id: String(row.id), verificationCode: String(row.verification_code), courseSlug: String(row.course_slug), courseTitle: String(row.course_title_snapshot), studentName: String(row.student_name), durationMinutes: Number(row.duration_minutes_snapshot), quizScorePercentage: Number(row.quiz_score_percentage), status: row.status as 'active' | 'revoked', issuedAt: String(row.issued_at), revokedAt: row.revoked_at ? String(row.revoked_at) : null };
     }

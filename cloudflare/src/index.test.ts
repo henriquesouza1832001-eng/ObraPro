@@ -659,8 +659,13 @@ describe('contratos de quiz e certificado', () => {
     it.each([
         '/api/cursos/planejamento-da-obra/quiz',
         '/api/certificados',
+        '/api/admin/certificados/certificate-1/revogacao',
     ])('exige sessao para %s', async (path) => {
-        const response = await worker.fetch(get(path), baseEnv());
+        const response = await worker.fetch(new Request(`https://obrapro.test${path}`, {
+            method: path.includes('/revogacao') ? 'PATCH' : 'GET',
+            headers: path.includes('/revogacao') ? { 'Content-Type': 'application/json' } : undefined,
+            body: path.includes('/revogacao') ? JSON.stringify({ revoked: true }) : undefined,
+        }), baseEnv());
 
         expect(response.status).toBe(401);
         expect(response.headers.get('Cache-Control')).toBe('no-store');
