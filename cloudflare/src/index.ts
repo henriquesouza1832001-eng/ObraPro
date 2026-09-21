@@ -316,6 +316,22 @@ async function route(request: Request, env: Env): Promise<Response> {
 
     const courseProgressMatch = path.match(/^\/api\/cursos\/([^/]+)\/progresso$/);
     const courseLessonProgressMatch = path.match(/^\/api\/cursos\/([^/]+)\/aulas\/([^/]+)\/progresso$/);
+    if (path === '/api/cursos/progresso' && request.method === 'GET') {
+        const session = await privateApiSession(request, env);
+        if (!session) {
+            return privateJson({ error: 'authentication_required' }, 401);
+        }
+        if (!env.COURSES_DB) {
+            return privateJson({ error: 'course_data_unavailable' }, 503);
+        }
+
+        const requestedLimit = Number(url.searchParams.get('limit') ?? '20');
+        const limit = Number.isFinite(requestedLimit) ? requestedLimit : 20;
+        const summaries = await new D1CourseProgressRepository(env.COURSES_DB).listProgressSummaries(session.userId, limit);
+
+        return privateJson({ data: summaries });
+    }
+
     const isCourseProgressRead = Boolean(courseProgressMatch) && request.method === 'GET';
     const isCourseLessonProgressWrite = Boolean(courseLessonProgressMatch) && request.method === 'POST';
     if (isCourseProgressRead || isCourseLessonProgressWrite) {
@@ -753,6 +769,22 @@ async function route(request: Request, env: Env): Promise<Response> {
         } catch {
             return privateJson({ error: 'support_ticket_invalid' }, 400);
         }
+    }
+
+    if (path === '/api/painel/suporte/chamados' && request.method === 'GET') {
+        const session = await privateApiSession(request, env);
+        if (!session) {
+            return privateJson({ error: 'authentication_required' }, 401);
+        }
+        if (!env.OPERATIONS_DB) {
+            return privateJson({ error: 'operational_data_unavailable' }, 503);
+        }
+
+        const requestedLimit = Number(url.searchParams.get('limit') ?? '50');
+        const limit = Number.isFinite(requestedLimit) ? requestedLimit : 50;
+        const tickets = await new D1SupportTicketRepository(env.OPERATIONS_DB).listForUser(session.userId, limit);
+
+        return privateJson({ data: tickets });
     }
 
     if (path === '/api/painel/evidencias' && request.method === 'POST') {
