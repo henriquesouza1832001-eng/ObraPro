@@ -514,6 +514,8 @@ describe('login/logout real via D1 (CF3-C1/C2)', () => {
         expect(body).toContain("'/api/admin/aulas/' + encodeURIComponent(lessonId) + '/conteudo'");
         expect(body).toContain('id="lesson-content-select"');
         expect(body).not.toContain('id="lesson-content-id"');
+        expect(body).not.toContain("info.innerHTML = '<strong>' + course.title");
+        expect(body).toContain('infoTitle.textContent = course.title');
     });
 
     it('GET /certificados com sessao valida mostra o estado bloqueado com os criterios; sem sessao redireciona para /entrar', async () => {

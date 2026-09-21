@@ -146,7 +146,13 @@ export function renderAdminPanel(): string {
                 var row = document.createElement('div');
                 row.className = 'admin-course-row';
                 var info = document.createElement('div');
-                info.innerHTML = '<strong>' + course.title + '</strong><div class="info">' + course.category + ' · ' + course.accessType + ' · ' + course.durationMinutes + ' min · ' + course.lessonsCount + ' aulas</div>';
+                var infoTitle = document.createElement('strong');
+                infoTitle.textContent = course.title;
+                var infoMeta = document.createElement('div');
+                infoMeta.className = 'info';
+                infoMeta.textContent = course.category + ' · ' + course.accessType + ' · ' + course.durationMinutes + ' min · ' + course.lessonsCount + ' aulas';
+                info.appendChild(infoTitle);
+                info.appendChild(infoMeta);
                 row.appendChild(info);
                 var right = document.createElement('div');
                 right.style.display = 'flex';
