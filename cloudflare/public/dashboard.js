@@ -56,7 +56,7 @@
     }
 
     function renderOverview(works) {
-        const cards = [...document.querySelectorAll('[data-dashboard-view="overview"] section:first-child article')];
+        const cards = [...document.querySelectorAll('#overview-stats article')];
         const counts = [
             ['Obras ativas', works.filter((work) => work.status === 'active').length],
             ['Em planejamento', works.filter((work) => work.status === 'planning').length],
@@ -488,6 +488,10 @@
             const organizationsResult = await requestJson('/api/painel/organizacoes');
             const organization = organizationsResult.data?.[0];
             if (!organization) {
+                const title = document.querySelector('header h1');
+                const location = document.querySelector('header p:last-of-type');
+                if (title) title.textContent = 'Nenhuma obra';
+                if (location) location.textContent = 'Nenhuma organizacao vinculada';
                 state.realData = true;
                 state.procedures = [];
                 renderWorks([]);
@@ -506,7 +510,14 @@
             message('Dados da sua organizacao carregados com seguranca.', 'success');
         } catch (error) {
             if (error.status === 401) {
+                const title = document.querySelector('header h1');
+                const location = document.querySelector('header p:last-of-type');
+                if (title) title.textContent = 'Nenhuma obra';
+                if (location) location.textContent = 'Entre para ver os dados da sua organizacao';
                 updateCategoryCounts([]);
+                renderWorks([]);
+                renderOverview([]);
+                renderUnsupportedViews();
                 renderListState(document.querySelector('#procedures-list'), 'demo', 'Voce esta vendo uma demonstracao. Procedimentos reais aparecem apos login com uma conta da organizacao.');
                 renderListState(document.querySelector('#checklists-list'), 'demo', 'Voce esta vendo uma demonstracao. Checklists reais aparecem apos login com uma conta da organizacao.');
                 message('Voce esta vendo uma demonstracao. Dados operacionais reais aparecem apos login com uma conta da organizacao.', 'demo');
@@ -539,6 +550,41 @@
         return (code && supportErrorMessages[code]) || 'Nao foi possivel enviar agora. Confira sua conexao e tente novamente.';
     }
 
+    const supportListErrorMessages = {
+        authentication_required: 'Sua sessao expirou. Atualize a pagina e entre novamente para ver seus chamados.',
+        operational_data_unavailable: 'Nao foi possivel carregar seus chamados agora. Tente novamente em instantes.',
+    };
+
+    const supportStatusLabels = {
+        open: 'Aberto',
+        in_progress: 'Em andamento',
+        resolved: 'Resolvido',
+        closed: 'Encerrado',
+    };
+
+    async function loadSupportTickets() {
+        const list = document.querySelector('#support-list');
+        const status = document.querySelector('#support-list-status');
+        if (!list || !status) return;
+        status.classList.remove('hidden');
+        status.textContent = 'Carregando seus chamados...';
+        list.innerHTML = '';
+        try {
+            const result = await requestJson('/api/painel/suporte/chamados');
+            const tickets = Array.isArray(result.data) ? result.data : [];
+            if (!tickets.length) {
+                status.textContent = 'Voce ainda nao abriu nenhum chamado.';
+                return;
+            }
+            status.classList.add('hidden');
+            list.innerHTML = tickets.map((ticket) => `<li class="rounded-md border border-slate-200 p-4"><div class="flex items-center justify-between gap-3"><strong class="font-bold">${escapeHtml(ticket.title)}</strong><span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">${escapeHtml(supportStatusLabels[ticket.status] || ticket.status)}</span></div><p class="mt-2 text-sm text-slate-500">${escapeHtml(ticket.description)}</p></li>`).join('');
+        } catch (error) {
+            const code = error && typeof error === 'object' ? error.body?.error : undefined;
+            status.classList.remove('hidden');
+            status.textContent = (code && supportListErrorMessages[code]) || 'Nao foi possivel carregar seus chamados agora. Tente novamente em instantes.';
+        }
+    }
+
     function configureSupport() {
         const form = document.querySelector('#support-form');
         if (!form) return;
@@ -565,6 +611,7 @@
                 });
                 form.reset();
                 showSupportStatus(`Chamado registrado. Referencia: ${result.data.id}`);
+                loadSupportTickets();
             } catch (error) {
                 showSupportStatus(supportErrorMessageFor(error), 'error');
             } finally {
@@ -573,7 +620,10 @@
         });
     }
 
-    navigation.forEach((button) => button.addEventListener('click', () => showView(button.dataset.dashboardGo)));
+    navigation.forEach((button) => button.addEventListener('click', () => {
+        showView(button.dataset.dashboardGo);
+        if (button.dataset.dashboardGo === 'support') loadSupportTickets();
+    }));
     document.addEventListener('click', (event) => {
         const openProcedureButton = event.target.closest('[data-open-procedure]');
         if (openProcedureButton) {

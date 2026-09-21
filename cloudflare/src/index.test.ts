@@ -2,6 +2,8 @@ import { describe, expect, it, vi } from 'vitest';
 import type { Env } from './env';
 import worker from './index';
 import { hashPassword } from './auth/password';
+import { renderLessonDetail } from './pages/lesson';
+import type { Course } from './data/course';
 
 interface FakeSessionRow {
     id: string;
@@ -232,8 +234,11 @@ function get(path: string): Request {
 describe('rotas publicas do Worker', () => {
     it('GET / retorna 200 servindo o shell publico', async () => {
         const response = await worker.fetch(get('/'), baseEnv());
+        const body = await response.text();
 
         expect(response.status).toBe(200);
+        expect(body).toContain('/api/cursos/progresso?limit=6');
+        expect(body).toContain('id="continue-section" hidden');
     });
 
     it('GET /health retorna status ok em JSON', async () => {
@@ -304,6 +309,31 @@ describe('rotas publicas do Worker', () => {
 
         expect(response.status).toBe(404);
         expect(body).toContain('Aula não encontrada');
+    });
+
+    it('renderLessonDetail escapa titulos/metadados vindos de dados reais (curso, aula, modulo, navegacao) para evitar XSS armazenado', () => {
+        const maliciousCourse: Course = {
+            slug: 'curso-teste',
+            category: 'Teste',
+            title: '<script>alert(1)</script>',
+            description: 'desc',
+            accessType: 'free',
+            priceCents: null,
+            modulesCount: 1,
+            durationMinutes: 10,
+        };
+        const maliciousLesson = { moduleTitle: '<img src=x onerror=alert(2)>', id: 'l1', title: '"><script>alert(3)</script>', durationMinutes: 5 };
+        const maliciousPrev = { moduleTitle: 'm', id: 'l0', title: '<b>prev</b>', durationMinutes: 5 };
+        const maliciousNext = { moduleTitle: 'm', id: 'l2', title: '<b>next</b>', durationMinutes: 5 };
+
+        const html = renderLessonDetail(maliciousCourse, maliciousLesson, maliciousPrev, maliciousNext);
+
+        expect(html).not.toContain('<script>alert(1)</script>');
+        expect(html).not.toContain('<img src=x onerror=alert(2)>');
+        expect(html).not.toContain('"><script>alert(3)</script>');
+        expect(html).not.toContain('<b>prev</b>');
+        expect(html).not.toContain('<b>next</b>');
+        expect(html).toContain('&lt;script&gt;alert(1)&lt;/script&gt;');
     });
 
     it('GET /cursos/:slug/aulas/:lessonId com curso inexistente retorna 404 real', async () => {
@@ -484,6 +514,44 @@ describe('login/logout real via D1 (CF3-C1/C2)', () => {
         expect(body).toContain("'/api/admin/aulas/' + encodeURIComponent(lessonId) + '/conteudo'");
         expect(body).toContain('id="lesson-content-select"');
         expect(body).not.toContain('id="lesson-content-id"');
+    });
+
+    it('GET /certificados com sessao valida mostra o estado bloqueado com os criterios; sem sessao redireciona para /entrar', async () => {
+        const authDb = createFakeAuthDatabase({ id: 'user-1', name: 'Ana', email: 'ana@example.com', passwordHash: await hashPassword('senha-super-secreta') });
+        const env = baseEnv({ AUTH_DB: authDb });
+        const form = new URLSearchParams({ email: 'ana@example.com', password: 'senha-super-secreta' });
+
+        const loginResponse = await worker.fetch(new Request('https://obrapro.test/entrar', { method: 'POST', body: form, headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }), env);
+        const cookie = cookieFromSetCookie(loginResponse);
+
+        const semSessao = await worker.fetch(get('/certificados'), env);
+
+        expect(semSessao.status).toBe(303);
+        expect(semSessao.headers.get('Location')).toBe('/entrar');
+
+        const comSessao = await worker.fetch(new Request('https://obrapro.test/certificados', { headers: { Cookie: cookie } }), env);
+        const body = await comSessao.text();
+
+        expect(comSessao.status).toBe(200);
+        expect(body).toContain('Meus certificados');
+        expect(body).toContain('Concluir 100% das aulas do curso');
+        expect(body).toContain('Nota mínima de 75%');
+        expect(body).toContain("fetch('/api/certificados'");
+        expect(body).not.toContain('QR');
+    });
+
+    it('GET /certificados/verificar/:codigo renderiza a pagina publica de verificacao sem exigir sessao', async () => {
+        const response = await worker.fetch(get('/certificados/verificar/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'), baseEnv());
+        const body = await response.text();
+
+        expect(response.status).toBe(200);
+        expect(body).toContain('Verificando certificado');
+        expect(body).toContain("fetch('/api/certificados/verificar/' + encodeURIComponent(code))");
+        expect(body).toContain('id="cert-print"');
+        expect(body).toContain('Copiar link de verificação');
+        expect(body).toContain('id="cert-revoked-banner"');
+        expect(body).toContain('não é um arquivo protegido nem tem marca d\'água própria');
+        expect(body).not.toContain('QR');
     });
 
     it('POST /sair revoga a sessao: acessar /painel depois com o mesmo cookie volta a exigir login', async () => {
