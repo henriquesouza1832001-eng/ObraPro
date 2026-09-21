@@ -2,6 +2,8 @@ import { describe, expect, it, vi } from 'vitest';
 import type { Env } from './env';
 import worker from './index';
 import { hashPassword } from './auth/password';
+import { renderLessonDetail } from './pages/lesson';
+import type { Course } from './data/course';
 
 interface FakeSessionRow {
     id: string;
@@ -307,6 +309,31 @@ describe('rotas publicas do Worker', () => {
 
         expect(response.status).toBe(404);
         expect(body).toContain('Aula não encontrada');
+    });
+
+    it('renderLessonDetail escapa titulos/metadados vindos de dados reais (curso, aula, modulo, navegacao) para evitar XSS armazenado', () => {
+        const maliciousCourse: Course = {
+            slug: 'curso-teste',
+            category: 'Teste',
+            title: '<script>alert(1)</script>',
+            description: 'desc',
+            accessType: 'free',
+            priceCents: null,
+            modulesCount: 1,
+            durationMinutes: 10,
+        };
+        const maliciousLesson = { moduleTitle: '<img src=x onerror=alert(2)>', id: 'l1', title: '"><script>alert(3)</script>', durationMinutes: 5 };
+        const maliciousPrev = { moduleTitle: 'm', id: 'l0', title: '<b>prev</b>', durationMinutes: 5 };
+        const maliciousNext = { moduleTitle: 'm', id: 'l2', title: '<b>next</b>', durationMinutes: 5 };
+
+        const html = renderLessonDetail(maliciousCourse, maliciousLesson, maliciousPrev, maliciousNext);
+
+        expect(html).not.toContain('<script>alert(1)</script>');
+        expect(html).not.toContain('<img src=x onerror=alert(2)>');
+        expect(html).not.toContain('"><script>alert(3)</script>');
+        expect(html).not.toContain('<b>prev</b>');
+        expect(html).not.toContain('<b>next</b>');
+        expect(html).toContain('&lt;script&gt;alert(1)&lt;/script&gt;');
     });
 
     it('GET /cursos/:slug/aulas/:lessonId com curso inexistente retorna 404 real', async () => {
