@@ -47,6 +47,13 @@ function privateJson(body: unknown, status = 200): Response {
     return withSecurityHeaders(response);
 }
 
+function publicNoStoreJson(body: unknown, status = 200): Response {
+    const response = json(body, status);
+    response.headers.set('Cache-Control', 'no-store');
+
+    return withSecurityHeaders(response);
+}
+
 function organizationIdFrom(url: URL): string | null {
     const organizationId = url.searchParams.get('organization_id');
 
@@ -361,9 +368,9 @@ async function route(request: Request, env: Env): Promise<Response> {
 
     const certificateVerificationMatch = path.match(/^\/api\/certificados\/verificar\/([A-Za-z0-9_-]{32,64})$/);
     if (certificateVerificationMatch && request.method === 'GET') {
-        if (!env.COURSES_DB) return json({ error: 'certificate_data_unavailable' }, 503);
+        if (!env.COURSES_DB) return publicNoStoreJson({ error: 'certificate_data_unavailable' }, 503);
         const certificate = await new D1CourseQuizRepository(env.COURSES_DB).verifyCertificate(certificateVerificationMatch[1] ?? '');
-        return certificate ? json({ data: certificate }) : json({ error: 'certificate_not_found' }, 404);
+        return certificate ? publicNoStoreJson({ data: certificate }) : publicNoStoreJson({ error: 'certificate_not_found' }, 404);
     }
 
     const isCourseProgressRead = Boolean(courseProgressMatch) && request.method === 'GET';

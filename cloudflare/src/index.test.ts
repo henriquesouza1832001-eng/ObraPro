@@ -654,3 +654,23 @@ describe('API operacional por tenant', () => {
         await expect(response.json()).resolves.toMatchObject({ data: { status: 'available' } });
     });
 });
+
+describe('contratos de quiz e certificado', () => {
+    it.each([
+        '/api/cursos/planejamento-da-obra/quiz',
+        '/api/certificados',
+    ])('exige sessao para %s', async (path) => {
+        const response = await worker.fetch(get(path), baseEnv());
+
+        expect(response.status).toBe(401);
+        expect(response.headers.get('Cache-Control')).toBe('no-store');
+        await expect(response.json()).resolves.toEqual({ error: 'authentication_required' });
+    });
+
+    it('mantem a verificacao publica sob contrato mesmo sem o banco de cursos', async () => {
+        const response = await worker.fetch(get('/api/certificados/verificar/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'), baseEnv());
+
+        expect(response.status).toBe(503);
+        expect(response.headers.get('Cache-Control')).toBe('no-store');
+    });
+});
