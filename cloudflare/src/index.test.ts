@@ -323,6 +323,7 @@ describe('rotas publicas do Worker', () => {
         expect(response.headers.get('X-Content-Type-Options')).toBe('nosniff');
         expect(response.headers.get('X-Frame-Options')).toBe('DENY');
         expect(response.headers.get('Referrer-Policy')).toBe('strict-origin-when-cross-origin');
+        expect(response.headers.get('Strict-Transport-Security')).toBe('max-age=31536000; includeSubDomains');
         expect(response.headers.get('Content-Security-Policy')).toContain("default-src 'self'");
         expect(response.headers.get('Content-Security-Policy')).toContain("frame-ancestors 'none'");
     });
@@ -678,5 +679,42 @@ describe('API operacional por tenant', () => {
 
         expect(response.status).toBe(201);
         await expect(response.json()).resolves.toMatchObject({ data: { status: 'available' } });
+    });
+});
+
+describe('contratos de quiz e certificado', () => {
+    it('rejeita mutacao API cross-site antes de qualquer escrita', async () => {
+        const response = await worker.fetch(new Request('https://obrapro.test/api/certificados', {
+            method: 'POST',
+            headers: { Origin: 'https://atacante.test', 'Content-Type': 'application/json' },
+            body: JSON.stringify({}),
+        }), baseEnv());
+
+        expect(response.status).toBe(403);
+        expect(response.headers.get('Cache-Control')).toBe('no-store');
+        await expect(response.json()).resolves.toEqual({ error: 'csrf_rejected' });
+    });
+
+    it.each([
+        '/api/cursos/planejamento-da-obra/quiz',
+        '/api/certificados',
+        '/api/admin/certificados/certificate-1/revogacao',
+    ])('exige sessao para %s', async (path) => {
+        const response = await worker.fetch(new Request(`https://obrapro.test${path}`, {
+            method: path.includes('/revogacao') ? 'PATCH' : 'GET',
+            headers: path.includes('/revogacao') ? { 'Content-Type': 'application/json' } : undefined,
+            body: path.includes('/revogacao') ? JSON.stringify({ revoked: true }) : undefined,
+        }), baseEnv());
+
+        expect(response.status).toBe(401);
+        expect(response.headers.get('Cache-Control')).toBe('no-store');
+        await expect(response.json()).resolves.toEqual({ error: 'authentication_required' });
+    });
+
+    it('mantem a verificacao publica sob contrato mesmo sem o banco de cursos', async () => {
+        const response = await worker.fetch(get('/api/certificados/verificar/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'), baseEnv());
+
+        expect(response.status).toBe(503);
+        expect(response.headers.get('Cache-Control')).toBe('no-store');
     });
 });
