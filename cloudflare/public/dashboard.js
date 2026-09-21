@@ -488,6 +488,10 @@
             const organizationsResult = await requestJson('/api/painel/organizacoes');
             const organization = organizationsResult.data?.[0];
             if (!organization) {
+                const title = document.querySelector('header h1');
+                const location = document.querySelector('header p:last-of-type');
+                if (title) title.textContent = 'Nenhuma obra';
+                if (location) location.textContent = 'Nenhuma organizacao vinculada';
                 state.realData = true;
                 state.procedures = [];
                 renderWorks([]);
@@ -506,9 +510,14 @@
             message('Dados da sua organizacao carregados com seguranca.', 'success');
         } catch (error) {
             if (error.status === 401) {
+                const title = document.querySelector('header h1');
+                const location = document.querySelector('header p:last-of-type');
+                if (title) title.textContent = 'Nenhuma obra';
+                if (location) location.textContent = 'Entre para ver os dados da sua organizacao';
                 updateCategoryCounts([]);
                 renderWorks([]);
                 renderOverview([]);
+                renderUnsupportedViews();
                 renderListState(document.querySelector('#procedures-list'), 'demo', 'Voce esta vendo uma demonstracao. Procedimentos reais aparecem apos login com uma conta da organizacao.');
                 renderListState(document.querySelector('#checklists-list'), 'demo', 'Voce esta vendo uma demonstracao. Checklists reais aparecem apos login com uma conta da organizacao.');
                 message('Voce esta vendo uma demonstracao. Dados operacionais reais aparecem apos login com uma conta da organizacao.', 'demo');
