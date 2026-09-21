@@ -17,6 +17,20 @@ export function withSecurityHeaders(response: Response): Response {
     return secured;
 }
 
+export function isCrossSiteMutation(request: Request, origin: string): boolean {
+    if (!['POST', 'PUT', 'PATCH', 'DELETE'].includes(request.method)) {
+        return false;
+    }
+
+    const fetchSite = request.headers.get('Sec-Fetch-Site');
+    if (fetchSite?.toLowerCase() === 'cross-site') {
+        return true;
+    }
+
+    const requestOrigin = request.headers.get('Origin');
+    return requestOrigin !== null && requestOrigin !== origin;
+}
+
 export function redirect(location: string, cookie: string | null = null): Response {
     const headers: HeadersInit = { Location: location };
 

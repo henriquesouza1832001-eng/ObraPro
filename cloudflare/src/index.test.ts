@@ -656,6 +656,18 @@ describe('API operacional por tenant', () => {
 });
 
 describe('contratos de quiz e certificado', () => {
+    it('rejeita mutacao API cross-site antes de qualquer escrita', async () => {
+        const response = await worker.fetch(new Request('https://obrapro.test/api/certificados', {
+            method: 'POST',
+            headers: { Origin: 'https://atacante.test', 'Content-Type': 'application/json' },
+            body: JSON.stringify({}),
+        }), baseEnv());
+
+        expect(response.status).toBe(403);
+        expect(response.headers.get('Cache-Control')).toBe('no-store');
+        await expect(response.json()).resolves.toEqual({ error: 'csrf_rejected' });
+    });
+
     it.each([
         '/api/cursos/planejamento-da-obra/quiz',
         '/api/certificados',

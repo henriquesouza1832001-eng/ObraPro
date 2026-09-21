@@ -1,5 +1,5 @@
 import type { Env } from './env';
-import { withSecurityHeaders, redirect } from './http/security';
+import { withSecurityHeaders, redirect, isCrossSiteMutation } from './http/security';
 import { isAuthenticated, sessionToken } from './auth/demoSession';
 import { renderLoginPage } from './pages/login';
 import { D1MembershipRepository } from './auth/membershipRepository';
@@ -172,6 +172,10 @@ async function route(request: Request, env: Env): Promise<Response> {
     const courseRepository = courseRepositoryFor(env);
     const url = new URL(request.url);
     const path = url.pathname;
+
+    if (path.startsWith('/api/') && path !== '/api/health' && isCrossSiteMutation(request, url.origin)) {
+        return privateJson({ error: 'csrf_rejected' }, 403);
+    }
 
     if (path === '/health') {
         return withSecurityHeaders(json({ status: 'ok', service: 'obrapro-worker' }));
