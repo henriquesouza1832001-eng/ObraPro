@@ -17,7 +17,7 @@ import type { CourseRepository } from './data/course';
 import { renderCourseCatalog, renderCourseDetail, renderCourseNotFound } from './pages/courses';
 import { renderLessonDetail, renderLessonNotFound, flattenLessons } from './pages/lesson';
 import { renderAdminPanel } from './pages/admin';
-import { renderCertificatesBlocked } from './pages/certificates';
+import { renderCertificatesBlocked, renderCertificateVerification } from './pages/certificates';
 import { renderLearningHome } from './pages/home';
 import { renderComoFunciona } from './pages/comoFunciona';
 import { renderServerError } from './pages/serverError';
@@ -1120,6 +1120,11 @@ async function route(request: Request, env: Env): Promise<Response> {
         }
 
         return withSecurityHeaders(html(renderCertificatesBlocked()));
+    }
+
+    const certificateVerificationPageMatch = path.match(/^\/certificados\/verificar\/([A-Za-z0-9_-]{1,64})$/);
+    if (certificateVerificationPageMatch) {
+        return withSecurityHeaders(html(renderCertificateVerification(certificateVerificationPageMatch[1] ?? '')));
     }
 
     if (path === '/dashboard.html') {

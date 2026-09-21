@@ -509,8 +509,20 @@ describe('login/logout real via D1 (CF3-C1/C2)', () => {
         expect(body).toContain('Meus certificados');
         expect(body).toContain('Concluir 100% das aulas do curso');
         expect(body).toContain('Nota mínima de 75%');
+        expect(body).toContain("fetch('/api/certificados'");
         expect(body).not.toContain('QR');
-        expect(body).not.toContain('baixar');
+    });
+
+    it('GET /certificados/verificar/:codigo renderiza a pagina publica de verificacao sem exigir sessao', async () => {
+        const response = await worker.fetch(get('/certificados/verificar/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'), baseEnv());
+        const body = await response.text();
+
+        expect(response.status).toBe(200);
+        expect(body).toContain('Verificando certificado');
+        expect(body).toContain("fetch('/api/certificados/verificar/' + encodeURIComponent(code))");
+        expect(body).toContain('id="cert-print"');
+        expect(body).toContain('Copiar link de verificação');
+        expect(body).not.toContain('QR');
     });
 
     it('POST /sair revoga a sessao: acessar /painel depois com o mesmo cookie volta a exigir login', async () => {
