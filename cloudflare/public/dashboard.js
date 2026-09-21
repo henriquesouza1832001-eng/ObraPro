@@ -56,7 +56,7 @@
     }
 
     function renderOverview(works) {
-        const cards = [...document.querySelectorAll('[data-dashboard-view="overview"] section:first-child article')];
+        const cards = [...document.querySelectorAll('#overview-stats article')];
         const counts = [
             ['Obras ativas', works.filter((work) => work.status === 'active').length],
             ['Em planejamento', works.filter((work) => work.status === 'planning').length],
@@ -507,6 +507,8 @@
         } catch (error) {
             if (error.status === 401) {
                 updateCategoryCounts([]);
+                renderWorks([]);
+                renderOverview([]);
                 renderListState(document.querySelector('#procedures-list'), 'demo', 'Voce esta vendo uma demonstracao. Procedimentos reais aparecem apos login com uma conta da organizacao.');
                 renderListState(document.querySelector('#checklists-list'), 'demo', 'Voce esta vendo uma demonstracao. Checklists reais aparecem apos login com uma conta da organizacao.');
                 message('Voce esta vendo uma demonstracao. Dados operacionais reais aparecem apos login com uma conta da organizacao.', 'demo');
