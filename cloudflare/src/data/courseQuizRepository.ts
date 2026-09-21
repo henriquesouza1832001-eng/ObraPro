@@ -121,9 +121,9 @@ export class D1CourseQuizRepository {
             certificateId = crypto.randomUUID();
             const verificationCode = crypto.randomUUID().replaceAll('-', '');
             const inserted = await this.database.prepare(`INSERT OR IGNORE INTO certificates
-                (id, course_id, user_id, quiz_attempt_id, verification_code, course_title_snapshot, duration_minutes_snapshot, quiz_score_percentage, status, issued_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active', ?)`)
-                .bind(certificateId, course.id, userId, attemptId, verificationCode, course.title, course.duration_minutes, scorePercentage, submittedAt).run();
+                (id, course_id, user_id, quiz_attempt_id, verification_code, course_title_snapshot, student_name_snapshot, duration_minutes_snapshot, quiz_score_percentage, status, issued_at)
+                SELECT ?, ?, ?, ?, ?, ?, name, ?, ?, 'active', ? FROM users WHERE id = ?`)
+                .bind(certificateId, course.id, userId, attemptId, verificationCode, course.title, course.duration_minutes, scorePercentage, submittedAt, userId).run();
             if (inserted.meta.changes !== 1) {
                 const existing = await this.database.prepare('SELECT id FROM certificates WHERE course_id = ? AND user_id = ?').bind(course.id, userId).first<{ id: string }>();
                 certificateId = existing?.id ?? null;
@@ -134,7 +134,7 @@ export class D1CourseQuizRepository {
 
     public async listCertificates(userId: string): Promise<CertificateSummary[]> {
         const result = await this.database.prepare(`SELECT c.id, c.verification_code, co.slug AS course_slug,
-                c.course_title_snapshot, u.name AS student_name, c.duration_minutes_snapshot,
+                c.course_title_snapshot, COALESCE(c.student_name_snapshot, u.name) AS student_name, c.duration_minutes_snapshot,
                 c.quiz_score_percentage, c.status, c.issued_at, c.revoked_at
             FROM certificates AS c INNER JOIN courses AS co ON co.id = c.course_id
             INNER JOIN users AS u ON u.id = c.user_id WHERE c.user_id = ? ORDER BY c.issued_at DESC`).bind(userId).all<Record<string, unknown>>();
@@ -143,7 +143,7 @@ export class D1CourseQuizRepository {
 
     public async verifyCertificate(code: string): Promise<CertificateSummary | null> {
         const row = await this.database.prepare(`SELECT c.id, c.verification_code, co.slug AS course_slug,
-                c.course_title_snapshot, u.name AS student_name, c.duration_minutes_snapshot,
+                c.course_title_snapshot, COALESCE(c.student_name_snapshot, u.name) AS student_name, c.duration_minutes_snapshot,
                 c.quiz_score_percentage, c.status, c.issued_at, c.revoked_at
             FROM certificates AS c INNER JOIN courses AS co ON co.id = c.course_id
             INNER JOIN users AS u ON u.id = c.user_id WHERE c.verification_code = ? LIMIT 1`).bind(code).first<Record<string, unknown>>();
