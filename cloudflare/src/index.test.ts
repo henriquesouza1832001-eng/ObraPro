@@ -522,6 +522,8 @@ describe('login/logout real via D1 (CF3-C1/C2)', () => {
         expect(body).toContain("fetch('/api/certificados/verificar/' + encodeURIComponent(code))");
         expect(body).toContain('id="cert-print"');
         expect(body).toContain('Copiar link de verificação');
+        expect(body).toContain('id="cert-revoked-banner"');
+        expect(body).toContain('não é um arquivo protegido nem tem marca d\'água própria');
         expect(body).not.toContain('QR');
     });
 
