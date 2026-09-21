@@ -26,6 +26,7 @@ import { D1LessonContentRepository } from './data/lessonContentRepository';
 import { D1UserRepository } from './auth/userRepository';
 import { D1CatalogAuthorization } from './auth/catalogAuthorization';
 import { D1AdminRepository } from './data/adminRepository';
+import { D1CourseQuizRepository } from './data/courseQuizRepository';
 
 function courseRepositoryFor(env: Env): CourseRepository {
     return env.COURSES_DB ? new D1CourseRepository(env.COURSES_DB) : new MockCourseRepository();
@@ -330,6 +331,25 @@ async function route(request: Request, env: Env): Promise<Response> {
         const summaries = await new D1CourseProgressRepository(env.COURSES_DB).listProgressSummaries(session.userId, limit);
 
         return privateJson({ data: summaries });
+    }
+
+    const quizMatch = path.match(/^\/api\/cursos\/([^/]+)\/quiz$/);
+    if (quizMatch && (request.method === 'GET' || request.method === 'POST')) {
+        const session = await privateApiSession(request, env);
+        if (!session) return privateJson({ error: 'authentication_required' }, 401);
+        if (!env.COURSES_DB) return privateJson({ error: 'course_data_unavailable' }, 503);
+        const courseSlug = decodeURIComponent(quizMatch[1] ?? '');
+        const repository = new D1CourseQuizRepository(env.COURSES_DB);
+        if (request.method === 'GET') {
+            const quiz = await repository.findPublishedForUser(session.userId, courseSlug);
+            return quiz ? privateJson({ data: quiz }) : privateJson({ error: 'quiz_not_available' }, 404);
+        }
+        let body: unknown;
+        try { body = await request.json(); } catch { return privateJson({ error: 'quiz_submission_invalid' }, 422); }
+        const answers = body && typeof body === 'object' && !Array.isArray(body) ? (body as Record<string, unknown>).answers : null;
+        if (!answers || typeof answers !== 'object' || Array.isArray(answers)) return privateJson({ error: 'quiz_submission_invalid' }, 422);
+        const result = await repository.submit(session.userId, courseSlug, answers as Record<string, unknown>, new Date().toISOString());
+        return result ? privateJson({ data: result }, 201) : privateJson({ error: 'quiz_not_available' }, 404);
     }
 
     const isCourseProgressRead = Boolean(courseProgressMatch) && request.method === 'GET';
