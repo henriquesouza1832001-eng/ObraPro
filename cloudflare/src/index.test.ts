@@ -488,6 +488,30 @@ describe('login/logout real via D1 (CF3-C1/C2)', () => {
         expect(body).not.toContain('id="lesson-content-id"');
     });
 
+    it('GET /certificados com sessao valida mostra o estado bloqueado com os criterios; sem sessao redireciona para /entrar', async () => {
+        const authDb = createFakeAuthDatabase({ id: 'user-1', name: 'Ana', email: 'ana@example.com', passwordHash: await hashPassword('senha-super-secreta') });
+        const env = baseEnv({ AUTH_DB: authDb });
+        const form = new URLSearchParams({ email: 'ana@example.com', password: 'senha-super-secreta' });
+
+        const loginResponse = await worker.fetch(new Request('https://obrapro.test/entrar', { method: 'POST', body: form, headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }), env);
+        const cookie = cookieFromSetCookie(loginResponse);
+
+        const semSessao = await worker.fetch(get('/certificados'), env);
+
+        expect(semSessao.status).toBe(303);
+        expect(semSessao.headers.get('Location')).toBe('/entrar');
+
+        const comSessao = await worker.fetch(new Request('https://obrapro.test/certificados', { headers: { Cookie: cookie } }), env);
+        const body = await comSessao.text();
+
+        expect(comSessao.status).toBe(200);
+        expect(body).toContain('Meus certificados');
+        expect(body).toContain('Concluir 100% das aulas do curso');
+        expect(body).toContain('Nota mínima de 75%');
+        expect(body).not.toContain('QR');
+        expect(body).not.toContain('baixar');
+    });
+
     it('POST /sair revoga a sessao: acessar /painel depois com o mesmo cookie volta a exigir login', async () => {
         const authDb = createFakeAuthDatabase({ id: 'user-1', name: 'Ana', email: 'ana@example.com', passwordHash: await hashPassword('senha-super-secreta') });
         const env = baseEnv({ AUTH_DB: authDb });
