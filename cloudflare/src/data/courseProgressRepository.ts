@@ -19,9 +19,11 @@ export class D1CourseProgressRepository {
         const course = await this.database.prepare(`
             SELECT c.id
             FROM courses AS c
+            INNER JOIN course_enrollments AS e ON e.course_id = c.id
             WHERE c.slug = ? AND c.is_published = 1
+                AND e.user_id = ? AND e.status IN ('active', 'completed')
             LIMIT 1
-        `).bind(courseSlug).first<{ id: string }>();
+        `).bind(courseSlug, userId).first<{ id: string }>();
 
         if (!course) {
             return null;
@@ -32,11 +34,12 @@ export class D1CourseProgressRepository {
                 CASE WHEN p.lesson_id IS NULL THEN 0 ELSE 1 END AS completed
             FROM lessons AS l
             INNER JOIN course_modules AS cm ON cm.id = l.course_module_id
+            INNER JOIN course_enrollments AS e ON e.course_id = cm.course_id
             LEFT JOIN course_lesson_progress AS p
                 ON p.lesson_id = l.id AND p.user_id = ?
-            WHERE cm.course_id = ?
+            WHERE cm.course_id = ? AND e.user_id = ? AND e.status IN ('active', 'completed')
             ORDER BY cm.position ASC, l.position ASC
-        `).bind(userId, course.id).all<{ lesson_id: string; completed: number }>();
+        `).bind(userId, course.id, userId).all<{ lesson_id: string; completed: number }>();
 
         const completedLessonIds = result.results.filter((row) => row.completed === 1).map((row) => row.lesson_id);
 
@@ -53,9 +56,11 @@ export class D1CourseProgressRepository {
             FROM lessons AS l
             INNER JOIN course_modules AS cm ON cm.id = l.course_module_id
             INNER JOIN courses AS c ON c.id = cm.course_id
+            INNER JOIN course_enrollments AS e ON e.course_id = c.id
             WHERE c.slug = ? AND c.is_published = 1 AND l.id = ?
+                AND e.user_id = ? AND e.status IN ('active', 'completed')
             LIMIT 1
-        `).bind(courseSlug, lessonId).first<{ course_id: string }>();
+        `).bind(courseSlug, lessonId, userId).first<{ course_id: string }>();
 
         if (!lesson) {
             return null;
