@@ -6,6 +6,8 @@ Todas as mudancas relevantes do ObraPro sao registradas aqui. O formato segue Ke
 
 ### Added
 
+- Segurança de transporte: respostas do Worker passam a incluir HSTS por um ano com subdomínios, aplicável somente ao domínio HTTPS publicado pelo Cloudflare.
+
 - Contrato inicial de quiz final autenticado em `GET/POST /api/cursos/{slug}/quiz`: perguntas publicadas sem respostas corretas, submissao server-side, nota minima configurada (75%), limite de quatro tentativas e exigencia de matricula ativa/concluida. Emissao de certificado ainda depende da validacao de 100% do progresso e sera adicionada em etapa seguinte.
 
 - Fundacao incremental para quiz final e certificado verificavel: migration `0015_quizzes_and_certificates.sql` cria quiz versionado, perguntas, tentativas limitadas a quatro e certificados idempotentes por usuario/curso com codigo opaco e status de revogacao. Nao coleta CPF, nao publica respostas corretas e ainda nao libera emissao ate os endpoints e testes de autorizacao serem implementados.
