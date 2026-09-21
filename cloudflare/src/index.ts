@@ -1,5 +1,5 @@
 import type { Env } from './env';
-import { withSecurityHeaders, redirect } from './http/security';
+import { withSecurityHeaders, redirect, isCrossSiteMutation } from './http/security';
 import { isAuthenticated, sessionToken } from './auth/demoSession';
 import { renderLoginPage } from './pages/login';
 import { D1MembershipRepository } from './auth/membershipRepository';
@@ -41,6 +41,13 @@ function json(body: unknown, status = 200): Response {
 }
 
 function privateJson(body: unknown, status = 200): Response {
+    const response = json(body, status);
+    response.headers.set('Cache-Control', 'no-store');
+
+    return withSecurityHeaders(response);
+}
+
+function publicNoStoreJson(body: unknown, status = 200): Response {
     const response = json(body, status);
     response.headers.set('Cache-Control', 'no-store');
 
@@ -165,6 +172,10 @@ async function route(request: Request, env: Env): Promise<Response> {
     const courseRepository = courseRepositoryFor(env);
     const url = new URL(request.url);
     const path = url.pathname;
+
+    if (path.startsWith('/api/') && path !== '/api/health' && isCrossSiteMutation(request, url.origin)) {
+        return privateJson({ error: 'csrf_rejected' }, 403);
+    }
 
     if (path === '/health') {
         return withSecurityHeaders(json({ status: 'ok', service: 'obrapro-worker' }));
@@ -315,6 +326,49 @@ async function route(request: Request, env: Env): Promise<Response> {
         return privateJson({ data: updated });
     }
 
+    const certificateRevocationMatch = path.match(/^\/api\/admin\/certificados\/([A-Za-z0-9_-]{1,128})\/revogacao$/);
+    if (certificateRevocationMatch && request.method === 'PATCH') {
+        const session = await privateApiSession(request, env);
+        if (!session) {
+            return privateJson({ error: 'authentication_required' }, 401);
+        }
+        if (!env.COURSES_DB || !env.AUTH_DB) {
+            return privateJson({ error: 'certificate_data_unavailable' }, 503);
+        }
+        if (!await new D1CatalogAuthorization(new D1UserRepository(env.AUTH_DB)).canManageCatalog(session.userId)) {
+            return privateJson({ error: 'catalog_admin_required' }, 403);
+        }
+
+        let body: unknown;
+        try {
+            body = await request.json<unknown>();
+        } catch {
+            return privateJson({ error: 'invalid_revocation_payload' }, 422);
+        }
+        if (!body || typeof body !== 'object' || typeof (body as { revoked?: unknown }).revoked !== 'boolean') {
+            return privateJson({ error: 'invalid_revocation_payload' }, 422);
+        }
+
+        const certificateId = certificateRevocationMatch[1] ?? '';
+        const revoked = (body as { revoked: boolean }).revoked;
+        const changed = await new D1CourseQuizRepository(env.COURSES_DB).setCertificateRevocation(certificateId, revoked, new Date().toISOString());
+        if (!changed) {
+            return privateJson({ error: 'certificate_not_found' }, 404);
+        }
+
+        await new D1AdminRepository(env.COURSES_DB).recordAuditEvent({
+            id: crypto.randomUUID(),
+            actorUserId: session.userId,
+            action: 'certificate.revocation.set',
+            resourceType: 'certificate',
+            resourceId: certificateId,
+            metadata: { revoked },
+            createdAt: new Date().toISOString(),
+        });
+
+        return privateJson({ data: { id: certificateId, status: revoked ? 'revoked' : 'active' } });
+    }
+
     const courseProgressMatch = path.match(/^\/api\/cursos\/([^/]+)\/progresso$/);
     const courseLessonProgressMatch = path.match(/^\/api\/cursos\/([^/]+)\/aulas\/([^/]+)\/progresso$/);
     if (path === '/api/cursos/progresso' && request.method === 'GET') {
@@ -350,6 +404,20 @@ async function route(request: Request, env: Env): Promise<Response> {
         if (!answers || typeof answers !== 'object' || Array.isArray(answers)) return privateJson({ error: 'quiz_submission_invalid' }, 422);
         const result = await repository.submit(session.userId, courseSlug, answers as Record<string, unknown>, new Date().toISOString());
         return result ? privateJson({ data: result }, 201) : privateJson({ error: 'quiz_not_available' }, 404);
+    }
+
+    if (path === '/api/certificados' && request.method === 'GET') {
+        const session = await privateApiSession(request, env);
+        if (!session) return privateJson({ error: 'authentication_required' }, 401);
+        if (!env.COURSES_DB) return privateJson({ error: 'course_data_unavailable' }, 503);
+        return privateJson({ data: await new D1CourseQuizRepository(env.COURSES_DB).listCertificates(session.userId) });
+    }
+
+    const certificateVerificationMatch = path.match(/^\/api\/certificados\/verificar\/([A-Za-z0-9_-]{32,64})$/);
+    if (certificateVerificationMatch && request.method === 'GET') {
+        if (!env.COURSES_DB) return publicNoStoreJson({ error: 'certificate_data_unavailable' }, 503);
+        const certificate = await new D1CourseQuizRepository(env.COURSES_DB).verifyCertificate(certificateVerificationMatch[1] ?? '');
+        return certificate ? publicNoStoreJson({ data: certificate }) : publicNoStoreJson({ error: 'certificate_not_found' }, 404);
     }
 
     const isCourseProgressRead = Boolean(courseProgressMatch) && request.method === 'GET';
