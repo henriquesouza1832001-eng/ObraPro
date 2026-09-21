@@ -232,8 +232,11 @@ function get(path: string): Request {
 describe('rotas publicas do Worker', () => {
     it('GET / retorna 200 servindo o shell publico', async () => {
         const response = await worker.fetch(get('/'), baseEnv());
+        const body = await response.text();
 
         expect(response.status).toBe(200);
+        expect(body).toContain('/api/cursos/progresso?limit=6');
+        expect(body).toContain('id="continue-section" hidden');
     });
 
     it('GET /health retorna status ok em JSON', async () => {

@@ -30,7 +30,13 @@ const homeStyles = `.home-hero{padding:44px 5vw 34px;background:#10233f;color:#f
 .course-row .card p{color:#60706a;font-size:13px;line-height:1.5;flex:1}
 .course-row .tag{align-self:flex-start;padding:5px 8px;border-radius:5px;background:#eef5ff;color:#1267e8;font-size:11px;font-weight:800}
 .course-row .markers{display:flex;gap:10px;color:#60706a;font-size:12px;border-top:1px solid #f4f6f5;padding-top:10px;margin-top:auto}
-.empty-search{display:none;margin-top:16px;padding:20px;border:1px dashed #d9c9a3;border-radius:8px;color:#60706a;text-align:center}`;
+.empty-search{display:none;margin-top:16px;padding:20px;border:1px dashed #d9c9a3;border-radius:8px;color:#60706a;text-align:center}
+.continue-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}
+.continue-card{display:flex;flex-direction:column;padding:16px;border:1px solid #e4dcc8;border-radius:8px;background:#fff}
+.continue-card h3{font-size:15px;margin:0 0 8px}
+.continue-card .progress-bar{height:6px;background:#eef1f0;border-radius:999px;overflow:hidden;margin-top:8px}
+.continue-card .progress-bar span{display:block;height:100%;background:#1267e8}
+.continue-card small{color:#60706a;font-size:12px;margin-top:6px}`;
 
 const categoryStyle: Record<string, { bg: string; icon: string }> = {
     fundacoes: {
@@ -103,6 +109,10 @@ export function renderLearningHome(courses: Course[]): string {
             <div class="categories">${categoryLabels.map(({ key, label, tagline }) => categoryCard(key, label, tagline, counts[key] ?? 0)).join('')}</div>
         </section>
         <main class="content" style="padding-top:0">
+            <section id="continue-section" hidden>
+                <div class="section-title"><h2>Continue de onde parou</h2></div>
+                <div class="continue-row" id="continue-list"></div>
+            </section>
             ${freeCourses.length > 0 ? `<div class="section-title"><div><h2>Cursos gratuitos para começar</h2><small class="section-note">${freeCourses.length} cursos disponíveis</small></div><a href="/cursos?acesso=free">Ver todos</a></div>${courseRow(freePreview)}` : ''}
             ${premiumCourses.length > 0 ? `<div class="section-title"><div><h2>Cursos completos e premium</h2><small class="section-note">${premiumCourses.length} cursos disponíveis</small></div><a href="/cursos?acesso=premium">Ver todos</a></div>${courseRow(premiumPreview)}` : ''}
             ${courses.length === 0 ? '<p class="empty" style="margin-top:24px;padding:32px;border:1px dashed #b9c5c0;border-radius:7px;text-align:center;color:#60706a">Nenhum curso publicado no momento. Volte em breve — novo conteúdo está a caminho.</p>' : ''}
@@ -123,6 +133,29 @@ export function renderLearningHome(courses: Course[]): string {
                 });
                 empty.style.display = query && visible === 0 ? 'block' : 'none';
             });
+        })();
+        (function () {
+            var section = document.getElementById('continue-section');
+            var list = document.getElementById('continue-list');
+            if (!section || !list) return;
+            fetch('/api/cursos/progresso?limit=6', { credentials: 'same-origin' })
+                .then(function (res) { return res.ok ? res.json() : null; })
+                .then(function (payload) {
+                    var summaries = payload && Array.isArray(payload.data) ? payload.data : [];
+                    if (!summaries.length) return;
+                    list.innerHTML = summaries.map(function (item) {
+                        var total = item.totalLessons || 0;
+                        var done = item.completedCount || 0;
+                        var percent = total > 0 ? Math.round((done / total) * 100) : 0;
+                        var href = '/cursos/' + encodeURIComponent(item.courseSlug);
+                        var title = String(item.courseTitle || '');
+                        var span = document.createElement('span');
+                        span.textContent = title;
+                        return '<a class="continue-card" href="' + href + '"><h3>' + span.innerHTML + '</h3><small>' + done + ' de ' + total + ' aulas concluídas</small><div class="progress-bar"><span style="width:' + percent + '%"></span></div></a>';
+                    }).join('');
+                    section.hidden = false;
+                })
+                .catch(function () {});
         })();</script>`;
 
     return publicPage({ title: 'ObraPro | Aprenda a construir com clareza', activePath: '/', body, extraStyles: homeStyles });
