@@ -352,6 +352,20 @@ async function route(request: Request, env: Env): Promise<Response> {
         return result ? privateJson({ data: result }, 201) : privateJson({ error: 'quiz_not_available' }, 404);
     }
 
+    if (path === '/api/certificados' && request.method === 'GET') {
+        const session = await privateApiSession(request, env);
+        if (!session) return privateJson({ error: 'authentication_required' }, 401);
+        if (!env.COURSES_DB) return privateJson({ error: 'course_data_unavailable' }, 503);
+        return privateJson({ data: await new D1CourseQuizRepository(env.COURSES_DB).listCertificates(session.userId) });
+    }
+
+    const certificateVerificationMatch = path.match(/^\/api\/certificados\/verificar\/([A-Za-z0-9_-]{32,64})$/);
+    if (certificateVerificationMatch && request.method === 'GET') {
+        if (!env.COURSES_DB) return json({ error: 'certificate_data_unavailable' }, 503);
+        const certificate = await new D1CourseQuizRepository(env.COURSES_DB).verifyCertificate(certificateVerificationMatch[1] ?? '');
+        return certificate ? json({ data: certificate }) : json({ error: 'certificate_not_found' }, 404);
+    }
+
     const isCourseProgressRead = Boolean(courseProgressMatch) && request.method === 'GET';
     const isCourseLessonProgressWrite = Boolean(courseLessonProgressMatch) && request.method === 'POST';
     if (isCourseProgressRead || isCourseLessonProgressWrite) {
