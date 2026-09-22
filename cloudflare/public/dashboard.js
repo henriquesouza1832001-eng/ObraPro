@@ -5,6 +5,9 @@
     const navigation = [...document.querySelectorAll('[data-dashboard-go]')];
     const header = document.querySelector('header');
     const syncStatus = document.createElement('p');
+    const syncChip = header?.querySelector('span');
+
+    if (syncChip) syncChip.textContent = 'Aguardando dados';
 
     syncStatus.className = 'mx-5 mt-4 rounded-md border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 lg:mx-8';
     syncStatus.setAttribute('role', 'status');
@@ -12,6 +15,14 @@
 
     function message(text, kind = 'info') {
         syncStatus.textContent = text;
+        if (syncChip) {
+            syncChip.textContent = kind === 'error' ? 'Falha ao sincronizar' : kind === 'demo' ? 'Modo demonstracao' : 'Sincronizado';
+            syncChip.className = kind === 'error'
+                ? 'hidden rounded-md bg-red-50 px-3 py-2 text-xs font-bold text-red-700 sm:block'
+                : kind === 'demo'
+                    ? 'hidden rounded-md bg-amber-50 px-3 py-2 text-xs font-bold text-amber-700 sm:block'
+                    : 'hidden rounded-md bg-emerald-50 px-3 py-2 text-xs font-bold text-brand sm:block';
+        }
         syncStatus.className = 'mx-5 mt-4 rounded-md border px-4 py-3 text-sm lg:mx-8';
         syncStatus.style.cssText = kind === 'error'
             ? 'border-color:#f3b9b3;background:#fff1f0;color:#a92c22'
