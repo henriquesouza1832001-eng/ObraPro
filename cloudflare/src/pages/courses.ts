@@ -65,7 +65,7 @@ function courseCard(course: Course): string {
     const accent = categoryAccent[categoryBucket(course.category)] ?? '#94a3b8';
     const searchable = searchKey(`${course.title} ${course.description} ${course.category}`);
 
-    return `<a class="card" data-course-card data-course-search="${escapeHtml(searchable)}" style="border-top-color:${accent}" href="/cursos/${encodeURIComponent(course.slug)}"><div class="heading"><span class="tag">${escapeHtml(course.category)}</span>${accessTag}</div><h3>${escapeHtml(course.title)}</h3>${moduleBadge}<p>${escapeHtml(course.description)}</p><div class="meta"><span>${course.modulesCount} módulos</span><span>${course.durationMinutes} min</span><span class="cta">Ver curso ${arrowRightIcon}</span></div></a>`;
+    return `<a class="card" data-course-card data-course-search="${escapeHtml(searchable)}" style="border-top-color:${accent}" href="/cursos/${encodeURIComponent(course.slug)}"><div class="heading"><span class="tag">${escapeHtml(course.category)}</span>${accessTag}</div><h3>${escapeHtml(course.title)}</h3>${moduleBadge}<p>${escapeHtml(course.description)}</p><div class="meta"><span>${course.modulesCount} ${course.modulesCount === 1 ? 'módulo' : 'módulos'}</span><span>${course.durationMinutes} min</span><span class="cta">Ver curso ${arrowRightIcon}</span></div></a>`;
 }
 
 export function renderCourseCatalog(courses: Course[], activeCategory?: string, activeAccess?: string, activeSearch?: string): string {
