@@ -22,6 +22,7 @@ import { renderCourseQuiz } from './pages/quiz';
 import { renderLearningHome } from './pages/home';
 import { renderComoFunciona } from './pages/comoFunciona';
 import { renderServerError } from './pages/serverError';
+import { renderNotFound } from './pages/notFound';
 import { D1CourseProgressRepository } from './data/courseProgressRepository';
 import { D1CourseEnrollmentRepository } from './data/courseEnrollmentRepository';
 import { D1LessonContentRepository } from './data/lessonContentRepository';
@@ -1147,7 +1148,7 @@ async function route(request: Request, env: Env): Promise<Response> {
     }
 
     if (path === '/dashboard.html') {
-        return new Response('Not found', { status: 404 });
+        return withSecurityHeaders(html(renderNotFound(path), 404));
     }
 
     return withSecurityHeaders(await env.ASSETS.fetch(request));
