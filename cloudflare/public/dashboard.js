@@ -523,6 +523,10 @@
                 message('Voce esta vendo uma demonstracao. Dados operacionais reais aparecem apos login com uma conta da organizacao.', 'demo');
                 return;
             }
+            if (error.status === 403) {
+                message('Sua conta nao tem acesso a esta organizacao. Fale com um administrador se acha que isso e um engano.', 'error');
+                return;
+            }
             message('Nao foi possivel carregar os dados agora. Tente atualizar a pagina.', 'error');
         }
     }
