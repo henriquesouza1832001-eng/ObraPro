@@ -27,7 +27,7 @@ export function renderLoginPage(options: LoginPageOptions = {}): string {
     const heading = realAuthEnabled ? 'Entrar no ObraPro' : 'Acesso de demonstração';
     const intro = realAuthEnabled
         ? 'Entre com a conta da sua organização para acessar o painel.'
-        : 'Entre para visualizar o painel administrativo do mockup.';
+        : 'Entre para visualizar o painel administrativo de demonstração.';
     const note = realAuthEnabled
         ? ''
         : '<p class="note">Ambiente de demonstração. Não utilize credenciais pessoais.</p>';
