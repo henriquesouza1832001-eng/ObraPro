@@ -294,6 +294,8 @@ describe('rotas publicas do Worker', () => {
 
         expect(response.status).toBe(200);
         expect(body).toContain('Planejamento da obra do zero');
+        expect(body).not.toContain('<label><input type="checkbox" class="lesson-check"');
+        expect(body).toContain('aria-label="Marcar aula concluída:');
     });
 
     it('GET /cursos/:slug inexistente retorna 404 real, sem redirecionar para a home', async () => {
