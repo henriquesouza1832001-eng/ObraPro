@@ -1151,6 +1151,10 @@ async function route(request: Request, env: Env): Promise<Response> {
         return withSecurityHeaders(html(renderNotFound(path), 404));
     }
 
+    if (request.headers.get('Accept')?.includes('text/html')) {
+        return withSecurityHeaders(html(renderNotFound(path), 404));
+    }
+
     return withSecurityHeaders(await env.ASSETS.fetch(request));
 }
 
