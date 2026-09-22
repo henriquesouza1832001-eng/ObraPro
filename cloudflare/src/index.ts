@@ -1015,8 +1015,11 @@ async function route(request: Request, env: Env): Promise<Response> {
 
     if (path === '/') {
         const courses = await courseRepository.listCourses();
+        const authenticated = env.AUTH_DB
+            ? await authenticateRequest(request, env)
+            : await isAuthenticated(request, env);
 
-        return withSecurityHeaders(html(renderLearningHome(courses)));
+        return withSecurityHeaders(html(renderLearningHome(courses, authenticated)));
     }
 
     if (path === '/como-funciona') {

@@ -40,7 +40,7 @@ const homeStyles = `.home-hero{padding:44px 5vw 34px;background:#10233f;color:#f
 
 // Camada visual da home: uma jornada unica, com contraste e ritmo consistentes.
 // Mantem os contratos e os dados do catalogo; apenas reorganiza a apresentacao.
-const homeVisualOverrides = `.home-hero{padding:58px 5vw 48px;background:linear-gradient(135deg,#10233f 0%,#17365d 100%);border-bottom:1px solid #244a73}.home-hero h1{max-width:760px;font-size:clamp(32px,5vw,56px);line-height:1.04;letter-spacing:-.035em}.home-hero p{font-size:17px;line-height:1.55}.search{max-width:720px;margin-top:28px}.search input{min-height:58px;border:2px solid transparent;border-radius:12px;box-shadow:0 12px 28px #07162e55}.search input:focus{outline:3px solid #ffb04c;outline-offset:3px}.categories{max-width:1040px;gap:14px;margin-top:34px}.category-card{min-height:136px;padding:18px;border:1px solid #ffffff2e;border-radius:14px;transition:transform .15s,box-shadow .15s}.category-card:hover{transform:translateY(-3px);box-shadow:0 12px 24px #07162e44}.category-card:focus-visible,.section-title a:focus-visible,.course-row .card:focus-visible,.continue-card:focus-visible{outline:3px solid #ffb04c;outline-offset:3px}.section-title{max-width:1100px;margin:48px auto 16px}.section-title h2{font-size:clamp(21px,3vw,27px);letter-spacing:-.02em}.course-row,.continue-row{max-width:1100px;margin-left:auto;margin-right:auto;gap:16px}.course-row .card{min-height:270px;padding:20px;border:1px solid #dfe5ea;border-radius:14px;box-shadow:0 5px 16px #10233f0b;transition:transform .15s,box-shadow .15s}.course-row .card:hover{transform:translateY(-3px);box-shadow:0 12px 26px #10233f18}.course-row .card h3{font-size:17px;line-height:1.25}.course-row .card p{font-size:14px;line-height:1.55}.continue-card{padding:20px;border:1px solid #b8d3f2;border-radius:14px;background:#f4f8ff}.continue-card h3{font-size:17px;line-height:1.3}.home-hero+main.content{padding-top:8px}@media(max-width:639px){.home-hero{padding-top:40px;padding-bottom:36px}.categories{gap:10px}.category-card{min-height:118px;padding:14px}.section-title{margin-top:34px}}`;
+const homeVisualOverrides = `.home-hero{padding:48px 5vw 36px;background:#10233f;border-bottom:1px solid #244a73}.home-hero h1{max-width:760px;font-size:clamp(30px,4.5vw,50px);line-height:1.06;letter-spacing:-.035em}.home-hero p{font-size:17px;line-height:1.55}.search{max-width:720px;margin-top:24px}.search input{min-height:56px;border:2px solid transparent;border-radius:10px}.search input:focus{outline:3px solid #ffb04c;outline-offset:3px}.categories{max-width:1040px;gap:12px;margin-top:28px}.category-card{min-height:124px;padding:16px;border:1px solid #ffffff2e;border-radius:10px;transition:transform .15s,box-shadow .15s}.category-card:hover{transform:translateY(-2px);box-shadow:0 8px 16px #07162e44}.category-card:focus-visible,.section-title a:focus-visible,.course-row .card:focus-visible,.continue-card:focus-visible{outline:3px solid #ffb04c;outline-offset:3px}.section-title{max-width:1100px;margin:42px auto 16px}.section-title h2{font-size:clamp(21px,3vw,27px);letter-spacing:-.02em}.course-row,.continue-row{max-width:1100px;margin-left:auto;margin-right:auto;gap:16px}.course-row .card{min-height:250px;padding:20px;border:1px solid #dfe5ea;border-radius:10px;box-shadow:0 3px 10px #10233f0b;transition:transform .15s,box-shadow .15s}.course-row .card:hover{transform:translateY(-2px);box-shadow:0 8px 18px #10233f18}.course-row .card h3{font-size:17px;line-height:1.25}.course-row .card p{font-size:14px;line-height:1.55}.continue-card{padding:20px;border:1px solid #b8d3f2;border-radius:10px;background:#f4f8ff}.continue-card h3{font-size:17px;line-height:1.3}.home-hero+main.content{padding-top:8px}@media(max-width:639px){.home-hero{padding-top:36px;padding-bottom:30px}.categories{gap:10px}.category-card{min-height:112px;padding:14px}.section-title{margin-top:32px}}`;
 
 const categoryStyle: Record<string, { bg: string; icon: string }> = {
     fundacoes: {
@@ -82,7 +82,7 @@ function courseRow(courses: Course[]): string {
     }).join('')}</div>`;
 }
 
-export function renderLearningHome(courses: Course[]): string {
+export function renderLearningHome(courses: Course[], showContinue = false): string {
     const counts: Record<string, number> = {};
     const labels = new Map<string, { label: string; count: number }>();
     courses.forEach((course) => {
@@ -141,7 +141,7 @@ export function renderLearningHome(courses: Course[]): string {
         (function () {
             var section = document.getElementById('continue-section');
             var list = document.getElementById('continue-list');
-            if (!section || !list) return;
+            if (!${showContinue ? 'true' : 'false'} || !section || !list) return;
             fetch('/api/cursos/progresso?limit=6', { credentials: 'same-origin' })
                 .then(function (res) { return res.ok ? res.json() : null; })
                 .then(function (payload) {
