@@ -4,6 +4,10 @@ Todas as mudancas relevantes do ObraPro sao registradas aqui. O formato segue Ke
 
 ## [Unreleased]
 
+### Fixed
+
+- Painel operacional (`cloudflare/public/dashboard.js`): a lista de execucao de procedimento (`renderExecutionChecklist`) recria todo o `innerHTML` da lista a cada interacao (concluir etapa, pular etapa, escolher arquivo de evidencia, enviar evidencia), sem nenhuma restauracao de foco depois — um usuario de teclado que clicasse/ativasse "Concluir etapa" perdia o foco para `<body>` a cada acao, tendo que percorrer a pagina inteira via Tab novamente para chegar na proxima etapa do checklist, em um fluxo que e literalmente sequencial passo-a-passo. Corrigido dando a cada `<li>` de etapa um `id` estavel (`execution-step-{indice}`) e `tabindex="-1"`, e chamando `restoreExecutionFocus(indice)` logo apos toda chamada a `renderExecutionChecklist()` nos 4 pontos afetados (`updateExecutionStepStatus`, `selectEvidenceFile`, `uploadEvidence`), devolvendo o foco ao container da propria etapa apos cada atualizacao. Nenhuma logica de negocio, contrato ou dado foi alterado. Validado com `node --check`, typecheck, `worker:test` 83/83, build dry-run e `git diff --check`.
+
 ### Added
 
 - Jornada Comece aqui -> Continue -> Aula -> Quiz -> Certificado: `renderLessonDetail` (`cloudflare/src/pages/lesson.ts`) mostrava um espaco vazio no lugar do link de "proxima aula" quando o aluno estava na ULTIMA aula do curso, sem nenhum caminho visivel para o quiz final a partir dali — o aluno so descobria o quiz voltando para a pagina do curso e notando o link "Fazer quiz final" (que so aparece apos matricula). Corrigido: quando nao ha proxima aula, a navegacao agora mostra "Fazer quiz final →" apontando para `/cursos/{slug}/quiz`, fechando a jornada sem inventar nenhuma regra nova (a pagina do quiz ja trata graciosamente o caso de nao haver perguntas publicadas ainda). 1 teste novo em `index.test.ts` confirmando o link na ultima aula do curso mock, suite 83/83.
