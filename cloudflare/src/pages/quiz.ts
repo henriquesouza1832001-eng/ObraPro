@@ -1,11 +1,10 @@
-import { escapeHtml, publicPage } from './layout';
+import { jsStringLiteral, publicPage } from './layout';
 
 const quizStyles = `.quiz-shell{max-width:820px;margin:0 auto;padding:32px 5vw 56px}.quiz-shell h1{font-size:clamp(26px,4vw,40px);margin:10px 0}.quiz-intro,.quiz-status{color:#5b6a72;line-height:1.6}.quiz-card{margin-top:22px;padding:22px;border:1px solid #d9e0dd;border-radius:12px;background:#fff}.quiz-card fieldset{border:0;padding:0;margin:0 0 24px}.quiz-card legend{font-weight:800;line-height:1.45;margin-bottom:12px}.quiz-option{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid #e4e8eb;border-radius:8px;margin-top:8px;cursor:pointer}.quiz-option:has(input:focus-visible){outline:3px solid #ffb04c;outline-offset:2px}.quiz-actions{display:flex;gap:12px;flex-wrap:wrap}.quiz-button{border:0;border-radius:8px;padding:13px 18px;background:#1267e8;color:#fff;font:inherit;font-weight:800;cursor:pointer}.quiz-button:disabled{opacity:.6;cursor:wait}.quiz-link{display:inline-block;padding:12px 16px;border-radius:8px;border:1px solid #d9e0dd;color:#10233f;font-weight:800}.quiz-result{padding:18px;border-radius:10px;background:#eef5ff;color:#10233f}.quiz-result.is-fail{background:#fff7ed;color:#7c3a0a}.quiz-result.is-error{background:#fef2f2;color:#991b1b}`;
 
 export function renderCourseQuiz(courseSlug: string): string {
-    const safeSlug = escapeHtml(courseSlug);
     const body = `<main class="quiz-shell"><a class="quiz-link" href="/cursos/${encodeURIComponent(courseSlug)}">← Voltar ao curso</a><p class="eyebrow" style="margin-top:28px">Avaliação final</p><h1>Quiz de conclusão</h1><p class="quiz-intro">Responda às perguntas para verificar seu entendimento. A nota mínima e o limite de tentativas são definidos pelo curso.</p><p id="quiz-status" class="quiz-status" role="status" aria-live="polite">Carregando avaliação...</p><form id="course-quiz" class="quiz-card" hidden><div id="quiz-questions"></div><div class="quiz-actions"><button class="quiz-button" type="submit">Enviar respostas</button><a class="quiz-link" href="/certificados">Meus certificados</a></div></form><div id="quiz-result" class="quiz-result" hidden></div></main><script>(function(){
-    var slug = ${JSON.stringify(courseSlug)};
+    var slug = ${jsStringLiteral(courseSlug)};
     var status = document.getElementById('quiz-status');
     var form = document.getElementById('course-quiz');
     var questions = document.getElementById('quiz-questions');

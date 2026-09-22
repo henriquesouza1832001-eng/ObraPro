@@ -3,6 +3,7 @@ import type { Env } from './env';
 import worker from './index';
 import { hashPassword } from './auth/password';
 import { renderLessonDetail } from './pages/lesson';
+import { renderCourseQuiz } from './pages/quiz';
 import type { Course } from './data/course';
 
 interface FakeSessionRow {
@@ -268,6 +269,7 @@ describe('rotas publicas do Worker', () => {
 
         expect(response.status).toBe(200);
         expect(body).toContain('Como funciona');
+        expect(body).toContain('<main>');
     });
 
     it('GET /cursos lista o catalogo mockado quando nao ha binding D1', async () => {
@@ -298,6 +300,27 @@ describe('rotas publicas do Worker', () => {
         expect(body).toContain('aria-label="Marcar aula concluída:');
     });
 
+    it('GET /cursos/:slug/quiz retorna 200 com o shell do quiz, sem exigir sessao no server-render', async () => {
+        const response = await worker.fetch(get('/cursos/planejamento-da-obra/quiz'), baseEnv());
+        const body = await response.text();
+
+        expect(response.status).toBe(200);
+        expect(body).toContain('Quiz de conclusão');
+        expect(body).toContain("fetch('/api/cursos/' + encodeURIComponent(slug) + '/quiz'");
+        expect(body).toContain('id="quiz-status"');
+    });
+
+    it('GET /cursos/:slug/quiz com curso inexistente retorna 404 real em vez de refletir o slug da URL', async () => {
+        const maliciousSlug = '"><script>alert(1)</script>';
+        const response = await worker.fetch(get(`/cursos/${encodeURIComponent(maliciousSlug)}/quiz`), baseEnv());
+        const body = await response.text();
+
+        expect(response.status).toBe(404);
+        expect(body).toContain('Curso não encontrado');
+        expect(body).not.toContain('<script>alert(1)</script>');
+        expect(body).not.toContain('"><script>');
+    });
+
     it('GET /cursos/:slug inexistente retorna 404 real, sem redirecionar para a home', async () => {
         const response = await worker.fetch(get('/cursos/slug-que-nao-existe'), baseEnv());
         const body = await response.text();
@@ -314,6 +337,15 @@ describe('rotas publicas do Worker', () => {
         expect(response.status).toBe(200);
         expect(body).toContain('O que você precisa saber');
         expect(body).toContain('var lessonId = "mock-lesson-1-1"');
+    });
+
+    it('GET /cursos/:slug/aulas/:lessonId na ultima aula do curso mostra link para o quiz final em vez de "proxima aula" vazio', async () => {
+        const response = await worker.fetch(get('/cursos/planejamento-da-obra/aulas/mock-lesson-3-3'), baseEnv());
+        const body = await response.text();
+
+        expect(response.status).toBe(200);
+        expect(body).toContain('href="/cursos/planejamento-da-obra/quiz"');
+        expect(body).toContain('Fazer quiz final');
     });
 
     it('GET /cursos/:slug/aulas/:lessonId com aula inexistente retorna 404 real', async () => {
@@ -347,6 +379,15 @@ describe('rotas publicas do Worker', () => {
         expect(html).not.toContain('<b>prev</b>');
         expect(html).not.toContain('<b>next</b>');
         expect(html).toContain('&lt;script&gt;alert(1)&lt;/script&gt;');
+    });
+
+    it('renderCourseQuiz nao permite que o slug quebre para fora do bloco <script> inline (jsStringLiteral)', () => {
+        const maliciousSlug = '</script><script>alert(1)</script>';
+
+        const html = renderCourseQuiz(maliciousSlug);
+
+        expect(html).not.toContain('</script><script>alert(1)</script>');
+        expect(html).toContain('\\u003C/script>\\u003Cscript>alert(1)\\u003C/script>');
     });
 
     it('GET /cursos/:slug/aulas/:lessonId com curso inexistente retorna 404 real', async () => {

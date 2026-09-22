@@ -1,5 +1,5 @@
 import type { Course, CourseModule } from '../data/course';
-import { escapeHtml, publicPage } from './layout';
+import { escapeHtml, jsStringLiteral, publicPage } from './layout';
 
 export interface FlatLesson {
     moduleTitle: string;
@@ -16,7 +16,10 @@ const lessonStyles = `.back{color:#1267e8;font-weight:800}.lesson-head{padding:3
 
 export function renderLessonDetail(course: Course, lesson: FlatLesson, prev: FlatLesson | null, next: FlatLesson | null): string {
     const safeCourseSlug = encodeURIComponent(course.slug);
-    const navLinks = `<nav class="lesson-nav" aria-label="Navegação entre aulas">${prev ? `<a href="/cursos/${safeCourseSlug}/aulas/${encodeURIComponent(prev.id)}">← ${escapeHtml(prev.title)}</a>` : '<span></span>'}${next ? `<a href="/cursos/${safeCourseSlug}/aulas/${encodeURIComponent(next.id)}">${escapeHtml(next.title)} →</a>` : '<span></span>'}</nav>`;
+    const nextLink = next
+        ? `<a href="/cursos/${safeCourseSlug}/aulas/${encodeURIComponent(next.id)}">${escapeHtml(next.title)} →</a>`
+        : `<a href="/cursos/${safeCourseSlug}/quiz">Fazer quiz final →</a>`;
+    const navLinks = `<nav class="lesson-nav" aria-label="Navegação entre aulas">${prev ? `<a href="/cursos/${safeCourseSlug}/aulas/${encodeURIComponent(prev.id)}">← ${escapeHtml(prev.title)}</a>` : '<span></span>'}${nextLink}</nav>`;
 
     const body = `<a class="back" style="display:block;padding:12px 5vw;background:#fff;border-bottom:1px solid #d9e0dd" href="/cursos/${safeCourseSlug}">← ${escapeHtml(course.title)}</a>
 <div class="lesson-head"><span class="eyebrow">${escapeHtml(lesson.moduleTitle)}</span><h1>${escapeHtml(lesson.title)}</h1><p>${lesson.durationMinutes} min · ${escapeHtml(course.title)}</p></div>
@@ -31,8 +34,8 @@ export function renderLessonDetail(course: Course, lesson: FlatLesson, prev: Fla
     ${navLinks}
 </main>
 <script>(function(){
-    var courseSlug = ${JSON.stringify(course.slug)};
-    var lessonId = ${JSON.stringify(lesson.id)};
+    var courseSlug = ${jsStringLiteral(course.slug)};
+    var lessonId = ${jsStringLiteral(lesson.id)};
     var status = document.getElementById('lesson-status');
     var sections = {
         body: document.getElementById('lesson-body-section'),

@@ -352,7 +352,7 @@
             <div class="mt-2 h-3 overflow-hidden rounded-full bg-slate-100"><div class="h-full rounded-full bg-brand" style="width:${percent}%"></div></div>
             <p class="mt-4 hidden rounded-md border p-3 text-sm" id="execution-status"></p>
             <ol class="mt-6 grid gap-4">${state.execution.steps.map((step, index) => `
-                <li class="rounded-md border border-slate-200 bg-white p-4 shadow-sm">
+                <li class="rounded-md border border-slate-200 bg-white p-4 shadow-sm" id="execution-step-${index}" tabindex="-1">
                     <div class="flex items-center justify-between gap-3"><h3 class="font-bold">${step.position}. ${escapeHtml(step.title)}</h3><span class="rounded-md px-3 py-1 text-xs font-bold ${step.status === 'completed' ? 'bg-emerald-50 text-emerald-700' : step.status === 'skipped' ? 'bg-slate-100 text-slate-600' : 'bg-amber-50 text-amber-800'}">${{ pending: 'Pendente', completed: 'Concluida', skipped: 'Pulada' }[step.status]}</span></div>
                     <p class="mt-1 text-sm text-slate-600">${escapeHtml(step.instruction)}</p>
                     ${step.safetyNote ? `<p class="mt-2 rounded-md bg-amber-50 p-2 text-xs font-bold text-amber-800">Seguranca: ${escapeHtml(step.safetyNote)}</p>` : ''}
@@ -372,11 +372,16 @@
             ${!allResolved ? '<p class="mt-2 text-xs text-slate-500">Resolva todas as etapas (concluida ou pulada) para ver a conclusao.</p>' : ''}`;
     }
 
+    function restoreExecutionFocus(index) {
+        document.querySelector(`#execution-step-${index}`)?.focus({ preventScroll: true });
+    }
+
     async function updateExecutionStepStatus(index, status) {
         const step = state.execution?.steps[index];
         if (!step) return;
         const note = document.querySelector(`#execution-note-${index}`)?.value ?? step.note ?? '';
         renderExecutionChecklist();
+        restoreExecutionFocus(index);
         executionStatus('Salvando etapa...');
         try {
             await requestJson(`/api/painel/execucoes/${encodeURIComponent(state.execution.id)}/etapas/${encodeURIComponent(step.id)}?organization_id=${encodeURIComponent(state.execution.organizationId)}`, {
@@ -387,6 +392,7 @@
             step.status = status;
             step.note = note;
             renderExecutionChecklist();
+            restoreExecutionFocus(index);
         } catch (error) {
             executionStatus(operationalErrorMessageFor(error), 'error');
         }
@@ -398,15 +404,18 @@
         if (!file) {
             step.evidence = { status: 'idle', file: null, message: '' };
             renderExecutionChecklist();
+            restoreExecutionFocus(index);
             return;
         }
         if (file.size > 10 * 1024 * 1024) {
             step.evidence = { status: 'error', file: null, message: 'Arquivo maior que 10MB. Escolha um arquivo menor.' };
             renderExecutionChecklist();
+            restoreExecutionFocus(index);
             return;
         }
         step.evidence = { status: 'idle', file, message: `Pronto para enviar: ${file.name}` };
         renderExecutionChecklist();
+        restoreExecutionFocus(index);
     }
 
     async function uploadEvidence(index) {
@@ -415,6 +424,7 @@
         step.evidence.status = 'uploading';
         step.evidence.message = 'Enviando evidencia...';
         renderExecutionChecklist();
+        restoreExecutionFocus(index);
         try {
             const form = new FormData();
             form.set('organization_id', state.execution.organizationId);
@@ -426,6 +436,7 @@
             step.evidence = { status: 'error', file: step.evidence.file, message: operationalErrorMessageFor(error) };
         }
         renderExecutionChecklist();
+        restoreExecutionFocus(index);
     }
 
     function renderExecutionConclusion() {
@@ -532,6 +543,10 @@
                 renderListState(document.querySelector('#procedures-list'), 'demo', 'Voce esta vendo uma demonstracao. Procedimentos reais aparecem apos login com uma conta da organizacao.');
                 renderListState(document.querySelector('#checklists-list'), 'demo', 'Voce esta vendo uma demonstracao. Checklists reais aparecem apos login com uma conta da organizacao.');
                 message('Voce esta vendo uma demonstracao. Dados operacionais reais aparecem apos login com uma conta da organizacao.', 'demo');
+                return;
+            }
+            if (error.status === 403) {
+                message('Sua conta nao tem acesso a esta organizacao. Fale com um administrador se acha que isso e um engano.', 'error');
                 return;
             }
             message('Nao foi possivel carregar os dados agora. Tente atualizar a pagina.', 'error');
