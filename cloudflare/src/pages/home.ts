@@ -36,7 +36,8 @@ const homeStyles = `.home-hero{padding:44px 5vw 34px;background:#10233f;color:#f
 .continue-card h3{font-size:15px;margin:0 0 8px}
 .continue-card .progress-bar{height:6px;background:#eef1f0;border-radius:999px;overflow:hidden;margin-top:8px}
 .continue-card .progress-bar span{display:block;height:100%;background:#1267e8}
-.continue-card small{color:#60706a;font-size:12px;margin-top:6px}`;
+.continue-card small{color:#60706a;font-size:12px;margin-top:6px}
+.journey{max-width:1100px;margin:34px auto 0;padding:22px;border:1px solid #dfe5ea;border-radius:14px;background:#fff;box-shadow:0 4px 14px #10233f0b}.journey-head{display:flex;align-items:end;justify-content:space-between;gap:16px;flex-wrap:wrap}.journey-head h2{font-size:clamp(20px,3vw,26px);margin:0;color:#10233f}.journey-head p{margin:6px 0 0;color:#60706a;font-size:14px}.journey-steps{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:18px}.journey-step{padding:14px;border-radius:10px;background:#f4f8ff;border:1px solid #d7e5f7}.journey-step strong{display:block;color:#10233f;font-size:14px}.journey-step span{display:block;margin-top:5px;color:#60706a;font-size:12px;line-height:1.45}@media(max-width:760px){.journey{margin-left:5vw;margin-right:5vw;padding:18px}.journey-steps{grid-template-columns:repeat(2,1fr)}}@media(max-width:430px){.journey-steps{grid-template-columns:1fr}}`;
 
 // Camada visual da home: uma jornada unica, com contraste e ritmo consistentes.
 // Mantem os contratos e os dados do catalogo; apenas reorganiza a apresentacao.
@@ -97,8 +98,8 @@ export function renderLearningHome(courses: Course[], showContinue = false): str
         .sort((left, right) => right[1].count - left[1].count || left[1].label.localeCompare(right[1].label, 'pt-BR'))
         .slice(0, 8)
         .map(([key, value]) => ({ key, label: value.label, tagline: `Aprenda ${value.label.toLocaleLowerCase('pt-BR')} por etapas` }));
-    const freePreview = freeCourses.slice(0, 6);
-    const premiumPreview = premiumCourses.slice(0, 6);
+    const freePreview = freeCourses.slice(0, 10);
+    const premiumPreview = premiumCourses.slice(0, 10);
 
     const body = `
         <section class="home-hero"><div class="home-hero-inner"><div class="hero-copy">
@@ -118,6 +119,15 @@ export function renderLearningHome(courses: Course[], showContinue = false): str
             <section id="continue-section" hidden>
                 <div class="section-title"><h2>Continue de onde parou</h2></div>
                 <div class="continue-row" id="continue-list"></div>
+            </section>
+            <section class="journey" aria-labelledby="journey-title">
+                <div class="journey-head"><div><h2 id="journey-title">Sua jornada no ObraPro</h2><p>Aprenda, pratique e acompanhe seu avanço em cada curso.</p></div><a href="/como-funciona">Como funciona</a></div>
+                <div class="journey-steps">
+                    <div class="journey-step"><strong>1. Escolha uma trilha</strong><span>Encontre o assunto certo por etapa da construção.</span></div>
+                    <div class="journey-step"><strong>2. Estude as aulas</strong><span>Avance no seu ritmo e registre cada aula concluída.</span></div>
+                    <div class="journey-step"><strong>3. Faça o quiz final</strong><span>Teste seu entendimento ao terminar o curso.</span></div>
+                    <div class="journey-step"><strong>4. Emita seu certificado</strong><span>Com 100% das aulas concluídas e aprovação no quiz.</span></div>
+                </div>
             </section>
             ${freeCourses.length > 0 ? `<div class="section-title"><div><h2>Cursos gratuitos para começar</h2><small class="section-note">${freeCourses.length} cursos disponíveis</small></div><a href="/cursos?acesso=free">Ver todos</a></div>${courseRow(freePreview)}` : ''}
             ${premiumCourses.length > 0 ? `<div class="section-title"><div><h2>Cursos completos e premium</h2><small class="section-note">${premiumCourses.length} cursos disponíveis</small></div><a href="/cursos?acesso=premium">Ver todos</a></div>${courseRow(premiumPreview)}` : ''}
