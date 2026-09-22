@@ -1,5 +1,5 @@
 import type { Course, CourseModule } from '../data/course';
-import { escapeHtml, publicPage } from './layout';
+import { escapeHtml, jsStringLiteral, publicPage } from './layout';
 
 export interface FlatLesson {
     moduleTitle: string;
@@ -31,8 +31,8 @@ export function renderLessonDetail(course: Course, lesson: FlatLesson, prev: Fla
     ${navLinks}
 </main>
 <script>(function(){
-    var courseSlug = ${JSON.stringify(course.slug)};
-    var lessonId = ${JSON.stringify(lesson.id)};
+    var courseSlug = ${jsStringLiteral(course.slug)};
+    var lessonId = ${jsStringLiteral(lesson.id)};
     var status = document.getElementById('lesson-status');
     var sections = {
         body: document.getElementById('lesson-body-section'),

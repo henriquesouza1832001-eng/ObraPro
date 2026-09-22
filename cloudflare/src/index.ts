@@ -151,6 +151,16 @@ async function handleCourseDetail(slug: string, courseRepository: CourseReposito
     return html(renderCourseDetail(course, await courseRepository.findModulesByCourseSlug(slug)));
 }
 
+async function handleCourseQuiz(slug: string, courseRepository: CourseRepository): Promise<Response> {
+    const course = await courseRepository.findCourseBySlug(slug);
+
+    if (!course) {
+        return html(renderCourseNotFound(), 404);
+    }
+
+    return html(renderCourseQuiz(course.slug));
+}
+
 async function handleLessonDetail(slug: string, lessonId: string, courseRepository: CourseRepository): Promise<Response> {
     const course = await courseRepository.findCourseBySlug(slug);
 
@@ -1044,7 +1054,7 @@ async function route(request: Request, env: Env): Promise<Response> {
 
     const quizPageMatch = path.match(/^\/cursos\/([^/]+)\/quiz$/);
     if (quizPageMatch && quizPageMatch[1]) {
-        return withSecurityHeaders(html(renderCourseQuiz(decodeURIComponent(quizPageMatch[1]))));
+        return withSecurityHeaders(await handleCourseQuiz(decodeURIComponent(quizPageMatch[1]), courseRepository));
     }
 
     if (path.startsWith('/cursos/')) {

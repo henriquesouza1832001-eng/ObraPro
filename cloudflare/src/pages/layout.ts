@@ -14,6 +14,17 @@ export function escapeHtml(value: string | number): string {
     })[character] ?? character);
 }
 
+/**
+ * Serializa um valor para uso dentro de um bloco <script> inline server-renderizado.
+ * JSON.stringify sozinho nao escapa "<", entao um valor contendo "</script>" fecharia
+ * a tag prematuramente e permitiria injetar HTML/JS arbitrario no meio do documento
+ * (a analise HTML do "</script>" acontece antes do parser JS ver a string). Escapar
+ * "<" para "<" mantem o valor JS identico e elimina esse vetor.
+ */
+export function jsStringLiteral(value: string): string {
+    return JSON.stringify(value).replace(/</g, '\\u003C');
+}
+
 export function publicHeader(activePath: string): string {
     const link = (href: string, label: string): string => {
         const isActive = href === activePath;
