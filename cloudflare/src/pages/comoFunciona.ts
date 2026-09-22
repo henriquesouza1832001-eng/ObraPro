@@ -9,6 +9,7 @@ const styles = `.steps{max-width:1000px;margin:0 auto;padding:42px 5vw;display:g
 
 export function renderComoFunciona(): string {
     const body = `<section class="hero"><span class="eyebrow">Como funciona</span><h1>Do primeiro acesso à prática, em passos simples.</h1><p>O ObraPro ensina cada etapa da construção com aulas curtas, manual, ferramentas e um passo a passo para você aplicar — sem exigir cadastro para conhecer o produto.</p></section>
+<main>
 <section class="steps" aria-label="Passos do ObraPro">
     <article class="step"><span class="num" aria-hidden="true">1</span><h2>Explore o catálogo</h2><p>Veja cursos organizados por etapa da construção, com duração e nível indicados antes de qualquer cadastro.</p></article>
     <article class="step"><span class="num" aria-hidden="true">2</span><h2>Aprenda no seu ritmo</h2><p>Assista aulas curtas com manual, ferramentas e materiais necessários antes de colocar a mão na massa.</p></article>
@@ -16,7 +17,8 @@ export function renderComoFunciona(): string {
     <article class="step"><span class="num" aria-hidden="true">4</span><h2>Use o checklist se quiser</h2><p>Um checklist opcional ajuda a confirmar o que já foi feito. Acompanhamento completo de obra é um módulo profissional futuro, sem substituir o responsável técnico.</p></article>
 </section>
 <div class="cta-row"><a class="cta-primary" href="/cursos">Ver cursos gratuitos</a><a class="cta-secondary" href="/entrar">Entrar no painel</a></div>
-<p class="note">Conteúdo de demonstração da versão inicial do ObraPro. Preços, planos e regras de acesso são definidos no painel administrativo e podem mudar.</p>`;
+<p class="note">Conteúdo de demonstração da versão inicial do ObraPro. Preços, planos e regras de acesso são definidos no painel administrativo e podem mudar.</p>
+</main>`;
 
     return publicPage({ title: 'Como funciona | ObraPro', activePath: '/como-funciona', body, extraStyles: styles });
 }

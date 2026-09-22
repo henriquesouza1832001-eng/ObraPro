@@ -268,6 +268,7 @@ describe('rotas publicas do Worker', () => {
 
         expect(response.status).toBe(200);
         expect(body).toContain('Como funciona');
+        expect(body).toContain('<main>');
     });
 
     it('GET /cursos lista o catalogo mockado quando nao ha binding D1', async () => {
