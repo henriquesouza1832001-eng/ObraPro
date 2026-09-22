@@ -1,0 +1,27 @@
+import { escapeHtml, publicPage } from './layout';
+
+const quizStyles = `.quiz-shell{max-width:820px;margin:0 auto;padding:32px 5vw 56px}.quiz-shell h1{font-size:clamp(26px,4vw,40px);margin:10px 0}.quiz-intro,.quiz-status{color:#5b6a72;line-height:1.6}.quiz-card{margin-top:22px;padding:22px;border:1px solid #d9e0dd;border-radius:12px;background:#fff}.quiz-card fieldset{border:0;padding:0;margin:0 0 24px}.quiz-card legend{font-weight:800;line-height:1.45;margin-bottom:12px}.quiz-option{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid #e4e8eb;border-radius:8px;margin-top:8px;cursor:pointer}.quiz-option:has(input:focus-visible){outline:3px solid #ffb04c;outline-offset:2px}.quiz-actions{display:flex;gap:12px;flex-wrap:wrap}.quiz-button{border:0;border-radius:8px;padding:13px 18px;background:#1267e8;color:#fff;font:inherit;font-weight:800;cursor:pointer}.quiz-button:disabled{opacity:.6;cursor:wait}.quiz-link{display:inline-block;padding:12px 16px;border-radius:8px;border:1px solid #d9e0dd;color:#10233f;font-weight:800}.quiz-result{padding:18px;border-radius:10px;background:#eef5ff;color:#10233f}.quiz-result.is-fail{background:#fff7ed;color:#7c3a0a}.quiz-result.is-error{background:#fef2f2;color:#991b1b}`;
+
+export function renderCourseQuiz(courseSlug: string): string {
+    const safeSlug = escapeHtml(courseSlug);
+    const body = `<main class="quiz-shell"><a class="quiz-link" href="/cursos/${encodeURIComponent(courseSlug)}">← Voltar ao curso</a><p class="eyebrow" style="margin-top:28px">Avaliação final</p><h1>Quiz de conclusão</h1><p class="quiz-intro">Responda às perguntas para verificar seu entendimento. A nota mínima e o limite de tentativas são definidos pelo curso.</p><p id="quiz-status" class="quiz-status" role="status" aria-live="polite">Carregando avaliação...</p><form id="course-quiz" class="quiz-card" hidden><div id="quiz-questions"></div><div class="quiz-actions"><button class="quiz-button" type="submit">Enviar respostas</button><a class="quiz-link" href="/certificados">Meus certificados</a></div></form><div id="quiz-result" class="quiz-result" hidden></div></main><script>(function(){
+    var slug = ${JSON.stringify(courseSlug)};
+    var status = document.getElementById('quiz-status');
+    var form = document.getElementById('course-quiz');
+    var questions = document.getElementById('quiz-questions');
+    var result = document.getElementById('quiz-result');
+    function message(text, kind) { status.textContent = text; status.className = 'quiz-status' + (kind ? ' ' + kind : ''); }
+    function renderQuiz(data) {
+        if (!data || !Array.isArray(data.questions) || !data.questions.length) { message('Esta avaliação ainda não está disponível.'); return; }
+        questions.innerHTML = data.questions.map(function(q, index) {
+            return '<fieldset><legend>' + (index + 1) + '. ' + escapeText(q.prompt) + '</legend>' + q.options.map(function(option, optionIndex) { return '<label class="quiz-option"><input required type="radio" name="question-' + escapeAttr(q.id) + '" value="' + optionIndex + '"><span>' + escapeText(option) + '</span></label>'; }).join('') + '</fieldset>';
+        }).join('');
+        form.hidden = false; status.hidden = true;
+    }
+    function escapeText(value) { var span = document.createElement('span'); span.textContent = String(value || ''); return span.innerHTML; }
+    function escapeAttr(value) { return encodeURIComponent(String(value || '')); }
+    fetch('/api/cursos/' + encodeURIComponent(slug) + '/quiz', { credentials: 'same-origin' }).then(function(res) { if (res.status === 401) throw new Error('auth'); if (!res.ok) throw new Error('unavailable'); return res.json(); }).then(function(payload) { renderQuiz(payload.data); }).catch(function(error) { message(error.message === 'auth' ? 'Entre para acessar o quiz final.' : 'Não foi possível carregar o quiz agora.'); });
+    form.addEventListener('submit', function(event) { event.preventDefault(); var button = form.querySelector('button[type=submit]'); var answers = {}; form.querySelectorAll('input:checked').forEach(function(input) { answers[decodeURIComponent(input.name.slice(9))] = Number(input.value); }); button.disabled = true; fetch('/api/cursos/' + encodeURIComponent(slug) + '/quiz', { method:'POST', credentials:'same-origin', headers:{'Content-Type':'application/json'}, body:JSON.stringify({answers:answers}) }).then(function(res) { return res.json().then(function(payload) { return { ok: res.ok, payload: payload }; }); }).then(function(out) { button.disabled = false; result.hidden = false; result.className = 'quiz-result' + (out.ok && out.payload.data && !out.payload.data.passed ? ' is-fail' : ''); if (!out.ok) { result.textContent = out.payload.error === 'attempt_limit_reached' ? 'Você atingiu o limite de tentativas. Revise o curso antes de tentar novamente.' : 'Não foi possível registrar suas respostas.'; return; } var data = out.payload.data; result.textContent = data.passed ? 'Aprovado! Seu certificado já pode aparecer em Meus certificados.' : 'Você ainda não atingiu a nota mínima. Revise o conteúdo e tente novamente.'; }).catch(function(){ button.disabled = false; result.hidden = false; result.className = 'quiz-result is-error'; result.textContent = 'Não foi possível enviar suas respostas agora.'; }); });
+})();</script>`;
+    return publicPage({ title: 'Quiz de conclusão | ObraPro', activePath: '/cursos', body, extraStyles: quizStyles });
+}
