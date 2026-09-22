@@ -339,6 +339,15 @@ describe('rotas publicas do Worker', () => {
         expect(body).toContain('var lessonId = "mock-lesson-1-1"');
     });
 
+    it('GET /cursos/:slug/aulas/:lessonId na ultima aula do curso mostra link para o quiz final em vez de "proxima aula" vazio', async () => {
+        const response = await worker.fetch(get('/cursos/planejamento-da-obra/aulas/mock-lesson-3-3'), baseEnv());
+        const body = await response.text();
+
+        expect(response.status).toBe(200);
+        expect(body).toContain('href="/cursos/planejamento-da-obra/quiz"');
+        expect(body).toContain('Fazer quiz final');
+    });
+
     it('GET /cursos/:slug/aulas/:lessonId com aula inexistente retorna 404 real', async () => {
         const response = await worker.fetch(get('/cursos/planejamento-da-obra/aulas/aula-que-nao-existe'), baseEnv());
         const body = await response.text();
