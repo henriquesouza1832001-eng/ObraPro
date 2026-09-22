@@ -166,3 +166,5 @@ Todas as mudancas relevantes do ObraPro sao registradas aqui. O formato segue Ke
 
 [Unreleased]: https://github.com/henriquesouza1832001-eng/ObraPro/compare/main...develop
 [0.1.0]: https://github.com/henriquesouza1832001-eng/ObraPro/releases/tag/v0.1.0
+
+- Migration `0017_repair_editorial_encoding.sql` criada e aplicada no D1 de preview (`obrapro-preview-db`); consulta confirmou `bad_courses=0`, `bad_modules=0`, `bad_lessons=0`. A migration nao altera slugs, precos ou regras de acesso.
