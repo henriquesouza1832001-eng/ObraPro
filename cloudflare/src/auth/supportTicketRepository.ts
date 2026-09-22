@@ -54,4 +54,30 @@ export class D1SupportTicketRepository {
             updatedAt: String(row.updated_at),
         };
     }
+
+    public async listForUser(userId: string, limit = 50): Promise<Array<Omit<SupportTicket, 'userId' | 'sessionContext'>>> {
+        const safeLimit = Math.min(Math.max(Math.trunc(limit), 1), 100);
+        const result = await this.database.prepare(`
+            SELECT id, user_id, organization_id, title, description, category, priority,
+                   status, route, correlation_id, session_context_json, created_at, updated_at
+            FROM support_tickets
+            WHERE user_id = ?
+            ORDER BY created_at DESC
+            LIMIT ?
+        `).bind(userId, safeLimit).all<Record<string, unknown>>();
+
+        return result.results.map((row) => ({
+            id: String(row.id),
+            organizationId: row.organization_id ? String(row.organization_id) : null,
+            title: String(row.title),
+            description: String(row.description),
+            category: row.category as SupportTicket['category'],
+            priority: row.priority as SupportTicket['priority'],
+            status: row.status as SupportTicket['status'],
+            route: row.route ? String(row.route) : null,
+            correlationId: row.correlation_id ? String(row.correlation_id) : null,
+            createdAt: String(row.created_at),
+            updatedAt: String(row.updated_at),
+        }));
+    }
 }

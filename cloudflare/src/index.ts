@@ -1,5 +1,5 @@
 import type { Env } from './env';
-import { withSecurityHeaders, redirect } from './http/security';
+import { withSecurityHeaders, redirect, isCrossSiteMutation } from './http/security';
 import { isAuthenticated, sessionToken } from './auth/demoSession';
 import { renderLoginPage } from './pages/login';
 import { D1MembershipRepository } from './auth/membershipRepository';
@@ -17,6 +17,7 @@ import type { CourseRepository } from './data/course';
 import { renderCourseCatalog, renderCourseDetail, renderCourseNotFound } from './pages/courses';
 import { renderLessonDetail, renderLessonNotFound, flattenLessons } from './pages/lesson';
 import { renderAdminPanel } from './pages/admin';
+import { renderCertificatesBlocked, renderCertificateVerification } from './pages/certificates';
 import { renderLearningHome } from './pages/home';
 import { renderComoFunciona } from './pages/comoFunciona';
 import { renderServerError } from './pages/serverError';
@@ -26,6 +27,7 @@ import { D1LessonContentRepository } from './data/lessonContentRepository';
 import { D1UserRepository } from './auth/userRepository';
 import { D1CatalogAuthorization } from './auth/catalogAuthorization';
 import { D1AdminRepository } from './data/adminRepository';
+import { D1CourseQuizRepository } from './data/courseQuizRepository';
 
 function courseRepositoryFor(env: Env): CourseRepository {
     return env.COURSES_DB ? new D1CourseRepository(env.COURSES_DB) : new MockCourseRepository();
@@ -40,6 +42,13 @@ function json(body: unknown, status = 200): Response {
 }
 
 function privateJson(body: unknown, status = 200): Response {
+    const response = json(body, status);
+    response.headers.set('Cache-Control', 'no-store');
+
+    return withSecurityHeaders(response);
+}
+
+function publicNoStoreJson(body: unknown, status = 200): Response {
     const response = json(body, status);
     response.headers.set('Cache-Control', 'no-store');
 
@@ -165,8 +174,12 @@ async function route(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
     const path = url.pathname;
 
+    if (path.startsWith('/api/') && path !== '/api/health' && isCrossSiteMutation(request, url.origin)) {
+        return privateJson({ error: 'csrf_rejected' }, 403);
+    }
+
     if (path === '/health') {
-        return json({ status: 'ok', service: 'obrapro-worker' });
+        return withSecurityHeaders(json({ status: 'ok', service: 'obrapro-worker' }));
     }
 
     const adminCatalogRead = path === '/api/admin/catalogo' && request.method === 'GET';
@@ -314,8 +327,100 @@ async function route(request: Request, env: Env): Promise<Response> {
         return privateJson({ data: updated });
     }
 
+    const certificateRevocationMatch = path.match(/^\/api\/admin\/certificados\/([A-Za-z0-9_-]{1,128})\/revogacao$/);
+    if (certificateRevocationMatch && request.method === 'PATCH') {
+        const session = await privateApiSession(request, env);
+        if (!session) {
+            return privateJson({ error: 'authentication_required' }, 401);
+        }
+        if (!env.COURSES_DB || !env.AUTH_DB) {
+            return privateJson({ error: 'certificate_data_unavailable' }, 503);
+        }
+        if (!await new D1CatalogAuthorization(new D1UserRepository(env.AUTH_DB)).canManageCatalog(session.userId)) {
+            return privateJson({ error: 'catalog_admin_required' }, 403);
+        }
+
+        let body: unknown;
+        try {
+            body = await request.json<unknown>();
+        } catch {
+            return privateJson({ error: 'invalid_revocation_payload' }, 422);
+        }
+        if (!body || typeof body !== 'object' || typeof (body as { revoked?: unknown }).revoked !== 'boolean') {
+            return privateJson({ error: 'invalid_revocation_payload' }, 422);
+        }
+
+        const certificateId = certificateRevocationMatch[1] ?? '';
+        const revoked = (body as { revoked: boolean }).revoked;
+        const changed = await new D1CourseQuizRepository(env.COURSES_DB).setCertificateRevocation(certificateId, revoked, new Date().toISOString());
+        if (!changed) {
+            return privateJson({ error: 'certificate_not_found' }, 404);
+        }
+
+        await new D1AdminRepository(env.COURSES_DB).recordAuditEvent({
+            id: crypto.randomUUID(),
+            actorUserId: session.userId,
+            action: 'certificate.revocation.set',
+            resourceType: 'certificate',
+            resourceId: certificateId,
+            metadata: { revoked },
+            createdAt: new Date().toISOString(),
+        });
+
+        return privateJson({ data: { id: certificateId, status: revoked ? 'revoked' : 'active' } });
+    }
+
     const courseProgressMatch = path.match(/^\/api\/cursos\/([^/]+)\/progresso$/);
     const courseLessonProgressMatch = path.match(/^\/api\/cursos\/([^/]+)\/aulas\/([^/]+)\/progresso$/);
+    if (path === '/api/cursos/progresso' && request.method === 'GET') {
+        const session = await privateApiSession(request, env);
+        if (!session) {
+            return privateJson({ error: 'authentication_required' }, 401);
+        }
+        if (!env.COURSES_DB) {
+            return privateJson({ error: 'course_data_unavailable' }, 503);
+        }
+
+        const requestedLimit = Number(url.searchParams.get('limit') ?? '20');
+        const limit = Number.isFinite(requestedLimit) ? requestedLimit : 20;
+        const summaries = await new D1CourseProgressRepository(env.COURSES_DB).listProgressSummaries(session.userId, limit);
+
+        return privateJson({ data: summaries });
+    }
+
+    const quizMatch = path.match(/^\/api\/cursos\/([^/]+)\/quiz$/);
+    if (quizMatch && (request.method === 'GET' || request.method === 'POST')) {
+        const session = await privateApiSession(request, env);
+        if (!session) return privateJson({ error: 'authentication_required' }, 401);
+        if (!env.COURSES_DB) return privateJson({ error: 'course_data_unavailable' }, 503);
+        const courseSlug = decodeURIComponent(quizMatch[1] ?? '');
+        const repository = new D1CourseQuizRepository(env.COURSES_DB);
+        if (request.method === 'GET') {
+            const quiz = await repository.findPublishedForUser(session.userId, courseSlug);
+            return quiz ? privateJson({ data: quiz }) : privateJson({ error: 'quiz_not_available' }, 404);
+        }
+        let body: unknown;
+        try { body = await request.json(); } catch { return privateJson({ error: 'quiz_submission_invalid' }, 422); }
+        const answers = body && typeof body === 'object' && !Array.isArray(body) ? (body as Record<string, unknown>).answers : null;
+        if (!answers || typeof answers !== 'object' || Array.isArray(answers)) return privateJson({ error: 'quiz_submission_invalid' }, 422);
+        const result = await repository.submit(session.userId, courseSlug, answers as Record<string, unknown>, new Date().toISOString());
+        return result ? privateJson({ data: result }, 201) : privateJson({ error: 'quiz_not_available' }, 404);
+    }
+
+    if (path === '/api/certificados' && request.method === 'GET') {
+        const session = await privateApiSession(request, env);
+        if (!session) return privateJson({ error: 'authentication_required' }, 401);
+        if (!env.COURSES_DB) return privateJson({ error: 'course_data_unavailable' }, 503);
+        return privateJson({ data: await new D1CourseQuizRepository(env.COURSES_DB).listCertificates(session.userId) });
+    }
+
+    const certificateVerificationMatch = path.match(/^\/api\/certificados\/verificar\/([A-Za-z0-9_-]{32,64})$/);
+    if (certificateVerificationMatch && request.method === 'GET') {
+        if (!env.COURSES_DB) return publicNoStoreJson({ error: 'certificate_data_unavailable' }, 503);
+        const certificate = await new D1CourseQuizRepository(env.COURSES_DB).verifyCertificate(certificateVerificationMatch[1] ?? '');
+        return certificate ? publicNoStoreJson({ data: certificate }) : publicNoStoreJson({ error: 'certificate_not_found' }, 404);
+    }
+
     const isCourseProgressRead = Boolean(courseProgressMatch) && request.method === 'GET';
     const isCourseLessonProgressWrite = Boolean(courseLessonProgressMatch) && request.method === 'POST';
     if (isCourseProgressRead || isCourseLessonProgressWrite) {
@@ -755,6 +860,22 @@ async function route(request: Request, env: Env): Promise<Response> {
         }
     }
 
+    if (path === '/api/painel/suporte/chamados' && request.method === 'GET') {
+        const session = await privateApiSession(request, env);
+        if (!session) {
+            return privateJson({ error: 'authentication_required' }, 401);
+        }
+        if (!env.OPERATIONS_DB) {
+            return privateJson({ error: 'operational_data_unavailable' }, 503);
+        }
+
+        const requestedLimit = Number(url.searchParams.get('limit') ?? '50');
+        const limit = Number.isFinite(requestedLimit) ? requestedLimit : 50;
+        const tickets = await new D1SupportTicketRepository(env.OPERATIONS_DB).listForUser(session.userId, limit);
+
+        return privateJson({ data: tickets });
+    }
+
     if (path === '/api/painel/evidencias' && request.method === 'POST') {
         const session = await privateApiSession(request, env);
         if (!session) {
@@ -907,8 +1028,9 @@ async function route(request: Request, env: Env): Promise<Response> {
         const category = url.searchParams.get('categoria') ?? undefined;
         const accessParam = url.searchParams.get('acesso');
         const access = accessParam === 'free' || accessParam === 'premium' ? accessParam : undefined;
+        const search = url.searchParams.get('busca') ?? undefined;
 
-        return withSecurityHeaders(html(renderCourseCatalog(courses, category, access)));
+        return withSecurityHeaders(html(renderCourseCatalog(courses, category, access, search)));
     }
 
     const lessonPageMatch = path.match(/^\/cursos\/([^/]+)\/aulas\/([^/]+)$/);
@@ -988,6 +1110,23 @@ async function route(request: Request, env: Env): Promise<Response> {
         return withSecurityHeaders(html(renderAdminPanel()));
     }
 
+    if (path === '/certificados') {
+        const authenticated = env.AUTH_DB
+            ? await authenticateRequest(request, env)
+            : await isAuthenticated(request, env);
+
+        if (!authenticated) {
+            return redirect('/entrar');
+        }
+
+        return withSecurityHeaders(html(renderCertificatesBlocked()));
+    }
+
+    const certificateVerificationPageMatch = path.match(/^\/certificados\/verificar\/([A-Za-z0-9_-]{1,64})$/);
+    if (certificateVerificationPageMatch) {
+        return withSecurityHeaders(html(renderCertificateVerification(certificateVerificationPageMatch[1] ?? '')));
+    }
+
     if (path === '/dashboard.html') {
         return new Response('Not found', { status: 404 });
     }
@@ -1000,7 +1139,7 @@ async function route(request: Request, env: Env): Promise<Response> {
  * cair na pagina de erro sanitizada em vez de vazar uma excecao nao tratada
  * quando o repositorio de dados (mock hoje, D1 depois) falhar.
  */
-const renderedRoutePrefixes = ['/', '/como-funciona', '/cursos', '/admin'];
+const renderedRoutePrefixes = ['/', '/como-funciona', '/cursos', '/admin', '/certificados'];
 
 export default {
     async fetch(request: Request, env: Env): Promise<Response> {

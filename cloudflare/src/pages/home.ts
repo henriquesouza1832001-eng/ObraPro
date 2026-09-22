@@ -1,6 +1,6 @@
 import type { Course } from '../data/course';
-import { publicPage } from './layout';
-import { categoryAccent, categoryBucket, priceLabel } from './courses';
+import { escapeHtml, publicPage } from './layout';
+import { categoryAccent, categoryKey, priceLabel } from './courses';
 
 /**
  * Home publica de aprendizagem, fiel ao mockup do responsavel: saudacao, busca
@@ -21,6 +21,7 @@ const homeStyles = `.home-hero{padding:44px 5vw 34px;background:#10233f;color:#f
 .category-card span.count{font-size:11px;opacity:.85;margin-top:auto}
 .category-card.outline{color:#10233f;background:#fff}
 .section-title{display:flex;align-items:end;justify-content:space-between;gap:12px;margin:38px 0 14px;flex-wrap:wrap}
+.section-note{display:block;color:#60706a;font-size:12px;margin-top:4px}
 .section-title h2{font-size:19px;margin:0}
 .section-title a{color:#1267e8;font-weight:700;font-size:14px}
 .course-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}
@@ -29,7 +30,17 @@ const homeStyles = `.home-hero{padding:44px 5vw 34px;background:#10233f;color:#f
 .course-row .card p{color:#60706a;font-size:13px;line-height:1.5;flex:1}
 .course-row .tag{align-self:flex-start;padding:5px 8px;border-radius:5px;background:#eef5ff;color:#1267e8;font-size:11px;font-weight:800}
 .course-row .markers{display:flex;gap:10px;color:#60706a;font-size:12px;border-top:1px solid #f4f6f5;padding-top:10px;margin-top:auto}
-.empty-search{display:none;margin-top:16px;padding:20px;border:1px dashed #d9c9a3;border-radius:8px;color:#60706a;text-align:center}`;
+.empty-search{display:none;margin-top:16px;padding:20px;border:1px dashed #d9c9a3;border-radius:8px;color:#60706a;text-align:center}
+.continue-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}
+.continue-card{display:flex;flex-direction:column;padding:16px;border:1px solid #e4dcc8;border-radius:8px;background:#fff}
+.continue-card h3{font-size:15px;margin:0 0 8px}
+.continue-card .progress-bar{height:6px;background:#eef1f0;border-radius:999px;overflow:hidden;margin-top:8px}
+.continue-card .progress-bar span{display:block;height:100%;background:#1267e8}
+.continue-card small{color:#60706a;font-size:12px;margin-top:6px}`;
+
+// Camada visual da home: uma jornada unica, com contraste e ritmo consistentes.
+// Mantem os contratos e os dados do catalogo; apenas reorganiza a apresentacao.
+const homeVisualOverrides = `.home-hero{padding:58px 5vw 48px;background:linear-gradient(135deg,#10233f 0%,#17365d 100%);border-bottom:1px solid #244a73}.home-hero h1{max-width:760px;font-size:clamp(32px,5vw,56px);line-height:1.04;letter-spacing:-.035em}.home-hero p{font-size:17px;line-height:1.55}.search{max-width:720px;margin-top:28px}.search input{min-height:58px;border:2px solid transparent;border-radius:12px;box-shadow:0 12px 28px #07162e55}.search input:focus{outline:3px solid #ffb04c;outline-offset:3px}.categories{max-width:1040px;gap:14px;margin-top:34px}.category-card{min-height:136px;padding:18px;border:1px solid #ffffff2e;border-radius:14px;transition:transform .15s,box-shadow .15s}.category-card:hover{transform:translateY(-3px);box-shadow:0 12px 24px #07162e44}.category-card:focus-visible,.section-title a:focus-visible,.course-row .card:focus-visible,.continue-card:focus-visible{outline:3px solid #ffb04c;outline-offset:3px}.section-title{max-width:1100px;margin:48px auto 16px}.section-title h2{font-size:clamp(21px,3vw,27px);letter-spacing:-.02em}.course-row,.continue-row{max-width:1100px;margin-left:auto;margin-right:auto;gap:16px}.course-row .card{min-height:270px;padding:20px;border:1px solid #dfe5ea;border-radius:14px;box-shadow:0 5px 16px #10233f0b;transition:transform .15s,box-shadow .15s}.course-row .card:hover{transform:translateY(-3px);box-shadow:0 12px 26px #10233f18}.course-row .card h3{font-size:17px;line-height:1.25}.course-row .card p{font-size:14px;line-height:1.55}.continue-card{padding:20px;border:1px solid #b8d3f2;border-radius:14px;background:#f4f8ff}.continue-card h3{font-size:17px;line-height:1.3}.home-hero+main.content{padding-top:8px}@media(max-width:639px){.home-hero{padding-top:40px;padding-bottom:36px}.categories{gap:10px}.category-card{min-height:118px;padding:14px}.section-title{margin-top:34px}}`;
 
 const categoryStyle: Record<string, { bg: string; icon: string }> = {
     fundacoes: {
@@ -54,42 +65,40 @@ const categoryStyle: Record<string, { bg: string; icon: string }> = {
     },
 };
 
-const categoryLabels: Array<{ key: string; label: string; tagline: string }> = [
-    { key: 'fundacoes', label: 'Fundações', tagline: 'Base segura para toda obra' },
-    { key: 'alvenaria', label: 'Alvenaria', tagline: 'Paredes alinhadas e firmes' },
-    { key: 'hidraulica', label: 'Hidráulica', tagline: 'Água e esgoto sem retrabalho' },
-    { key: 'eletrica', label: 'Elétrica', tagline: 'Instalações com segurança' },
-    { key: 'acabamentos', label: 'Acabamentos', tagline: 'O capricho que se vê' },
-    { key: 'outros', label: 'Outros', tagline: 'Mais etapas da construção' },
-];
-
 function categoryCard(key: string, label: string, tagline: string, count: number): string {
-    const style = categoryStyle[key];
-    const outline = !style;
+    const style = categoryStyle[key] ?? { bg: categoryAccent[key] ?? '#64748b', icon: '<circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/>' };
     const iconMarkup = style
         ? `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">${style.icon}</svg>`
         : '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>';
 
-    return `<a class="category-card${outline ? ' outline' : ''}" style="${style ? `background:${style.bg}` : ''}" href="/cursos?categoria=${key}">${iconMarkup}<strong>${label}</strong><small>${tagline}</small><span class="count">${count === 1 ? '1 curso' : `${count} cursos`}</span></a>`;
+    return `<a class="category-card" style="background:${style.bg}" href="/cursos?categoria=${encodeURIComponent(key)}">${iconMarkup}<strong>${escapeHtml(label)}</strong><small>${escapeHtml(tagline)}</small><span class="count">${count === 1 ? '1 curso' : `${count} cursos`}</span></a>`;
 }
 
 function courseRow(courses: Course[]): string {
     return `<div class="course-row">${courses.map((course) => {
-        const accent = categoryAccent[categoryBucket(course.category)] ?? '#94a3b8';
+        const accent = categoryAccent[categoryKey(course.category)] ?? '#94a3b8';
 
-        return `<a class="card" style="border-top-color:${accent}" href="/cursos/${course.slug}" data-course-title="${course.title.toLowerCase()}"><span class="tag">${course.category}</span><h3>${course.title}</h3><p>${course.description}</p><div class="markers"><span>${course.modulesCount} módulos</span><span>${course.durationMinutes} min</span></div></a>`;
+        return `<a class="card" style="border-top-color:${accent}" href="/cursos/${encodeURIComponent(course.slug)}" data-course-title="${escapeHtml(course.title.toLocaleLowerCase('pt-BR'))}"><span class="tag">${escapeHtml(course.category)}</span><h3>${escapeHtml(course.title)}</h3><p>${escapeHtml(course.description)}</p><div class="markers"><span>${course.modulesCount} módulos</span><span>${course.durationMinutes} min</span></div></a>`;
     }).join('')}</div>`;
 }
 
 export function renderLearningHome(courses: Course[]): string {
-    const counts: Record<string, number> = { fundacoes: 0, alvenaria: 0, hidraulica: 0, eletrica: 0, acabamentos: 0, outros: 0 };
+    const counts: Record<string, number> = {};
+    const labels = new Map<string, { label: string; count: number }>();
     courses.forEach((course) => {
-        const key = categoryBucket(course.category);
+        const key = categoryKey(course.category);
         counts[key] = (counts[key] ?? 0) + 1;
+        labels.set(key, { label: course.category, count: counts[key] });
     });
 
     const freeCourses = courses.filter((course) => course.accessType === 'free');
     const premiumCourses = courses.filter((course) => course.accessType === 'premium');
+    const categoryLabels = [...labels.entries()]
+        .sort((left, right) => right[1].count - left[1].count || left[1].label.localeCompare(right[1].label, 'pt-BR'))
+        .slice(0, 8)
+        .map(([key, value]) => ({ key, label: value.label, tagline: `Aprenda ${value.label.toLocaleLowerCase('pt-BR')} por etapas` }));
+    const freePreview = freeCourses.slice(0, 6);
+    const premiumPreview = premiumCourses.slice(0, 6);
 
     const body = `
         <section class="home-hero">
@@ -104,8 +113,12 @@ export function renderLearningHome(courses: Course[]): string {
             <div class="categories">${categoryLabels.map(({ key, label, tagline }) => categoryCard(key, label, tagline, counts[key] ?? 0)).join('')}</div>
         </section>
         <main class="content" style="padding-top:0">
-            ${freeCourses.length > 0 ? `<div class="section-title"><h2>Cursos gratuitos para começar</h2><a href="/cursos">Ver catálogo completo</a></div>${courseRow(freeCourses)}` : ''}
-            ${premiumCourses.length > 0 ? `<div class="section-title"><h2>Cursos completos e premium</h2><a href="/cursos">Ver catálogo completo</a></div>${courseRow(premiumCourses)}` : ''}
+            <section id="continue-section" hidden>
+                <div class="section-title"><h2>Continue de onde parou</h2></div>
+                <div class="continue-row" id="continue-list"></div>
+            </section>
+            ${freeCourses.length > 0 ? `<div class="section-title"><div><h2>Cursos gratuitos para começar</h2><small class="section-note">${freeCourses.length} cursos disponíveis</small></div><a href="/cursos?acesso=free">Ver todos</a></div>${courseRow(freePreview)}` : ''}
+            ${premiumCourses.length > 0 ? `<div class="section-title"><div><h2>Cursos completos e premium</h2><small class="section-note">${premiumCourses.length} cursos disponíveis</small></div><a href="/cursos?acesso=premium">Ver todos</a></div>${courseRow(premiumPreview)}` : ''}
             ${courses.length === 0 ? '<p class="empty" style="margin-top:24px;padding:32px;border:1px dashed #b9c5c0;border-radius:7px;text-align:center;color:#60706a">Nenhum curso publicado no momento. Volte em breve — novo conteúdo está a caminho.</p>' : ''}
             <p class="empty-search" id="home-empty-search">Nenhum curso encontrado para essa busca.</p>
         </main>
@@ -124,7 +137,30 @@ export function renderLearningHome(courses: Course[]): string {
                 });
                 empty.style.display = query && visible === 0 ? 'block' : 'none';
             });
+        })();
+        (function () {
+            var section = document.getElementById('continue-section');
+            var list = document.getElementById('continue-list');
+            if (!section || !list) return;
+            fetch('/api/cursos/progresso?limit=6', { credentials: 'same-origin' })
+                .then(function (res) { return res.ok ? res.json() : null; })
+                .then(function (payload) {
+                    var summaries = payload && Array.isArray(payload.data) ? payload.data : [];
+                    if (!summaries.length) return;
+                    list.innerHTML = summaries.map(function (item) {
+                        var total = item.totalLessons || 0;
+                        var done = item.completedCount || 0;
+                        var percent = total > 0 ? Math.round((done / total) * 100) : 0;
+                        var href = '/cursos/' + encodeURIComponent(item.courseSlug);
+                        var title = String(item.courseTitle || '');
+                        var span = document.createElement('span');
+                        span.textContent = title;
+                        return '<a class="continue-card" href="' + href + '"><h3>' + span.innerHTML + '</h3><small>' + done + ' de ' + total + ' aulas concluídas</small><div class="progress-bar"><span style="width:' + percent + '%"></span></div></a>';
+                    }).join('');
+                    section.hidden = false;
+                })
+                .catch(function () {});
         })();</script>`;
 
-    return publicPage({ title: 'ObraPro | Aprenda a construir com clareza', activePath: '/', body, extraStyles: homeStyles });
+    return publicPage({ title: 'ObraPro | Aprenda a construir com clareza', activePath: '/', body, extraStyles: `${homeStyles}${homeVisualOverrides}` });
 }

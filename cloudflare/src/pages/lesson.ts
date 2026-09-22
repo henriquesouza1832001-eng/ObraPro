@@ -1,5 +1,5 @@
 import type { Course, CourseModule } from '../data/course';
-import { publicPage } from './layout';
+import { escapeHtml, publicPage } from './layout';
 
 export interface FlatLesson {
     moduleTitle: string;
@@ -15,10 +15,11 @@ export function flattenLessons(modules: CourseModule[]): FlatLesson[] {
 const lessonStyles = `.back{color:#1267e8;font-weight:800}.lesson-head{padding:20px 5vw 4px}.lesson-head .eyebrow{color:#f47b20;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em}.lesson-head h1{font-size:clamp(22px,3.6vw,30px);line-height:1.2;margin:8px 0 4px;color:#10233f;max-width:820px}.lesson-head p{color:#5b6a72;font-size:13.5px;margin:0}.layout{max-width:760px;margin:0 auto;padding:16px 5vw 34px;display:flex;flex-direction:column;gap:18px}.progress-row{display:flex;align-items:center;gap:8px;font-size:13px;color:#10233f;background:#eef5ff;border-radius:999px;padding:8px 14px;align-self:flex-start}.lesson-status{padding:16px;border-radius:7px;background:#eef5ff;color:#10233f;font-size:14px}.lesson-status.is-error{background:#fef2f2;color:#991b1b}.lesson-section{background:#fff;border:1px solid #d9e0dd;border-radius:7px;padding:20px}.lesson-section h2{font-size:16px;margin:0 0 10px}.lesson-section p{color:#374151;line-height:1.6;white-space:pre-line}.lesson-section ul,.lesson-section ol{margin:0;padding-left:20px;color:#374151;line-height:1.7}.safety-box{background:#fff7ed;border:1px solid #fed7aa;border-left:4px solid #f47b20;color:#7c3a0a}.safety-box h2{display:flex;align-items:center;gap:8px;color:#7c3a0a}.lesson-nav{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:8px}.lesson-nav a{padding:12px 16px;border-radius:6px;border:1px solid #d9e0dd;font-weight:800;color:#10233f}.lesson-nav a:focus-visible,.back:focus-visible{outline:3px solid #1267e8;outline-offset:2px}`;
 
 export function renderLessonDetail(course: Course, lesson: FlatLesson, prev: FlatLesson | null, next: FlatLesson | null): string {
-    const navLinks = `<nav class="lesson-nav" aria-label="Navegação entre aulas">${prev ? `<a href="/cursos/${course.slug}/aulas/${prev.id}">← ${prev.title}</a>` : '<span></span>'}${next ? `<a href="/cursos/${course.slug}/aulas/${next.id}">${next.title} →</a>` : '<span></span>'}</nav>`;
+    const safeCourseSlug = encodeURIComponent(course.slug);
+    const navLinks = `<nav class="lesson-nav" aria-label="Navegação entre aulas">${prev ? `<a href="/cursos/${safeCourseSlug}/aulas/${encodeURIComponent(prev.id)}">← ${escapeHtml(prev.title)}</a>` : '<span></span>'}${next ? `<a href="/cursos/${safeCourseSlug}/aulas/${encodeURIComponent(next.id)}">${escapeHtml(next.title)} →</a>` : '<span></span>'}</nav>`;
 
-    const body = `<a class="back" style="display:block;padding:12px 5vw;background:#fff;border-bottom:1px solid #d9e0dd" href="/cursos/${course.slug}">← ${course.title}</a>
-<div class="lesson-head"><span class="eyebrow">${lesson.moduleTitle}</span><h1>${lesson.title}</h1><p>${lesson.durationMinutes} min · ${course.title}</p></div>
+    const body = `<a class="back" style="display:block;padding:12px 5vw;background:#fff;border-bottom:1px solid #d9e0dd" href="/cursos/${safeCourseSlug}">← ${escapeHtml(course.title)}</a>
+<div class="lesson-head"><span class="eyebrow">${escapeHtml(lesson.moduleTitle)}</span><h1>${escapeHtml(lesson.title)}</h1><p>${lesson.durationMinutes} min · ${escapeHtml(course.title)}</p></div>
 <main class="layout">
     <div class="progress-row" id="lesson-progress-row" hidden><label><input type="checkbox" id="lesson-complete-check" disabled> Marcar esta aula como concluída</label></div>
     <p class="lesson-status" id="lesson-status" role="status" aria-live="polite">Carregando conteúdo da aula...</p>
@@ -131,7 +132,7 @@ export function renderLessonDetail(course: Course, lesson: FlatLesson, prev: Fla
 }
 
 export function renderLessonNotFound(course: Course): string {
-    const body = `<main class="content" style="text-align:center;padding-top:80px"><h1>Aula não encontrada</h1><p style="color:#60706a;margin-top:8px">Esse link pode estar desatualizado.</p><a class="button" style="display:inline-block;margin-top:24px" href="/cursos/${course.slug}">Voltar ao curso</a></main>`;
+    const body = `<main class="content" style="text-align:center;padding-top:80px"><h1>Aula não encontrada</h1><p style="color:#60706a;margin-top:8px">Esse link pode estar desatualizado.</p><a class="button" style="display:inline-block;margin-top:24px" href="/cursos/${encodeURIComponent(course.slug)}">Voltar ao curso</a></main>`;
 
     return publicPage({ title: `Aula não encontrada | ${course.title} | ObraPro`, activePath: '/cursos', body, extraStyles: '.button{padding:14px 22px;background:#1267e8;color:#fff;border-radius:6px;font-weight:800}.button:focus-visible{outline:3px solid #1267e8;outline-offset:2px}' });
 }
