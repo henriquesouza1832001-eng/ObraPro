@@ -239,6 +239,17 @@ describe('rotas publicas do Worker', () => {
         expect(response.status).toBe(200);
         expect(body).toContain('/api/cursos/progresso?limit=6');
         expect(body).toContain('id="continue-section" hidden');
+        expect(body).toContain('class="site-footer"');
+        expect(body).toContain('role="contentinfo"');
+    });
+
+    it('rodape compartilhado aparece em todas as rotas renderizadas pelo Worker (paginas publicas e privadas via publicPage)', async () => {
+        const paths = ['/', '/como-funciona', '/cursos'];
+        for (const path of paths) {
+            const response = await worker.fetch(get(path), baseEnv());
+            const body = await response.text();
+            expect(body, `rodape ausente em ${path}`).toContain('class="site-footer"');
+        }
     });
 
     it('GET /health retorna status ok em JSON', async () => {
