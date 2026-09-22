@@ -18,6 +18,7 @@ import { renderCourseCatalog, renderCourseDetail, renderCourseNotFound } from '.
 import { renderLessonDetail, renderLessonNotFound, flattenLessons } from './pages/lesson';
 import { renderAdminPanel } from './pages/admin';
 import { renderCertificatesBlocked, renderCertificateVerification } from './pages/certificates';
+import { renderCourseQuiz } from './pages/quiz';
 import { renderLearningHome } from './pages/home';
 import { renderComoFunciona } from './pages/comoFunciona';
 import { renderServerError } from './pages/serverError';
@@ -1039,6 +1040,11 @@ async function route(request: Request, env: Env): Promise<Response> {
     const lessonPageMatch = path.match(/^\/cursos\/([^/]+)\/aulas\/([^/]+)$/);
     if (lessonPageMatch && lessonPageMatch[1] && lessonPageMatch[2]) {
         return withSecurityHeaders(await handleLessonDetail(lessonPageMatch[1], lessonPageMatch[2], courseRepository));
+    }
+
+    const quizPageMatch = path.match(/^\/cursos\/([^/]+)\/quiz$/);
+    if (quizPageMatch && quizPageMatch[1]) {
+        return withSecurityHeaders(html(renderCourseQuiz(decodeURIComponent(quizPageMatch[1]))));
     }
 
     if (path.startsWith('/cursos/')) {
