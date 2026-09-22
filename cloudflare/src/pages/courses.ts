@@ -104,7 +104,7 @@ export function renderCourseDetail(course: Course, modules: CourseModule[]): str
 
     const moduleTag = course.instructionModule ? `<span class="tag module-tag">Módulo ${course.instructionModule.position}: ${escapeHtml(course.instructionModule.title)}</span>` : '';
 
-    const body = `<a class="back" style="display:block;padding:12px 5vw;background:#fff;border-bottom:1px solid #d9e0dd" href="/cursos">${arrowLeftIcon} Todos os cursos</a><div class="detail-inner" style="padding:24px 5vw 0">${moduleTag}<span class="tag">${escapeHtml(course.category)}</span><h1>${escapeHtml(course.title)}</h1><p>${escapeHtml(course.description)}</p></div><main class="layout"><section class="detail-content"><h2 style="font-size:16px;color:#5b6a72;margin:0 0 4px">Currículo do curso</h2>${moduleList}</section><aside class="aside"><strong>${priceLabel(course)}</strong><p style="color:#60706a;font-size:13px;margin-top:4px">Aulas curtas e passo a passo para você aprender fazendo.</p><a class="button" id="course-cta-login" href="/entrar">Começar agora</a><button class="button" id="course-cta-enroll" type="button" hidden>Matricular-se gratuitamente</button><p class="access-status" id="course-access-status" role="status" aria-live="polite">Verificando seu acesso...</p><div id="course-progress" class="progress-box" hidden><strong id="course-progress-text"></strong><div class="progress-bar"><span id="course-progress-fill" style="width:0"></span></div></div><small>Estudo educativo. Não substitui projeto ou responsável técnico.</small></aside></main>
+    const body = `<a class="back" style="display:block;padding:12px 5vw;background:#fff;border-bottom:1px solid #d9e0dd" href="/cursos">${arrowLeftIcon} Todos os cursos</a><div class="detail-inner" style="padding:24px 5vw 0">${moduleTag}<span class="tag">${escapeHtml(course.category)}</span><h1>${escapeHtml(course.title)}</h1><p>${escapeHtml(course.description)}</p></div><main class="layout"><section class="detail-content"><h2 style="font-size:16px;color:#5b6a72;margin:0 0 4px">Currículo do curso</h2>${moduleList}</section><aside class="aside"><strong>${priceLabel(course)}</strong><p style="color:#60706a;font-size:13px;margin-top:4px">Aulas curtas e passo a passo para você aprender fazendo.</p><a class="button" id="course-cta-login" href="/entrar">Começar agora</a><button class="button" id="course-cta-enroll" type="button" hidden>Matricular-se gratuitamente</button><p class="access-status" id="course-access-status" role="status" aria-live="polite">Verificando seu acesso...</p><div id="course-progress" class="progress-box" hidden><strong id="course-progress-text"></strong><div class="progress-bar"><span id="course-progress-fill" style="width:0"></span></div></div><a class="button" id="course-quiz-link" href="/cursos/${encodeURIComponent(course.slug)}/quiz" hidden>Fazer quiz final</a><small>Estudo educativo. Não substitui projeto ou responsável técnico.</small></aside></main>
 <script>(function(){
     var slug = ${JSON.stringify(course.slug)};
     var progressBox = document.getElementById('course-progress');
@@ -113,6 +113,7 @@ export function renderCourseDetail(course: Course, modules: CourseModule[]): str
     var loginCta = document.getElementById('course-cta-login');
     var enrollButton = document.getElementById('course-cta-enroll');
     var accessStatus = document.getElementById('course-access-status');
+    var quizLink = document.getElementById('course-quiz-link');
     var lessonChecks = document.querySelectorAll('.lesson-check');
 
     function renderProgress(data) {
@@ -150,6 +151,7 @@ export function renderCourseDetail(course: Course, modules: CourseModule[]): str
             return;
         }
         if (access.enrolled) {
+            if (quizLink) quizLink.hidden = false;
             accessStatus.textContent = 'Você está matriculado. Continue de onde parou.';
             enableLessonChecks(true);
             loadProgress();
