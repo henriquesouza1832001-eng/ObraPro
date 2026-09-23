@@ -6,5 +6,5 @@ export function renderNotFound(pathname = ''): string {
     const safePath = escapeHtml(pathname || '/');
     const body = `<main class="error-box"><p class="eyebrow">Página não encontrada</p><h1>Esse caminho não existe</h1><p>O endereço pode estar desatualizado ou ter sido digitado incorretamente. Volte ao catálogo para continuar aprendendo.</p><div class="actions"><a class="primary" href="/cursos">Ver cursos</a><a class="secondary" href="${safePath}">Tentar novamente</a></div></main>`;
 
-    return publicPage({ title: 'Página não encontrada | ObraPro', activePath: '', body, extraStyles: styles });
+    return publicPage({ title: 'Página não encontrada | Obra Mais', activePath: '', body, extraStyles: styles });
 }
