@@ -4,6 +4,8 @@ Todas as mudancas relevantes do ObraPro sao registradas aqui. O formato segue Ke
 
 ## [Unreleased]
 
+- adicionado guia de uso e roteiro de demonstração em Markdown e HTML, com rotas, fluxo de curso, quiz, certificado e status explícito de provisionamento da conta.
+
 - Ícones da home e apresentação substituídos por SVG inline, incluindo cursos, trilhas, certificado, progresso e setas; textos e rotas preservados.
 
 - Apresentação: corrigida herança de espaçamento no hero e nos títulos; paleta clara, trilhas pastel e cards compactos aproximam a referência visual. Roteiro de vídeo com caminhos e pré-condições de acesso em `docs/ROTEIRO-VIDEO.md`.
