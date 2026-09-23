@@ -90,6 +90,45 @@ function courseRow(courses: Course[]): string {
     }).join('')}</div>`;
 }
 
+const mockupFinish = `
+body{background:#faf9f6;font-family:Arial,Helvetica,sans-serif}
+.reference-home{background:#faf9f6}
+.reference-home .hero-band{background:#faf9f6}
+.reference-home .hero{padding:0;min-height:310px;background:#faf9f6;color:#10233f;grid-template-columns:1.15fr 1fr}
+.reference-home .hero>*{max-width:none;margin:0;min-width:0}
+.reference-home .hero-left{padding:28px 32px}
+.reference-home .hero h1{color:#10233f;font-size:clamp(30px,3.1vw,44px);letter-spacing:-.035em}
+.reference-home .hero-sub{color:#405775}
+.reference-home .hero-img{min-height:310px}
+.reference-home .hero-img img{position:absolute;inset:0;display:block;opacity:1}
+.reference-home .hero-img:after{background:linear-gradient(90deg,#faf9f6,transparent 40%)}
+.reference-home .hero-actions .secondary{background:#fff;border:1px solid #b8c8db;color:#10233f}
+.reference-home .search-bar input{min-width:0;border:1px solid #d7dfe8}
+.reference-home .main-content,.reference-home .sidebar{background:#faf9f6}
+.reference-home .section-title{margin:0;max-width:none;font-size:20px;letter-spacing:-.025em}
+.reference-home .section-header{gap:12px;flex-wrap:wrap}
+.reference-home .trilhas-grid{gap:10px;margin-bottom:22px}
+.reference-home .trilha-card{padding:12px 10px;gap:8px;min-width:0;background:#fff1e8;box-shadow:none}
+.reference-home .trilha-card:nth-child(2){background:#fff4e6}
+.reference-home .trilha-card:nth-child(3){background:#e9f3ff}
+.reference-home .trilha-card:nth-child(4){background:#edf5e6}
+.reference-home .trilha-icon{background:transparent!important;width:32px;font-size:24px}
+.reference-home .trilha-name{font-size:13px}
+.reference-home .trilha-desc{font-size:11px}
+.reference-home .curso-card{border:1px solid #e1e6ec;box-shadow:0 2px 10px #10233f06}
+.reference-home .curso-body{padding:12px}
+.reference-home .curso-title{font-size:14px;color:#10233f}
+.reference-home .curso-desc{font-size:12px;line-height:1.5}
+.reference-home .btn-ver{text-align:center;border-color:#dbe3ed}
+.reference-home .side-label{display:block;margin-top:4px;line-height:1.45}
+.reference-home .side-card{border:1px solid #e1e6ec}
+.reference-home .quote{background:#edf0f4;color:#405775;border:0}
+.reference-home .streak strong{font-size:17px}
+.reference-home .continue-card{flex-direction:row}
+@media(max-width:900px){.reference-home .hero{grid-template-columns:1fr 1fr}.reference-home .trilhas-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:600px){.reference-home .hero{grid-template-columns:1fr}.reference-home .hero-left{padding:24px 5vw}.reference-home .hero-img{min-height:180px}.reference-home .hero-actions{flex-wrap:wrap}.reference-home .cursos-grid{grid-template-columns:1fr}.reference-home .section-title{font-size:18px}}
+`;
+
 function referenceCourseCard(course: Course, index: number): string {
     const accents = ['#78716c,#57534e', '#c8a96e,#8b6914', '#3b82f6,#1d4ed8', '#6ee7b7,#059669'];
     const icons = ['🏗️', '🧱', '⚡', '🖌️'];
@@ -185,5 +224,5 @@ export function renderLearningHome(courses: Course[], showContinue = false): str
                 .catch(function () {});
         })();</script>`;
 
-    return publicPage({ title: 'Obra Mais | Aprenda a construir com clareza', activePath: '/', body, extraStyles: `${homeStyles}${homeVisualOverrides}${marketingStyles}${referenceStyles}${referenceHeaderStyles}${referenceIconStyles}` });
+    return publicPage({ title: 'Obra Mais | Aprenda a construir com clareza', activePath: '/', body, extraStyles: `${homeStyles}${homeVisualOverrides}${marketingStyles}${referenceStyles}${referenceHeaderStyles}${referenceIconStyles}${mockupFinish}` });
 }
