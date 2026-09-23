@@ -185,5 +185,5 @@ export function renderLearningHome(courses: Course[], showContinue = false): str
                 .catch(function () {});
         })();</script>`;
 
-    return publicPage({ title: 'ObraPro | Aprenda a construir com clareza', activePath: '/', body, extraStyles: `${homeStyles}${homeVisualOverrides}${marketingStyles}${referenceStyles}${referenceHeaderStyles}${referenceIconStyles}` });
+    return publicPage({ title: 'Obra Mais | Aprenda a construir com clareza', activePath: '/', body, extraStyles: `${homeStyles}${homeVisualOverrides}${marketingStyles}${referenceStyles}${referenceHeaderStyles}${referenceIconStyles}` });
 }

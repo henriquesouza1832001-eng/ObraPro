@@ -24,7 +24,7 @@ export function renderLoginPage(options: LoginPageOptions = {}): string {
         ? '<p class="error" role="alert" id="login-error">Não foi possível entrar com esses dados. Confira o e-mail e a senha e tente novamente.</p>'
         : '';
 
-    const heading = realAuthEnabled ? 'Entrar no ObraPro' : 'Acesso de demonstração';
+    const heading = realAuthEnabled ? 'Entrar no Obra Mais' : 'Acesso de demonstração';
     const intro = realAuthEnabled
         ? 'Entre com a conta da sua organização para acessar o painel.'
         : 'Entre para visualizar o painel administrativo de demonstração.';
@@ -38,12 +38,12 @@ export function renderLoginPage(options: LoginPageOptions = {}): string {
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="theme-color" content="#10233f">
-    <title>${heading} | ObraPro</title>
+    <title>${heading} | Obra Mais</title>
     <style>${styles}</style>
 </head>
 <body>
     <main class="panel">
-        <div class="brand"><span class="mark" aria-hidden="true">⛑</span>ObraPro</div>
+        <div class="brand"><span class="mark" aria-hidden="true">⛑</span>Obra Mais</div>
         <h1>${heading}</h1>
         <p>${intro}</p>
         ${error}
