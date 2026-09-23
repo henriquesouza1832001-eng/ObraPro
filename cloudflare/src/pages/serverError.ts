@@ -11,5 +11,5 @@ const styles = '.error-box{max-width:640px;margin:0 auto;padding:80px 5vw;text-a
 export function renderServerError(activePath: string): string {
     const body = `<main class="error-box"><h1>Não foi possível carregar esta página agora</h1><p>Algo falhou do nosso lado. Você pode tentar novamente em instantes ou voltar ao catálogo.</p><div class="actions"><a class="primary" href="${escapeHtml(activePath)}">Tentar novamente</a><a class="secondary" href="/cursos">Voltar ao catálogo</a></div></main>`;
 
-    return publicPage({ title: 'Não foi possível carregar | ObraPro', activePath, body, extraStyles: styles });
+    return publicPage({ title: 'Não foi possível carregar | Obra Mais', activePath, body, extraStyles: styles });
 }

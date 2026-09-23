@@ -401,5 +401,5 @@ export function renderAdminPanel(): string {
     loadAudit();
 })();</script>`;
 
-    return publicPage({ title: 'Painel administrativo | ObraPro', activePath: '/admin', body, extraStyles: adminStyles });
+    return publicPage({ title: 'Painel administrativo | Obra Mais', activePath: '/admin', body, extraStyles: adminStyles });
 }

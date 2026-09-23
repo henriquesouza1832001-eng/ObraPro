@@ -12,7 +12,7 @@ describe('renderLoginPage', () => {
     it('mostra o cabecalho real e omite o aviso de demonstracao quando a autenticacao real esta ligada', () => {
         const html = renderLoginPage({ realAuthEnabled: true });
 
-        expect(html).toContain('Entrar no ObraPro');
+        expect(html).toContain('Entrar no Obra Mais');
         expect(html).not.toContain('Ambiente de demonstração');
     });
 

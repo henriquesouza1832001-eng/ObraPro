@@ -34,11 +34,11 @@ export function publicHeader(activePath: string): string {
         return `<a href="${href}"${isActive ? ' aria-current="page"' : ''}>${label}</a>`;
     };
 
-    return `<header><a class="brand" href="/"><span class="mark" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9.5 12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5Z"/></svg></span><span>ObraPro</span></a><nav class="top" aria-label="Navegação principal">${link('/', 'Início')}${link('/como-funciona', 'Como funciona')}${link('/cursos', 'Cursos')}<a class="header-search" href="/cursos" aria-label="Buscar cursos"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg></a><a class="login" href="/entrar">Entrar</a><a class="header-cta" href="/cursos?acesso=free">Começar gratuitamente</a></nav></header>`;
+    return `<header><a class="brand" href="/"><span class="mark" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9.5 12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5Z"/></svg></span><span>Obra Mais</span></a><nav class="top" aria-label="Navegação principal">${link('/', 'Início')}${link('/como-funciona', 'Como funciona')}${link('/cursos', 'Cursos')}<a class="header-search" href="/cursos" aria-label="Buscar cursos"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg></a><a class="login" href="/entrar">Entrar</a><a class="header-cta" href="/cursos?acesso=free">Começar gratuitamente</a></nav></header>`;
 }
 
 export function publicFooter(): string {
-    return `<footer class="site-footer" role="contentinfo"><nav aria-label="Rodapé"><a href="/">Início</a><a href="/como-funciona">Como funciona</a><a href="/cursos">Cursos</a><a href="/entrar">Entrar</a></nav><p>ObraPro ensina construção civil com aulas curtas e passo a passo. Conteúdo educativo — não substitui projeto ou responsável técnico. © ObraPro.</p></footer>`;
+    return `<footer class="site-footer" role="contentinfo"><nav aria-label="Rodapé"><a href="/">Início</a><a href="/como-funciona">Como funciona</a><a href="/cursos">Cursos</a><a href="/entrar">Entrar</a></nav><p>Obra Mais ensina construção civil com aulas curtas e passo a passo. Conteúdo educativo — não substitui projeto ou responsável técnico. © Obra Mais.</p></footer>`;
 }
 
 export function publicPage(options: { title: string; activePath: string; body: string; extraStyles?: string }): string {

@@ -30,7 +30,7 @@ export function renderLessonDetail(course: Course, lesson: FlatLesson, prev: Fla
     <section class="lesson-section" id="lesson-materials-section" hidden><h2>Materiais</h2><ul id="lesson-materials"></ul></section>
     <section class="lesson-section" id="lesson-tools-section" hidden><h2>Ferramentas</h2><ul id="lesson-tools"></ul></section>
     <section class="lesson-section" id="lesson-steps-section" hidden><h2>Passo a passo</h2><ol id="lesson-steps"></ol></section>
-    <section class="lesson-section safety-box" id="lesson-safety-section" hidden><h2><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 2 2 20h20L12 2z"/><line x1="12" y1="9" x2="12" y2="14"/><circle cx="12" cy="17" r="0.6" fill="currentColor"/></svg> Aviso técnico ObraPro</h2><p id="lesson-safety"></p></section>
+    <section class="lesson-section safety-box" id="lesson-safety-section" hidden><h2><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 2 2 20h20L12 2z"/><line x1="12" y1="9" x2="12" y2="14"/><circle cx="12" cy="17" r="0.6" fill="currentColor"/></svg> Aviso técnico Obra Mais</h2><p id="lesson-safety"></p></section>
     ${navLinks}
 </main>
 <script>(function(){
@@ -131,11 +131,11 @@ export function renderLessonDetail(course: Course, lesson: FlatLesson, prev: Fla
         });
 })();</script>`;
 
-    return publicPage({ title: `${lesson.title} | ${course.title} | ObraPro`, activePath: '/cursos', body, extraStyles: lessonStyles });
+    return publicPage({ title: `${lesson.title} | ${course.title} | Obra Mais`, activePath: '/cursos', body, extraStyles: lessonStyles });
 }
 
 export function renderLessonNotFound(course: Course): string {
     const body = `<main class="content" style="text-align:center;padding-top:80px"><h1>Aula não encontrada</h1><p style="color:#60706a;margin-top:8px">Esse link pode estar desatualizado.</p><a class="button" style="display:inline-block;margin-top:24px" href="/cursos/${encodeURIComponent(course.slug)}">Voltar ao curso</a></main>`;
 
-    return publicPage({ title: `Aula não encontrada | ${course.title} | ObraPro`, activePath: '/cursos', body, extraStyles: '.button{padding:14px 22px;background:#1267e8;color:#fff;border-radius:6px;font-weight:800}.button:focus-visible{outline:3px solid #1267e8;outline-offset:2px}' });
+    return publicPage({ title: `Aula não encontrada | ${course.title} | Obra Mais`, activePath: '/cursos', body, extraStyles: '.button{padding:14px 22px;background:#1267e8;color:#fff;border-radius:6px;font-weight:800}.button:focus-visible{outline:3px solid #1267e8;outline-offset:2px}' });
 }

@@ -497,7 +497,7 @@ describe('login/logout real via D1 (CF3-C1/C2)', () => {
         const body = await response.text();
 
         expect(response.status).toBe(200);
-        expect(body).toContain('Entrar no ObraPro');
+        expect(body).toContain('Entrar no Obra Mais');
         expect(body).not.toContain('Ambiente de demonstração');
     });
 
