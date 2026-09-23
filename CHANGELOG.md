@@ -4,6 +4,8 @@ Todas as mudancas relevantes do ObraPro sao registradas aqui. O formato segue Ke
 
 ## [Unreleased]
 
+- Jornada do aluno: painel de aprendizagem e tira-dúvidas usam o layout compartilhado da landing, com progresso real, formulário de dúvida, confirmação e listagem. Login usa o mesmo cabeçalho. Corrigida abertura direta do tira-dúvidas e mensagem do quiz quando ainda não existe certificado emitido.
+
 - adicionada rota autenticada `/tira-duvidas`, que abre diretamente o suporte existente, com nomenclatura simplificada para demonstração e conta demo provisionada no preview.
 
 - adicionado guia de uso e roteiro de demonstração em Markdown e HTML, com rotas, fluxo de curso, quiz, certificado e status explícito de provisionamento da conta.

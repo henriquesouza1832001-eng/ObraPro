@@ -34,7 +34,7 @@ export function publicHeader(activePath: string): string {
         return `<a href="${href}"${isActive ? ' aria-current="page"' : ''}>${label}</a>`;
     };
 
-    return `<header><a class="brand" href="/"><span class="mark" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9.5 12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5Z"/></svg></span><span>Obra Mais</span></a><nav class="top" aria-label="Navegação principal">${link('/', 'Início')}${link('/como-funciona', 'Como funciona')}${link('/cursos', 'Cursos')}<a class="header-search" href="/cursos" aria-label="Buscar cursos"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg></a><a class="login" href="/entrar">Entrar</a><a class="header-cta" href="/cursos?acesso=free">Começar gratuitamente</a></nav></header>`;
+    return `<header><a class="brand" href="/"><span class="mark" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9.5 12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5Z"/></svg></span><span>Obra Mais</span></a><nav class="top" aria-label="Navegação principal">${link('/', 'Início')}${link('/como-funciona', 'Como funciona')}${link('/cursos', 'Cursos')}${link('/painel', 'Meu aprendizado')}<a class="header-search" href="/cursos" aria-label="Buscar cursos"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg></a><a class="login" href="/entrar">Entrar</a><a class="header-cta" href="/cursos?acesso=free">Começar gratuitamente</a></nav></header>`;
 }
 
 export function publicFooter(): string {
@@ -42,8 +42,9 @@ export function publicFooter(): string {
 }
 
 export function publicPage(options: { title: string; activePath: string; body: string; extraStyles?: string }): string {
+    const journeyStyles = `body{background:#faf8f4}body>header{background:#102b4b;border-bottom:0;min-height:72px}.header-cta{background:#ff7818;color:#fff;padding:12px 20px;border-radius:9px}.page-head{border-bottom:1px solid #e0e6ed}.lesson-head,.cert-hero{background:linear-gradient(110deg,#fffaf1,#edf4fc);color:#10233f}.lesson-head h1,.cert-hero h1{color:#10233f}.lesson-head p,.cert-hero p{color:#586b83}.lesson-head .eyebrow{color:#a64b0a}.lesson-section,.cert-box,.quiz-card{border-color:#dce4ee;border-radius:14px;box-shadow:0 5px 20px #10233f08}[hidden]{display:none!important}@media(max-width:720px){body>header{gap:12px}.header-cta{padding:10px 12px}nav.top{flex-wrap:wrap;overflow:visible;justify-content:flex-start;gap:14px}.student-shell{padding:24px 16px}}`;
     return `<!doctype html>
 <html lang="pt-BR">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#10233f"><title>${escapeHtml(options.title)}</title><style>${sharedStyles}${sharedVisualOverrides}${options.extraStyles ?? ''}</style></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#10233f"><title>${escapeHtml(options.title)}</title><style>${sharedStyles}${sharedVisualOverrides}${options.extraStyles ?? ''}${journeyStyles}</style></head>
 <body>${publicHeader(options.activePath)}${options.body}${publicFooter()}</body></html>`;
 }

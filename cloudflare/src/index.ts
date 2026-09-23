@@ -2,6 +2,7 @@ import type { Env } from './env';
 import { withSecurityHeaders, redirect, isCrossSiteMutation } from './http/security';
 import { isAuthenticated, sessionToken } from './auth/demoSession';
 import { renderLoginPage } from './pages/login';
+import { renderStudentPage } from './pages/student';
 import { D1MembershipRepository } from './auth/membershipRepository';
 import { MockCourseRepository } from './data/mockCourseRepository';
 import { D1CourseRepository } from './data/d1CourseRepository';
@@ -1113,9 +1114,9 @@ async function route(request: Request, env: Env): Promise<Response> {
             return redirect('/entrar');
         }
 
-        const dashboardUrl = new URL('/dashboard.html', request.url);
-
-        return withSecurityHeaders(await env.ASSETS.fetch(new Request(dashboardUrl, request)));
+        const response = withSecurityHeaders(html(renderStudentPage()));
+        response.headers.set('Cache-Control', 'no-store');
+        return response;
     }
 
     if (path === '/tira-duvidas') {
@@ -1127,9 +1128,9 @@ async function route(request: Request, env: Env): Promise<Response> {
             return redirect('/entrar');
         }
 
-        const dashboardUrl = new URL('/dashboard.html?view=support', request.url);
-
-        return withSecurityHeaders(await env.ASSETS.fetch(new Request(dashboardUrl, request)));
+        const response = withSecurityHeaders(html(renderStudentPage(true)));
+        response.headers.set('Cache-Control', 'no-store');
+        return response;
     }
 
     if (path === '/admin') {

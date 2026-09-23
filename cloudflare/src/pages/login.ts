@@ -10,6 +10,8 @@
  * secao de cadastro fica como chamada informativa para o catalogo publico, em
  * vez de um formulario que enviaria dados para um endpoint inexistente.
  */
+import { publicPage } from './layout';
+
 const styles = `*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;padding:24px;background:linear-gradient(135deg,#10233f 0%,#15385c 55%,#f4f7f6 55%);color:#10233f;font-family:Arial,sans-serif}.panel{width:min(100%,460px);border:1px solid #d9e0dd;background:#fff;padding:32px;border-radius:14px;box-shadow:0 20px 55px #07162e33}.brand{display:flex;align-items:center;gap:12px;font-size:22px;font-weight:900}.mark{display:grid;place-items:center;width:44px;height:44px;border-radius:8px;background:#f47b20}h1{margin:28px 0 6px;font-size:clamp(26px,6vw,34px);letter-spacing:-.03em}p{color:#60706a;line-height:1.5}.field{display:grid;gap:7px;margin-top:18px}label{font-size:14px;font-weight:700}input{width:100%;min-height:50px;border:2px solid #b9c5c0;border-radius:8px;padding:0 13px;font-size:16px}input:focus-visible{outline:3px solid #ffb04c;outline-offset:2px}button{width:100%;min-height:52px;margin-top:22px;border:0;border-radius:8px;background:#1267e8;color:#fff;font-size:16px;font-weight:800;cursor:pointer}button:hover{background:#0d55c4}button:focus-visible{outline:3px solid #ffb04c;outline-offset:2px}.error{padding:12px;border-radius:8px;background:#fff1f0;color:#a92c22;font-size:14px;border:1px solid #f3b9b3;margin-top:16px}.note{margin-top:18px;font-size:12px;text-align:center;color:#60706a}.signup{margin-top:24px;padding-top:20px;border-top:1px solid #edf0ef;text-align:center}.signup a{color:#1267e8;font-weight:800}.signup a:focus-visible{outline:3px solid #1267e8;outline-offset:2px;border-radius:3px}@media(max-width:560px){body{padding:16px;background:#f4f7f6}.panel{padding:24px;border-radius:12px}}`;
 
 export interface LoginPageOptions {
@@ -26,24 +28,13 @@ export function renderLoginPage(options: LoginPageOptions = {}): string {
 
     const heading = realAuthEnabled ? 'Entrar no Obra Mais' : 'Acesso de demonstração';
     const intro = realAuthEnabled
-        ? 'Entre com a conta da sua organização para acessar o painel.'
+        ? 'Entre para continuar seus cursos e acompanhar sua evolução.'
         : 'Entre para visualizar o painel administrativo de demonstração.';
     const note = realAuthEnabled
         ? ''
         : '<p class="note">Ambiente de demonstração. Não utilize credenciais pessoais.</p>';
 
-    return `<!doctype html>
-<html lang="pt-BR">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <meta name="theme-color" content="#10233f">
-    <title>${heading} | Obra Mais</title>
-    <style>${styles}</style>
-</head>
-<body>
-    <main class="panel">
-        <div class="brand"><span class="mark" aria-hidden="true">⛑</span>Obra Mais</div>
+    const body = `    <main class="panel">
         <h1>${heading}</h1>
         <p>${intro}</p>
         ${error}
@@ -63,6 +54,6 @@ export function renderLoginPage(options: LoginPageOptions = {}): string {
             <p>Ainda não tem conta? <a href="/cursos">Conheça o catálogo gratuito</a> antes de assinar um plano.</p>
         </div>
     </main>
-</body>
-</html>`;
+`;
+    return publicPage({ title: `${heading} | Obra Mais`, activePath: '/entrar', body, extraStyles: `${styles}body{display:block;padding:0;background:#faf7f0}.panel{margin:48px auto}header .brand{font-size:22px}header .mark{width:36px;height:36px}@media(max-width:560px){.panel{width:calc(100% - 32px);margin:24px auto}}` });
 }
