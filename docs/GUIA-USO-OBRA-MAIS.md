@@ -12,6 +12,8 @@ Conta demo do ambiente de apresentação:
 
 ## Roteiro principal
 
+Estado verificado em 22/09/2026: login, painel de aprendizagem e registro/listagem de dúvidas têm implementação. O curso de exemplo ainda tem nove aulas sem conteúdo publicado e nenhum quiz no D1. As etapas de aula, avaliação e emissão abaixo são o percurso planejado e ainda não estão prontas para gravação. O rascunho para revisão está em `PLANEJAMENTO-REVISAO.md`.
+
 1. Na home, escolha uma trilha, como **Alvenaria**, **Instalações**, **Estrutura** ou **Fundações**.
 2. Em **Cursos em destaque**, clique em **Ver curso**.
 3. Na página do curso, confira o currículo e selecione uma aula.
