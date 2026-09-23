@@ -1025,7 +1025,7 @@ async function route(request: Request, env: Env): Promise<Response> {
         return ticket ? privateJson({ data: ticket }) : privateJson({ error: 'support_ticket_not_found' }, 404);
     }
 
-    if (path === '/') {
+    if (path === '/' || path === '/apresentacao') {
         const courses = await courseRepository.listCourses();
         const authenticated = env.AUTH_DB
             ? await authenticateRequest(request, env)
@@ -1163,7 +1163,7 @@ async function route(request: Request, env: Env): Promise<Response> {
  * cair na pagina de erro sanitizada em vez de vazar uma excecao nao tratada
  * quando o repositorio de dados (mock hoje, D1 depois) falhar.
  */
-const renderedRoutePrefixes = ['/', '/como-funciona', '/cursos', '/admin', '/certificados'];
+const renderedRoutePrefixes = ['/', '/apresentacao', '/como-funciona', '/cursos', '/admin', '/certificados'];
 
 export default {
     async fetch(request: Request, env: Env): Promise<Response> {
