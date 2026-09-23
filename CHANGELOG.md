@@ -4,6 +4,8 @@ Todas as mudancas relevantes do ObraPro sao registradas aqui. O formato segue Ke
 
 ## [Unreleased]
 
+- Apresentação: corrigida herança de espaçamento no hero e nos títulos; paleta clara, trilhas pastel e cards compactos aproximam a referência visual. Roteiro de vídeo com caminhos e pré-condições de acesso em `docs/ROTEIRO-VIDEO.md`.
+
 ### Fixed
 
 - Painel operacional (`cloudflare/public/dashboard.html`): `#support-list-status` (unico feedback visivel enquanto a lista de chamados esta carregando, vazia, ou falhou) nao tinha `role="status"`/`aria-live`, ao contrario de todos os outros elementos de status dinamico do mesmo arquivo (`#support-status`, `#procedure-detail-status`, `#execution-status`). Um leitor de tela nao anunciava automaticamente "Carregando seus chamados...", "Voce ainda nao abriu nenhum chamado" ou uma mensagem de erro, ja que o texto muda dentro do mesmo elemento sem nenhuma pista de regiao viva. Adicionado `role="status" aria-live="polite"`. Validado com `node --check`, typecheck, `worker:test` 83/83, build dry-run e `git diff --check`.
