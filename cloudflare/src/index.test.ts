@@ -543,6 +543,8 @@ describe('login/logout real via D1 (CF3-C1/C2)', () => {
         const comSessao = await worker.fetch(new Request('https://obrapro.test/painel', { headers: { Cookie: cookie } }), env);
 
         expect(comSessao.status).toBe(200);
+        expect(comSessao.headers.get('Cache-Control')).toBe('no-store');
+        expect(await comSessao.text()).toContain('Continue de onde parou');
     });
 
     it('GET /tira-duvidas exige sessao e abre diretamente a tela de suporte', async () => {
@@ -558,6 +560,11 @@ describe('login/logout real via D1 (CF3-C1/C2)', () => {
 
         const comSessao = await worker.fetch(new Request('https://obrapro.test/tira-duvidas', { headers: { Cookie: cookie } }), env);
         expect(comSessao.status).toBe(200);
+        expect(comSessao.headers.get('Cache-Control')).toBe('no-store');
+        const portal = await comSessao.text();
+        expect(portal).toContain('id="question-form"');
+        expect(portal).toContain('src="/student.js"');
+        expect(portal).not.toContain('data-dashboard-view="support"');
     });
 
     it('GET /admin com sessao valida retorna o painel administrativo; sem sessao redireciona para /entrar', async () => {
