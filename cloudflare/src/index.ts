@@ -1118,6 +1118,20 @@ async function route(request: Request, env: Env): Promise<Response> {
         return withSecurityHeaders(await env.ASSETS.fetch(new Request(dashboardUrl, request)));
     }
 
+    if (path === '/tira-duvidas') {
+        const authenticated = env.AUTH_DB
+            ? await authenticateRequest(request, env)
+            : await isAuthenticated(request, env);
+
+        if (!authenticated) {
+            return redirect('/entrar');
+        }
+
+        const dashboardUrl = new URL('/dashboard.html?view=support', request.url);
+
+        return withSecurityHeaders(await env.ASSETS.fetch(new Request(dashboardUrl, request)));
+    }
+
     if (path === '/admin') {
         const authenticated = env.AUTH_DB
             ? await authenticateRequest(request, env)
