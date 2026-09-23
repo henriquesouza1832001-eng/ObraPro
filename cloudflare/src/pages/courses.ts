@@ -47,7 +47,11 @@ export function priceLabel(course: Course): string {
 
 /** Nome editorial para o cliente final; slugs e contratos continuam intactos. */
 export function presentationTitle(title: string): string {
-    return title.replace(/^(?:ISC|MOD)\s*[A-Z0-9.-]+\s*[-–—:]\s*/i, '').trim() || title;
+    return title.replace(/^(?:ISC|MOD)\s*[A-Z0-9.-]+\s*[-–—:]\s*/i, '').replace(/\s*[-–—]\s*rev\.\s*\d+\s*$/i, '').trim() || title;
+}
+
+export function presentationDescription(description: string): string {
+    return description.replace(/Guia de estudo baseado no documento ISC Direcional, com preparo, execucao e verificacao da etapa\.?/i, 'Aprenda o passo a passo com preparo, execução e conferência da etapa.').trim();
 }
 
 const arrowRightIcon = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="display:inline;vertical-align:-2px"><polyline points="9 18 15 12 9 6"/></svg>';
@@ -70,7 +74,7 @@ function courseCard(course: Course): string {
     const accent = categoryAccent[categoryBucket(course.category)] ?? '#94a3b8';
     const searchable = searchKey(`${course.title} ${course.description} ${course.category}`);
 
-    return `<a class="card" data-course-card data-course-search="${escapeHtml(searchable)}" style="border-top-color:${accent}" href="/cursos/${encodeURIComponent(course.slug)}"><div class="heading"><span class="tag">${escapeHtml(course.category)}</span>${accessTag}</div><h3>${escapeHtml(presentationTitle(course.title))}</h3>${moduleBadge}<p>${escapeHtml(course.description)}</p><div class="meta"><span>${course.modulesCount} ${course.modulesCount === 1 ? 'módulo' : 'módulos'}</span><span>${course.durationMinutes} min</span><span class="cta">Ver curso ${arrowRightIcon}</span></div></a>`;
+    return `<a class="card" data-course-card data-course-search="${escapeHtml(searchable)}" style="border-top-color:${accent}" href="/cursos/${encodeURIComponent(course.slug)}"><div class="heading"><span class="tag">${escapeHtml(course.category)}</span>${accessTag}</div><h3>${escapeHtml(presentationTitle(course.title))}</h3>${moduleBadge}<p>${escapeHtml(presentationDescription(course.description))}</p><div class="meta"><span>${course.modulesCount} ${course.modulesCount === 1 ? 'módulo' : 'módulos'}</span><span>${course.durationMinutes} min</span><span class="cta">Ver curso ${arrowRightIcon}</span></div></a>`;
 }
 
 export function renderCourseCatalog(courses: Course[], activeCategory?: string, activeAccess?: string, activeSearch?: string): string {
@@ -109,7 +113,7 @@ export function renderCourseDetail(course: Course, modules: CourseModule[]): str
 
     const moduleTag = course.instructionModule ? `<span class="tag module-tag">Módulo ${course.instructionModule.position}: ${escapeHtml(course.instructionModule.title)}</span>` : '';
 
-    const body = `<a class="back" style="display:block;padding:12px 5vw;background:#fff;border-bottom:1px solid #d9e0dd" href="/cursos">${arrowLeftIcon} Todos os cursos</a><div class="detail-inner" style="padding:24px 5vw 0">${moduleTag}<span class="tag">${escapeHtml(course.category)}</span><h1>${escapeHtml(presentationTitle(course.title))}</h1><p>${escapeHtml(course.description)}</p></div><main class="layout"><section class="detail-content"><h2 style="font-size:16px;color:#5b6a72;margin:0 0 4px">Currículo do curso</h2>${moduleList}</section><aside class="aside"><strong>${priceLabel(course)}</strong><p style="color:#60706a;font-size:13px;margin-top:4px">Aulas curtas e passo a passo para você aprender fazendo.</p><a class="button" id="course-cta-login" href="/entrar">Começar agora</a><button class="button" id="course-cta-enroll" type="button" hidden>Matricular-se gratuitamente</button><p class="access-status" id="course-access-status" role="status" aria-live="polite">Verificando seu acesso...</p><div id="course-progress" class="progress-box" hidden><strong id="course-progress-text"></strong><div class="progress-bar"><span id="course-progress-fill" style="width:0"></span></div></div><a class="button" id="course-quiz-link" href="/cursos/${encodeURIComponent(course.slug)}/quiz" hidden>Fazer quiz final</a><small>Estudo educativo. Não substitui projeto ou responsável técnico.</small></aside></main>
+    const body = `<a class="back" style="display:block;padding:12px 5vw;background:#fff;border-bottom:1px solid #d9e0dd" href="/cursos">${arrowLeftIcon} Todos os cursos</a><div class="detail-inner" style="padding:24px 5vw 0">${moduleTag}<span class="tag">${escapeHtml(course.category)}</span><h1>${escapeHtml(presentationTitle(course.title))}</h1><p>${escapeHtml(presentationDescription(course.description))}</p></div><main class="layout"><section class="detail-content"><h2 style="font-size:16px;color:#5b6a72;margin:0 0 4px">Currículo do curso</h2>${moduleList}</section><aside class="aside"><strong>${priceLabel(course)}</strong><p style="color:#60706a;font-size:13px;margin-top:4px">Aulas curtas e passo a passo para você aprender fazendo.</p><a class="button" id="course-cta-login" href="/entrar">Começar agora</a><button class="button" id="course-cta-enroll" type="button" hidden>Matricular-se gratuitamente</button><p class="access-status" id="course-access-status" role="status" aria-live="polite">Verificando seu acesso...</p><div id="course-progress" class="progress-box" hidden><strong id="course-progress-text"></strong><div class="progress-bar"><span id="course-progress-fill" style="width:0"></span></div></div><a class="button" id="course-quiz-link" href="/cursos/${encodeURIComponent(course.slug)}/quiz" hidden>Fazer quiz final</a><small>Estudo educativo. Não substitui projeto ou responsável técnico.</small></aside></main>
 <script>(function(){
     var slug = ${jsStringLiteral(course.slug)};
     var progressBox = document.getElementById('course-progress');
