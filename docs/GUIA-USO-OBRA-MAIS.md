@@ -4,9 +4,11 @@
 
 Abra `https://obrapro-preview.henriquesouza.workers.dev/apresentacao`.
 
-E-mail solicitado: `diego.rocha@obramais.com`.
+Conta demo do ambiente de apresentação:
 
-**Status da conta: não provisionada.** O sistema atual não possui fluxo autorizado de criação dessa conta neste ambiente; portanto não existe senha criada para informar. A senha deve ser definida somente por administrador, em canal seguro.
+- E-mail: `diego.rocha@obramais.com`
+- Senha temporária: `ObraMaisDemo!2026`
+- Tira-dúvidas rápido: `/tira-duvidas`
 
 ## Roteiro principal
 
@@ -28,6 +30,7 @@ E-mail solicitado: `diego.rocha@obramais.com`.
 | Login | `/entrar` |
 | Painel | `/painel` |
 | Certificados | `/certificados` |
+| Tira-dúvidas rápido | `/tira-duvidas` |
 
 Use os links da própria página para abrir aulas e quiz, evitando depender de IDs internos que podem mudar.
 
@@ -40,4 +43,4 @@ Use os links da própria página para abrir aulas e quiz, evitando depender de I
 - **21–26 s:** login e painel do aluno.
 - **26–30 s:** quiz, certificado e chamada para começar.
 
-Não apresentar como disponível criação pública de contas, pagamento, cupom, indicação, tira-dúvidas ou emissão de certificado para conta não provisionada. Esses itens dependem de fluxos administrativos e contratos backend específicos.
+Não apresentar como disponível criação pública de contas, pagamento, cupom ou indicação. O tira-dúvidas da demo registra e lista chamados vinculados à conta autenticada.
