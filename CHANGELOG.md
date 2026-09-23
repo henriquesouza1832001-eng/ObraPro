@@ -4,6 +4,8 @@ Todas as mudancas relevantes do ObraPro sao registradas aqui. O formato segue Ke
 
 ## [Unreleased]
 
+- adicionada rota autenticada `/tira-duvidas`, que abre diretamente o suporte existente, com nomenclatura simplificada para demonstração e conta demo provisionada no preview.
+
 - adicionado guia de uso e roteiro de demonstração em Markdown e HTML, com rotas, fluxo de curso, quiz, certificado e status explícito de provisionamento da conta.
 
 - Ícones da home e apresentação substituídos por SVG inline, incluindo cursos, trilhas, certificado, progresso e setas; textos e rotas preservados.

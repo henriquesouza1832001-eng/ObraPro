@@ -740,6 +740,9 @@
         }
     });
     configureSupport();
-    showView('overview');
+    const supportHeading = document.querySelector('[data-dashboard-view="support"] h2');
+    if (supportHeading) supportHeading.textContent = 'Tira-dúvidas rápido';
+    const requestedView = new URLSearchParams(window.location.search).get('view');
+    showView(requestedView === 'support' ? 'support' : 'overview');
     loadPanel();
 })();
